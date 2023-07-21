@@ -1,4 +1,4 @@
-# markdown.nvim
+# markdown.nvim <!-- omit in toc -->
 
 Tools to make working with markdown in Neovim more enjoyable. Very WIP.
 
@@ -8,10 +8,8 @@ Plans:
 
 - table of contents
 - section numbering
-- improved list editing:
-  - auto insertion of new list items
-  - auto indent/dedent new list items
-- improved multi-line block quote editing (auto-insert)
+- improved list editing
 - inline-style keybindings
 - link/image pasting from clipboard
 - format tables (gfm)
+- task list helpers (gfm)
