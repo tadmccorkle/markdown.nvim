@@ -1,7 +1,7 @@
 local api = vim.api
 local ts = vim.treesitter
 
-local ts_util = MDR("markdown.treesitter")
+local md_ts = MDR("markdown.treesitter")
 
 local M = {}
 
@@ -91,7 +91,7 @@ local function insert_list_item(loc)
 	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
 	local curr_row = cursor[1] - 1
 	local curr_eol = vim.fn.charcol("$") - 1
-	local match = ts_util.find_innermost_match_containing(t, list_item_query, { curr_row, curr_eol })
+	local match = md_ts.find_innermost_match_containing(t, list_item_query, { curr_row, curr_eol })
 	if match == nil then
 		return
 	end
@@ -116,7 +116,7 @@ local function insert_list_item(loc)
 	api.nvim_buf_set_lines(0, new_row, new_row, true, { indent .. marker .. task_marker })
 
 	if marker_id == LIST_ITEM_DOT_ID or marker_id == LIST_ITEM_PAREN_ID then
-		local list = ts_util.find_innermost_match_containing(t, ordered_list_query,
+		local list = md_ts.find_innermost_match_containing(t, ordered_list_query,
 					{ curr_row, curr_eol })
 				[1]
 		reset_list_numbering(list)

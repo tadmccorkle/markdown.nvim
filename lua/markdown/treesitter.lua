@@ -44,7 +44,7 @@ end
 ---@param node TSNode
 ---@param types string[]
 ---@return boolean
-function M.contained_by_type(node, types)
+function M.is_contained_by_any_of(node, types)
 	local p = node:parent()
 	while p ~= nil do
 		for _, type in pairs(types) do

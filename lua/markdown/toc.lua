@@ -1,10 +1,9 @@
 local api = vim.api
 local ts = vim.treesitter
 
-local ts_util = MDR("markdown.treesitter")
-local util = MDR("markdown.util")
-
 local Section = MDR("markdown.section")
+local md_ts = MDR("markdown.treesitter")
+local util = MDR("markdown.util")
 
 local M = {}
 
@@ -46,7 +45,7 @@ end
 ---@return boolean
 local function has_omit_flag(inline)
 	local inline_trees = ts.get_parser(0, "markdown"):children().markdown_inline:parse()
-	local t = ts_util.find_tree_in_node(inline_trees, inline)
+	local t = md_ts.find_tree_in_node(inline_trees, inline)
 	if t ~= nil then
 		for _, match, _ in html_tag_query:iter_matches(t:root(), 0, 0, -1) do
 			if is_omit_flag(match[1]) then
@@ -65,7 +64,7 @@ local function get_document_sections()
 	local last_omit_flag_end_row
 	for _, match, _ in toc_heading_query:iter_matches(t:root(), 0, 0, -1) do
 		local _, n = next(match)
-		if not ts_util.contained_by_type(n, { "list", "block_quote" }) then
+		if not md_ts.is_contained_by_any_of(n, { "list", "block_quote" }) then
 			local html = match[TOC_HTML_ID]
 			if html ~= nil then
 				if is_omit_flag(html) then

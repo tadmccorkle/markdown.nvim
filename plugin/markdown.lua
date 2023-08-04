@@ -1,1 +1,0 @@
--- vim.notify("markdown.nvim loaded", 0, {})

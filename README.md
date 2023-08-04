@@ -10,12 +10,12 @@ Plans:
 - [ ] inline-style keybindings
 - [x] table of contents
 - [ ] section numbering
-- improved list editing
+- [ ] improved list editing
   - [x] insert new items
   - [ ] change bullet type
 - [ ] link/image pasting from clipboard
 - [ ] follow links
-- tables (gfm)
+- [ ] tables (gfm)
   - [ ] format tables
   - [ ] autoformat
 - [ ] task list helpers (gfm)
