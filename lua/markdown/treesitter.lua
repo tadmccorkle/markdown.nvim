@@ -15,7 +15,7 @@ local M = {}
 function M.find_innermost_match_containing(tree, query, pos)
 	local match
 	local min_range = api.nvim_buf_line_count(0)
-	for _, m, _ in query:iter_matches(tree:root(), 0, 0, -1) do
+	for _, m, _ in query:iter_matches(tree:root(), 0, pos[1], pos[1] + 1) do
 		for _, node in pairs(m) do
 			local node_start_row, _, node_end_row, _ = node:range()
 			local node_range = node_end_row - node_start_row

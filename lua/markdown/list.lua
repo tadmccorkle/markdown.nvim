@@ -116,7 +116,8 @@ local function insert_list_item(loc)
 	api.nvim_buf_set_lines(0, new_row, new_row, true, { indent .. marker .. task_marker })
 
 	if marker_id == LIST_ITEM_DOT_ID or marker_id == LIST_ITEM_PAREN_ID then
-		local list = md_ts.find_innermost_match_containing(t, ordered_list_query,
+		local t_new = ts.get_parser(0, "markdown"):parse()[1]
+		local list = md_ts.find_innermost_match_containing(t_new, ordered_list_query,
 					{ curr_row, curr_eol })
 				[1]
 		reset_list_numbering(list)
