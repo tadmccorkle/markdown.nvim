@@ -3,6 +3,7 @@ local ts = vim.treesitter
 
 local config = require("markdown.config")
 local md_ts = require("markdown.treesitter")
+local notify = require("markdown.notify")
 local util = require("markdown.util")
 
 local M = {}
@@ -185,7 +186,8 @@ function M.toggle_emphasis(motion)
 
 		local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
 		if inline_t == nil then
-			-- TODO(tad): notify unexpected error occurred
+			local inline_txt = ts.get_node_text(inline_node, 0, nil)
+			notify.error("Failed to find inline tree for node '%s'", inline_txt)
 			return
 		end
 

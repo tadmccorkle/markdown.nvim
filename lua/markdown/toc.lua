@@ -81,15 +81,11 @@ local function get_document_sections()
 				local heading_start_row, _, _ = match[heading_ids.HEADING]:start()
 				if last_omit_flag_end_row ~= heading_start_row and not has_omit_flag(match[heading_ids.CONTENT]) then
 					local level = tonumber(match[heading_ids.MARKER]:type():match("(%d+)"))
-					if level == nil then
-						-- TODO(tad): notify unexpected error occurred
+					local name = util.sanitize(ts.get_node_text(match[heading_ids.CONTENT], 0, nil))
+					if level > toc.level then
+						toc = toc:add_subsection(name, level --[[@as integer]])
 					else
-						local name = util.sanitize(ts.get_node_text(match[heading_ids.CONTENT], 0, nil))
-						if level > toc.level then
-							toc = toc:add_subsection(name, level)
-						else
-							toc = toc:get_parent(level):add_subsection(name, level)
-						end
+						toc = toc:get_parent(level):add_subsection(name, level --[[@as integer]])
 					end
 				end
 			end
