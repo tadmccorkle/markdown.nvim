@@ -1,9 +1,9 @@
 local api = vim.api
 local ts = vim.treesitter
 
-local Section = MDR("markdown.section")
-local md_ts = MDR("markdown.treesitter")
-local util = MDR("markdown.util")
+local Section = require("markdown.section")
+local md_ts = require("markdown.treesitter")
+local util = require("markdown.util")
 
 local M = {}
 
@@ -38,7 +38,7 @@ end
 ---@return boolean
 local function is_omit_flag(html)
 	local text = ts.get_node_text(html, 0, nil)
-	return (is_comment(text) and text:match("omit in toc") ~= nil)
+	return is_comment(text) and text:match("omit in toc") ~= nil
 end
 
 ---@param inline TSNode
@@ -47,8 +47,8 @@ local function has_omit_flag(inline)
 	local inline_trees = ts.get_parser(0, "markdown"):children().markdown_inline:parse()
 	local t = md_ts.find_tree_in_node(inline_trees, inline)
 	if t ~= nil then
-		for _, match, _ in html_tag_query:iter_matches(t:root(), 0, 0, -1) do
-			if is_omit_flag(match[1]) then
+		for _, html_tag, _ in html_tag_query:iter_captures(t:root(), 0, 0, -1) do
+			if is_omit_flag(html_tag) then
 				return true
 			end
 		end
@@ -81,11 +81,15 @@ local function get_document_sections()
 				local heading_start_row, _, _ = match[heading_ids.HEADING]:start()
 				if last_omit_flag_end_row ~= heading_start_row and not has_omit_flag(match[heading_ids.CONTENT]) then
 					local level = tonumber(match[heading_ids.MARKER]:type():match("(%d+)"))
-					local name = util.sanitize(ts.get_node_text(match[heading_ids.CONTENT], 0, nil))
-					if level > toc.level then
-						toc = toc:add_subsection(name, level)
+					if level == nil then
+						-- TODO(tad): notify unexpected error occurred
 					else
-						toc = toc:get_parent(level):add_subsection(name, level)
+						local name = util.sanitize(ts.get_node_text(match[heading_ids.CONTENT], 0, nil))
+						if level > toc.level then
+							toc = toc:add_subsection(name, level)
+						else
+							toc = toc:get_parent(level):add_subsection(name, level)
+						end
 					end
 				end
 			end
