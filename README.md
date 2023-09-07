@@ -7,7 +7,7 @@ Tools to make working with markdown in Neovim more enjoyable. Very WIP.
 Plans:
 
 - [ ] configurable
-- [ ] inline-style keybindings
+- [x] inline-style keybindings
 - [x] table of contents
 - [ ] section numbering
 - [ ] improved list editing
