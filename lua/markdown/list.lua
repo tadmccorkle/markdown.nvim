@@ -1,33 +1,18 @@
 local api = vim.api
 local ts = vim.treesitter
 
-local md_ts = MDR("markdown.treesitter")
+local md_ts = require("markdown.treesitter")
 
 local M = {}
 
-local list_item_query = ts.query.parse("markdown", [[
-	(list_item
-		[
-		 (list_marker_minus) @minus
-		 (list_marker_star) @star
-		 (list_marker_plus) @plus
-		 (list_marker_dot) @dot
-		 (list_marker_parenthesis) @paren
-		]
-		[
-		 (task_list_marker_checked)
-		 (task_list_marker_unchecked)
-		]? @taskmarker
-		(_ (inline) @inline)?) @li
-]])
-local LIST_ITEM_MINUS_ID = 1;
-local LIST_ITEM_STAR_ID = 2;
-local LIST_ITEM_PLUS_ID = 3;
-local LIST_ITEM_DOT_ID = 4;
-local LIST_ITEM_PAREN_ID = 5;
-local LIST_ITEM_TASK_MARKER_ID = 6;
-local LIST_ITEM_INLINE_ID = 7;
-local LIST_ITEM_LI_ID = 8;
+local LIST_TYPE = "list"
+local LIST_ITEM_TYPE = "list_item"
+local LIST_MARKER_DOT_TYPE = "list_marker_dot"
+local LIST_MARKER_PAREN_TYPE = "list_marker_parenthesis"
+local TASK_MARKER_CHECKED_TYPE = "task_list_marker_checked"
+local TASK_MARKER_UNCHECKED_TYPE = "task_list_marker_unchecked"
+local PARAGRAPH_TYPE = "paragraph"
+local INLINE_TYPE = "inline"
 
 local ordered_list_query = ts.query.parse("markdown", [[
 	(list
@@ -36,25 +21,6 @@ local ordered_list_query = ts.query.parse("markdown", [[
 			(list_marker_parenthesis)
 		])) @l
 ]])
-
----@param match table<integer, TSNode>
----@return integer, string
-local function get_list_marker_for_match(match)
-	local marker_id
-	if match[LIST_ITEM_MINUS_ID] ~= nil then
-		marker_id = LIST_ITEM_MINUS_ID
-	elseif match[LIST_ITEM_STAR_ID] ~= nil then
-		marker_id = LIST_ITEM_STAR_ID
-	elseif match[LIST_ITEM_PLUS_ID] ~= nil then
-		marker_id = LIST_ITEM_PLUS_ID
-	elseif match[LIST_ITEM_DOT_ID] ~= nil then
-		marker_id = LIST_ITEM_DOT_ID
-	elseif match[LIST_ITEM_PAREN_ID] ~= nil then
-		marker_id = LIST_ITEM_PAREN_ID
-	end
-
-	return marker_id, ts.get_node_text(match[marker_id], 0, nil)
-end
 
 ---@param list TSNode
 local function reset_list_numbering(list)
@@ -74,53 +40,81 @@ end
 --- Resets list numbering in the current buffer.
 function M.reset_list_numbering()
 	local t = ts.get_parser(0, "markdown"):parse()[1]
-	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, 0, -1) do
-		reset_list_numbering(match[1])
+	for _, ordered_list, _ in ordered_list_query:iter_captures(t:root(), 0, 0, -1) do
+		reset_list_numbering(ordered_list)
 	end
 end
 
-local INSERT_LOC = {
-	ABOVE = 1,
-	BELOW = 2,
+---@param list_item TSNode
+local function get_last_list_item_inline(list_item)
+	for i = list_item:named_child_count() - 1, 0, -1 do
+		local child = list_item:named_child(i)
+		if child:type() == PARAGRAPH_TYPE then
+			for j = child:named_child_count() - 1, 0, -1 do
+				if child:named_child(j):type() == INLINE_TYPE then
+					return child:named_child(j)
+				end
+			end
+		end
+	end
+end
+
+---@enum rel_pos relative position
+local REL_POS = {
+	above = 1,
+	below = 2,
 }
 
----@param loc integer
+---@param loc rel_pos
 local function insert_list_item(loc)
-	local t = ts.get_parser(0, "markdown"):parse()[1]
-
 	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
 	local curr_row = cursor[1] - 1
 	local curr_eol = vim.fn.charcol("$") - 1
-	local match = md_ts.find_innermost_match_containing(t, list_item_query, { curr_row, curr_eol })
-	if match == nil then
+
+	ts.get_parser(0, "markdown"):parse()
+	local list_item = md_ts.get_node_of_type(LIST_ITEM_TYPE, { pos = { curr_row, curr_eol } })
+	if list_item == nil then
 		return
 	end
 
-	local marker_id, marker = get_list_marker_for_match(match)
-	local mrow_start, mcol_start, _, _ = match[marker_id]:range()
-	local indent = api.nvim_buf_get_text(0, mrow_start, 0, mrow_start, mcol_start, {})[1]
-	local li_row_start, _, _, _ = match[LIST_ITEM_LI_ID]:range()
+	local marker = list_item:named_child(0)
+	local marker_type = marker:type()
+	local marker_row, marker_col, _, _ = marker:range()
 
-	local new_row
-	if loc == INSERT_LOC.ABOVE then
-		new_row = li_row_start
-	elseif match[LIST_ITEM_INLINE_ID] ~= nil then
-		local _, _, inline_end, _ = match[LIST_ITEM_INLINE_ID]:range()
-		new_row = inline_end + 1
-	else
-		new_row = mrow_start + 1
+	---@type TSNode|nil
+	local task_marker = marker:next_named_sibling()
+	if
+			task_marker ~= nil
+			and task_marker:type() ~= TASK_MARKER_CHECKED_TYPE
+			and task_marker:type() ~= TASK_MARKER_UNCHECKED_TYPE
+	then
+		task_marker = nil
 	end
 
-	local task_marker = match[LIST_ITEM_TASK_MARKER_ID] and "[ ] " or ""
+	local new_row
+	if loc == REL_POS.above then
+		new_row, _, _, _ = list_item:range()
+	else
+		local inline = get_last_list_item_inline(list_item)
+		if inline ~= nil then
+			local _, _, inline_end, _ = inline:range()
+			new_row = inline_end + 1
+		else
+			new_row = marker_row + 1
+		end
+	end
 
-	api.nvim_buf_set_lines(0, new_row, new_row, true, { indent .. marker .. task_marker })
+	local indent = api.nvim_buf_get_text(0, marker_row, 0, marker_row, marker_col, {})[1]
+	local marker_txt = ts.get_node_text(marker, 0, nil)
+	local task_marker_txt = task_marker and "[ ] " or ""
+	api.nvim_buf_set_lines(0, new_row, new_row, true, { indent .. marker_txt .. task_marker_txt })
 
-	if marker_id == LIST_ITEM_DOT_ID or marker_id == LIST_ITEM_PAREN_ID then
-		local t_new = ts.get_parser(0, "markdown"):parse()[1]
-		local list = md_ts.find_innermost_match_containing(t_new, ordered_list_query,
-					{ curr_row, curr_eol })
-				[1]
-		reset_list_numbering(list)
+	if marker_type == LIST_MARKER_DOT_TYPE or marker_type == LIST_MARKER_PAREN_TYPE then
+		ts.get_parser(0, "markdown"):parse()
+		local list = md_ts.get_node_of_type(LIST_TYPE, { pos = { curr_row, curr_eol } })
+		if list ~= nil then
+			reset_list_numbering(list)
+		end
 	end
 
 	new_row = new_row + 1
@@ -132,12 +126,12 @@ end
 
 --- Inserts a list item above the cursor in the current buffer.
 function M.insert_list_item_above()
-	insert_list_item(INSERT_LOC.ABOVE)
+	insert_list_item(REL_POS.above)
 end
 
 --- Inserts a list item below the cursor in the current buffer.
 function M.insert_list_item_below()
-	insert_list_item(INSERT_LOC.BELOW)
+	insert_list_item(REL_POS.below)
 end
 
 return M

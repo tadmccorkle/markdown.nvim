@@ -57,4 +57,18 @@ function M.is_contained_by_any_of(node, types)
 	return false
 end
 
+--- Gets the smallest node of the given type based on the provided options.
+---@param type string Type of node to get
+---@param opts table|nil `vim.treesitter.get_node` opts
+---@return TSNode|nil
+---
+---@see vim.treesitter.get_node
+function M.get_node_of_type(type, opts)
+	local node = ts.get_node(opts)
+	while node ~= nil and node:type() ~= type do
+		node = node:parent()
+	end
+	return node
+end
+
 return M
