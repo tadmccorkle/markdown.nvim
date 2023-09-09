@@ -9,7 +9,6 @@ Plans:
 - [ ] configurable
 - [x] inline-style keybindings
 - [x] table of contents
-  - [x] insert toc
 - [ ] improved list editing
   - [x] insert new items
   - [x] auto-number ordered lists

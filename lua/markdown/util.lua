@@ -91,4 +91,18 @@ function M.range_contains_position(range, pos)
 			and (range[3] > pos[1] or (range[3] == pos[1] and range[4] >= pos[2]))
 end
 
+--- Gets the start and end lines from user command range arguments, defaulting to the cursor line in
+--- the current buffer if the user command has no range specified.
+---@param opts table User command arguments table
+---@return integer start_row, integer end_row
+---
+---@see nvim_create_user_command
+function M.get_user_command_range(opts)
+	if opts.range == 0 then
+		local row = api.nvim_win_get_cursor(0)[1] - 1 -- 1-based row, 0-based col
+		return row, row
+	end
+	return opts.line1 - 1, opts.line2
+end
+
 return M

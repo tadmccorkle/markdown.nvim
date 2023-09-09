@@ -10,8 +10,8 @@ local M = {}
 
 local group = api.nvim_create_augroup("markdown.nvim", {})
 
-local function create_buf_user_cmd(name, cmd)
-	api.nvim_buf_create_user_command(0, name, cmd, { force = true })
+local function create_buf_user_cmd(name, cmd, range)
+	api.nvim_buf_create_user_command(0, name, cmd, { force = true, range = range })
 end
 
 local function handle_key_autocmd_opts(pattern)
@@ -19,10 +19,10 @@ local function handle_key_autocmd_opts(pattern)
 		group = group,
 		pattern = pattern,
 		callback = function()
-			create_buf_user_cmd("MdInsertToc", toc.insert_toc)
-			create_buf_user_cmd("MdListItemBelow", list.insert_list_item_below)
-			create_buf_user_cmd("MdListItemAbove", list.insert_list_item_above)
-			create_buf_user_cmd("MdResetListNumbering", list.reset_list_numbering)
+			create_buf_user_cmd("MdInsertToc", toc.insert_toc, true)
+			create_buf_user_cmd("MdListItemBelow", list.insert_list_item_below, false)
+			create_buf_user_cmd("MdListItemAbove", list.insert_list_item_above, false)
+			create_buf_user_cmd("MdResetListNumbering", list.reset_list_numbering, false)
 
 			local surround_opts = config.opts.inline_surround
 			if surround_opts.enable then

@@ -114,12 +114,15 @@ local function build_toc_lines(toc, lines, indent)
 	return lines
 end
 
---- Inserts table of contents at the cursor in the current buffer.
-function M.insert_toc()
+--- Inserts table of contents.
+---@param opts table User command arguments table
+---
+---@see nvim_create_user_command
+function M.insert_toc(opts)
 	local toc = get_document_sections()
 	local lines = build_toc_lines(toc)
-	local row = api.nvim_win_get_cursor(0)[1] - 1 -- 1-based row, 0-based col
-	api.nvim_buf_set_lines(0, row, row, true, lines)
+	local start_row, end_row = util.get_user_command_range(opts)
+	api.nvim_buf_set_lines(0, start_row, end_row, true, lines)
 end
 
 return M
