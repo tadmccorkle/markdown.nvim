@@ -9,13 +9,15 @@ Plans:
 - [ ] configurable
 - [x] inline-style keybindings
 - [x] table of contents
-- [ ] section numbering
+  - [x] insert toc
 - [ ] improved list editing
   - [x] insert new items
-  - [ ] change bullet type
-- [ ] link/image pasting from clipboard
-- [ ] follow links
+  - [x] auto-number ordered lists
+  - [ ] task list helpers (gfm)
+- [ ] links
+  - [ ] create link around highlighted text (visual mode)
+  - [ ] link/image pasting from clipboard (visual mode)
+  - [ ] follow links
 - [ ] tables (gfm)
   - [ ] format tables
   - [ ] autoformat
-- [ ] task list helpers (gfm)

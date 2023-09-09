@@ -1,5 +1,7 @@
 ---@meta
 
+---@diagnostic disable: duplicate-doc-field
+
 ---@class R4
 ---@field [1] integer start row
 ---@field [2] integer start col

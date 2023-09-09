@@ -64,7 +64,11 @@ local function get_document_sections()
 	local last_omit_flag_end_row
 	for _, match, _ in toc_heading_query:iter_matches(t:root(), 0, 0, -1) do
 		local _, n = next(match)
-		if not md_ts.is_contained_by_any_of(n, { "list", "block_quote" }) then
+		local container_parent = md_ts.find_parent(n, function(p)
+			local parent_type = p:type()
+			return parent_type == "list" or parent_type == "block_quote"
+		end)
+		if not container_parent then
 			local html = match[TOC_HTML_ID]
 			if html ~= nil then
 				if is_omit_flag(html) then

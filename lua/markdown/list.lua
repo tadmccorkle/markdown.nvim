@@ -59,6 +59,15 @@ local function get_last_list_item_inline(list_item)
 	end
 end
 
+---@return integer row, integer col
+local function get_curr_eol_pos()
+	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
+	local curr_row = cursor[1] - 1
+	local curr_eol = vim.fn.charcol("$") - 1
+	return curr_row, curr_eol
+end
+
+---@diagnostic disable-next-line: duplicate-doc-alias
 ---@enum rel_pos relative position
 local REL_POS = {
 	above = 1,
@@ -67,12 +76,12 @@ local REL_POS = {
 
 ---@param loc rel_pos
 local function insert_list_item(loc)
-	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
-	local curr_row = cursor[1] - 1
-	local curr_eol = vim.fn.charcol("$") - 1
+	local curr_row, curr_eol = get_curr_eol_pos()
 
 	ts.get_parser(0, "markdown"):parse()
-	local list_item = md_ts.get_node_of_type(LIST_ITEM_TYPE, { pos = { curr_row, curr_eol } })
+	local list_item = md_ts.find_node(function(n)
+		return n:type() == LIST_ITEM_TYPE
+	end, { pos = { curr_row, curr_eol } })
 	if list_item == nil then
 		return
 	end
@@ -111,7 +120,9 @@ local function insert_list_item(loc)
 
 	if marker_type == LIST_MARKER_DOT_TYPE or marker_type == LIST_MARKER_PAREN_TYPE then
 		ts.get_parser(0, "markdown"):parse()
-		local list = md_ts.get_node_of_type(LIST_TYPE, { pos = { curr_row, curr_eol } })
+		local list = md_ts.find_node(function(n)
+			return n:type() == LIST_TYPE
+		end, { pos = { curr_row, curr_eol } })
 		if list ~= nil then
 			reset_list_numbering(list)
 		end
