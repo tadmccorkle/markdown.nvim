@@ -2,6 +2,7 @@ local api = vim.api
 local ts = vim.treesitter
 
 local md_ts = require("markdown.treesitter")
+local util = require("markdown.util")
 
 local M = {}
 
@@ -143,6 +144,63 @@ end
 --- Inserts a list item below the cursor in the current buffer.
 function M.insert_list_item_below()
 	insert_list_item(REL_POS.below)
+end
+
+---@param node TSNode
+---@return boolean
+local function is_task_list_item(node)
+	if node:type() ~= LIST_ITEM_TYPE then
+		return false
+	end
+
+	local task_marker = node:named_child(1)
+	if task_marker == nil then
+		return false
+	end
+
+	local tm_type = task_marker:type()
+	return tm_type == TASK_MARKER_CHECKED_TYPE
+			or tm_type == TASK_MARKER_UNCHECKED_TYPE
+end
+
+--- Toggles list item task markers.
+---@param opts table User command arguments table
+---
+---@see nvim_create_user_command
+function M.toggle_task(opts)
+	local start_row, end_row = util.get_user_command_range(opts)
+	if start_row == end_row then
+		end_row = end_row + 1
+	end
+
+	ts.get_parser(0, "markdown"):parse()
+	local task_markers = {}
+
+	local last_node
+	for row = start_row, end_row - 1, 1 do
+		local eol = vim.fn.charcol({ row, "$" }) - 1
+		local node = md_ts.find_node(is_task_list_item, { pos = { row, eol } })
+		if node ~= nil and node ~= last_node then
+			table.insert(task_markers, node:named_child(1))
+			last_node = node
+		end
+	end
+
+	local checked = false
+	for i = 1, #task_markers, 1 do
+		if task_markers[i]:type() == TASK_MARKER_UNCHECKED_TYPE then
+			local row, start_col, _, end_col = task_markers[i]:range()
+			util.replace_text(row, start_col, end_col - start_col + 1, "[x] ")
+			checked = true
+		end
+	end
+
+	if not checked then
+		for i = 1, #task_markers, 1 do
+			local row, start_col, _, end_col = task_markers[i]:range()
+			util.replace_text(row, start_col, end_col - start_col + 1, "[ ] ")
+		end
+	end
 end
 
 return M

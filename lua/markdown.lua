@@ -23,6 +23,7 @@ local function handle_key_autocmd_opts(pattern)
 			create_buf_user_cmd("MdListItemBelow", list.insert_list_item_below, false)
 			create_buf_user_cmd("MdListItemAbove", list.insert_list_item_above, false)
 			create_buf_user_cmd("MdResetListNumbering", list.reset_list_numbering, false)
+			create_buf_user_cmd("MdTaskToggle", list.toggle_task, true)
 
 			local surround_opts = config.opts.inline_surround
 			if surround_opts.enable then
