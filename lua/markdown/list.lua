@@ -23,26 +23,33 @@ local ordered_list_query = ts.query.parse("markdown", [[
 		])) @l
 ]])
 
+---@param list_item TSNode
+local function set_list_item_num(list_item, num)
+	local text = ts.get_node_text(list_item, 0, nil)
+	local marker_digits = text:match("(%d+)")
+	local row, col, _, _ = list_item:range()
+	local num_str = tostring(num)
+	if marker_digits ~= num_str then
+		util.replace_text(row, col, #marker_digits, num_str)
+	end
+end
+
 ---@param list TSNode
 local function reset_list_numbering(list)
 	local num = 1
 	for list_item in list:iter_children() do
-		local text = ts.get_node_text(list_item, 0, nil)
-		local marker_digits = text:match("(%d+)")
-		local row, col, _, _ = list_item:range()
-		local num_str = tostring(num)
-		if marker_digits ~= num_str then
-			api.nvim_buf_set_text(0, row, col, row, col + #marker_digits, { num_str })
+		if list_item:named() then
+			set_list_item_num(list_item, num)
+			num = num + 1
 		end
-		num = num + 1
 	end
 end
 
 --- Resets list numbering in the current buffer.
 function M.reset_list_numbering()
 	local t = ts.get_parser(0, "markdown"):parse()[1]
-	for _, ordered_list, _ in ordered_list_query:iter_captures(t:root(), 0, 0, -1) do
-		reset_list_numbering(ordered_list)
+	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, 0, -1) do
+		reset_list_numbering(match[1])
 	end
 end
 
