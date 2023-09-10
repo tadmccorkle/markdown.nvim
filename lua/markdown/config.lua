@@ -1,46 +1,70 @@
-local M = {}
+---@class InlineSurroundMappings
+---@field toggle string
+---@field toggle_line string
+---@field delete string
+---@field change string
 
-M.opts = {
-	inline_surround = {
-		enable = true,
-		mappings = {
-			toggle = "gs",
-			toggle_line = "gss",
-			delete = "ds",
-			change = "cs",
-		},
-		emphasis = {
-			key = "i",
-			txt = "*",
-		},
-		strong = {
-			key = "b",
-			txt = "**",
-		},
-		strikethrough = {
-			key = "s",
-			txt = "~~",
-		},
-		code = {
-			key = "c",
-			txt = "`",
-		},
-	},
-}
+---@alias KeyToTxt { key: string , txt: string }
 
-M.on_attach = nil
+---@class InlineSurroundOpts
+---@field enable boolean
+---@field mappings InlineSurroundMappings
+---@field emphasis KeyToTxt
+---@field strong KeyToTxt
+---@field strikethrough KeyToTxt
+---@field code KeyToTxt
+
+---@class MarkdownConfig
+---@field inline_surround InlineSurroundOpts
+---@field on_attach fun()|nil
+
+---@private
+---@class MarkdownConfigWrapper
+---@field cfg MarkdownConfig
+local MarkdownConfigWrapper = {}
+MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
 --- Setup config with user options.
----@param cfg? table
----@param on_attach fun()
-function M.setup(cfg, on_attach)
+---@param cfg? MarkdownConfig
+function MarkdownConfigWrapper:setup(cfg)
 	if cfg then
-		M.opts = vim.tbl_deep_extend("force", M.opts, cfg)
-	end
-
-	if on_attach then
-		M.on_attach = on_attach
+		self.cfg = vim.tbl_deep_extend("force", self.cfg, cfg)
 	end
 end
 
-return M
+--- Gets the current configuration.
+---@return MarkdownConfig
+function MarkdownConfigWrapper:get()
+	return self.cfg
+end
+
+return setmetatable({
+	cfg = {
+		inline_surround = {
+			enable = true,
+			mappings = {
+				toggle = "gs",
+				toggle_line = "gss",
+				delete = "ds",
+				change = "cs",
+			},
+			emphasis = {
+				key = "i",
+				txt = "*",
+			},
+			strong = {
+				key = "b",
+				txt = "**",
+			},
+			strikethrough = {
+				key = "s",
+				txt = "~~",
+			},
+			code = {
+				key = "c",
+				txt = "`",
+			},
+		},
+		on_attach = nil,
+	}
+}, MarkdownConfigWrapper)

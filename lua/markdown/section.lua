@@ -1,3 +1,5 @@
+---@diagnostic disable: duplicate-doc-field, duplicate-set-field
+
 ---@class Section
 ---@field name string
 ---@field parent Section

@@ -32,23 +32,23 @@ local emphasis_queries = {
 
 ---@return table<string, { type: string, text: string }>
 local function get_emphasis_by_key()
-	local surround_opts = config.opts.inline_surround
+	local opts = config:get().inline_surround
 	return {
-		[surround_opts.emphasis.key] = {
+		[opts.emphasis.key] = {
 			type = EMPHASIS_TYPE,
-			text = surround_opts.emphasis.txt
+			text = opts.emphasis.txt
 		},
-		[surround_opts.strong.key] = {
+		[opts.strong.key] = {
 			type = STRONG_TYPE,
-			text = surround_opts.strong.txt
+			text = opts.strong.txt
 		},
-		[surround_opts.strikethrough.key] = {
+		[opts.strikethrough.key] = {
 			type = STRIKETHROUGH_TYPE,
-			text = surround_opts.strikethrough.txt
+			text = opts.strikethrough.txt
 		},
-		[surround_opts.code.key] = {
+		[opts.code.key] = {
 			type = CODE_SPAN_TYPE,
-			text = surround_opts.code.txt
+			text = opts.code.txt
 		},
 	}
 end

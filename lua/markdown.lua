@@ -23,109 +23,110 @@ local function setup_usr_cmds()
 	buf_usr_cmd("MDTaskToggle", list.toggle_task, true)
 end
 
-local function setup_keymaps()
-	local surround_opts = config.opts.inline_surround
-	if surround_opts.enable then
-		K(
-			"n",
-			"<Plug>(markdown_toggle_emphasis)",
-			function()
-				return OpFunc("markdown.inline", "toggle_emphasis")
-			end, {
-				buffer = 0,
-				expr = true,
-				silent = true,
-				desc = "Toggle emphasis around a motion",
-			}
-		)
-		K(
-			"n",
-			"<Plug>(markdown_toggle_emphasis_current_line)",
-			function()
-				return "^" .. tostring(vim.v.count1) .. "<Plug>(markdown_toggle_emphasis)g_"
-			end, {
-				buffer = 0,
-				expr = true,
-				silent = true,
-				desc = "Toggle emphasis around the current line",
-			}
-		)
-		K(
-			"x",
-			"<Plug>(markdown_toggle_emphasis_visual)",
-			"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis()<CR>", {
-				buffer = 0,
-				silent = true,
-				desc = "Toggle emphasis around a visual selection",
-			}
-		)
-		K(
-			"n",
-			"<Plug>(markdown_delete_emphasis)",
-			inline.delete_surrounding_emphasis, {
-				buffer = 0,
-				silent = true,
-				desc = "Delete emphasis around the cursor",
-			}
-		)
-		K(
-			"n",
-			"<Plug>(markdown_change_emphasis)",
-			inline.change_surrounding_emphasis, {
-				buffer = 0,
-				silent = true,
-				desc = "Change emphasis around the cursor",
-			}
-		)
+local function setup_keymaps(cfg)
+	K(
+		"n",
+		"<Plug>(markdown_toggle_emphasis)",
+		function()
+			return OpFunc("markdown.inline", "toggle_emphasis")
+		end, {
+			buffer = 0,
+			expr = true,
+			silent = true,
+			desc = "Toggle emphasis around a motion",
+		}
+	)
+	K(
+		"n",
+		"<Plug>(markdown_toggle_emphasis_current_line)",
+		function()
+			return "^" .. tostring(vim.v.count1) .. "<Plug>(markdown_toggle_emphasis)g_"
+		end, {
+			buffer = 0,
+			expr = true,
+			silent = true,
+			desc = "Toggle emphasis around the current line",
+		}
+	)
+	K(
+		"x",
+		"<Plug>(markdown_toggle_emphasis_visual)",
+		"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis()<CR>", {
+			buffer = 0,
+			silent = true,
+			desc = "Toggle emphasis around a visual selection",
+		}
+	)
+	K(
+		"n",
+		"<Plug>(markdown_delete_emphasis)",
+		inline.delete_surrounding_emphasis, {
+			buffer = 0,
+			silent = true,
+			desc = "Delete emphasis around the cursor",
+		}
+	)
+	K(
+		"n",
+		"<Plug>(markdown_change_emphasis)",
+		inline.change_surrounding_emphasis, {
+			buffer = 0,
+			silent = true,
+			desc = "Change emphasis around the cursor",
+		}
+	)
 
-		K("n", surround_opts.mappings.toggle, "<Plug>(markdown_toggle_emphasis)", {
+	if cfg.inline_surround.enable then
+		K("n", cfg.inline_surround.mappings.toggle, "<Plug>(markdown_toggle_emphasis)", {
 			buffer = 0,
 			desc = "Toggle emphasis around a motion",
 		})
-		K("n", surround_opts.mappings.toggle_line, "<Plug>(markdown_toggle_emphasis_current_line)", {
-			buffer = 0,
-			desc = "Toggle emphasis around the current line",
-		})
-		K("x", surround_opts.mappings.toggle, "<Plug>(markdown_toggle_emphasis_visual)", {
+		K("n", cfg.inline_surround.mappings.toggle_line, "<Plug>(markdown_toggle_emphasis_current_line)",
+			{
+				buffer = 0,
+				desc = "Toggle emphasis around the current line",
+			})
+		K("x", cfg.inline_surround.mappings.toggle, "<Plug>(markdown_toggle_emphasis_visual)", {
 			buffer = 0,
 			desc = "Toggle emphasis around a visual selection",
 		})
-		K("n", surround_opts.mappings.delete, "<Plug>(markdown_delete_emphasis)", {
+		K("n", cfg.inline_surround.mappings.delete, "<Plug>(markdown_delete_emphasis)", {
 			buffer = 0,
 			desc = "Delete emphasis around the cursor",
 		})
-		K("n", surround_opts.mappings.change, "<Plug>(markdown_change_emphasis)", {
+		K("n", cfg.inline_surround.mappings.change, "<Plug>(markdown_change_emphasis)", {
 			buffer = 0,
 			desc = "Change emphasis around the cursor",
 		})
 	end
 end
 
-local function on_attach_cb()
-	setup_usr_cmds()
-	setup_keymaps()
+local function on_attach()
+	local cfg = config:get()
 
-	if config.on_attach ~= nil then
-		config.on_attach()
+	setup_usr_cmds()
+	setup_keymaps(cfg)
+
+	if cfg.on_attach ~= nil then
+		cfg.on_attach()
 	end
 end
 
 --- Setup with user options.
----@param cfg? table
----@param on_attach fun()
-function M.setup(cfg, on_attach)
-	config.setup(cfg, on_attach)
+---@param cfg? MarkdownConfig
+function M.setup(cfg)
+	config:setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("BufEnter", {
 		group = group,
 		pattern = { "*.md" },
-		callback = on_attach_cb,
+		callback = on_attach,
 	})
 	api.nvim_create_autocmd("FileType", {
 		group = group,
 		pattern = "markdown",
-		callback = on_attach_cb,
+		callback = on_attach,
 	})
 end
 
