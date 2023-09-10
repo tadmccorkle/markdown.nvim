@@ -169,15 +169,11 @@ end
 ---@see nvim_create_user_command
 function M.toggle_task(opts)
 	local start_row, end_row = util.get_user_command_range(opts)
-	if start_row == end_row then
-		end_row = end_row + 1
-	end
-
 	ts.get_parser(0, "markdown"):parse()
 	local task_markers = {}
 
 	local last_node
-	for row = start_row, end_row - 1, 1 do
+	for row = start_row, end_row, 1 do
 		local eol = vim.fn.charcol({ row, "$" }) - 1
 		local node = md_ts.find_node(is_task_list_item, { pos = { row, eol } })
 		if node ~= nil and node ~= last_node then

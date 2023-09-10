@@ -122,6 +122,9 @@ function M.insert_toc(opts)
 	local toc = get_document_sections()
 	local lines = build_toc_lines(toc)
 	local start_row, end_row = util.get_user_command_range(opts)
+	if start_row ~= end_row then
+		end_row = end_row + 1
+	end
 	api.nvim_buf_set_lines(0, start_row, end_row, true, lines)
 end
 
