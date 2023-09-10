@@ -5,6 +5,7 @@ M.opts = {
 		enable = true,
 		mappings = {
 			toggle = "gs",
+			toggle_line = "gss",
 			delete = "ds",
 			change = "cs",
 		},
@@ -27,11 +28,18 @@ M.opts = {
 	},
 }
 
+M.on_attach = nil
+
 --- Setup config with user options.
 ---@param cfg? table
-function M.setup(cfg)
+---@param on_attach fun()
+function M.setup(cfg, on_attach)
 	if cfg then
 		M.opts = vim.tbl_deep_extend("force", M.opts, cfg)
+	end
+
+	if on_attach then
+		M.on_attach = on_attach
 	end
 end
 

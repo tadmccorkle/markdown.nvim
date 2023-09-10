@@ -1,12 +1,12 @@
 # markdown.nvim <!-- omit in toc -->
 
-Tools to make working with markdown in Neovim more enjoyable. Still a work in progress.
+Tools to make working with markdown in Neovim more enjoyable. Finished features are complete and usable, but overall plugin is still a work in progress.
 
 ---
 
 Plans:
 
-- [ ] configurable
+- [x] configurable
 - [x] inline-style keybindings
 - [x] table of contents
 - [x] improved list editing
