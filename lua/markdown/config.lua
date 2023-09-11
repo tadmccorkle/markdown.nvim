@@ -16,7 +16,7 @@
 
 ---@class MarkdownConfig
 ---@field inline_surround InlineSurroundOpts
----@field on_attach fun()|nil
+---@field on_attach fun(bufnr: integer)|nil
 
 ---@private
 ---@class MarkdownConfigWrapper
