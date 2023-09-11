@@ -148,8 +148,6 @@ end
 function M.setup(cfg)
 	config:setup(cfg)
 
-	set_keymaps()
-
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("BufEnter", {
 		group = group,
@@ -163,12 +161,12 @@ function M.setup(cfg)
 	})
 end
 
---- Initializes plugin as treesitter module.
+--- Sets plugin keymaps and attempts to initialize plugin as treesitter module.
 function M.init()
+	set_keymaps()
+
 	local ok, nvim_ts = pcall(require, "nvim-treesitter")
 	if not ok then return end
-
-	set_keymaps()
 
 	nvim_ts.define_modules({
 		markdown = {
