@@ -21,12 +21,10 @@ end
 ---@param predicate fun(node: TSNode): boolean
 function M.find_parent(node, predicate)
 	local p = node:parent()
-	while p ~= nil do
-		if predicate(p) then
-			return p
-		end
+	while p ~= nil and not predicate(p) do
 		p = p:parent()
 	end
+	return p
 end
 
 --- Gets the number of `node`'s children that satisfy `predicate`.
