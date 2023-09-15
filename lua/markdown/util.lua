@@ -7,8 +7,8 @@ local M = {}
 ---@return string
 function M.sanitize(s)
 	local sanitized, _ = s:gsub("(%s-)\n(%s*)", " ")
-			:gsub("<!--(.-)-->", "")
-			:gsub("^%s*(.-)%s*$", "%1")
+		:gsub("<!--(.-)-->", "")
+		:gsub("^%s*(.-)%s*$", "%1")
 	return sanitized
 end
 
@@ -88,7 +88,7 @@ end
 ---@return boolean
 function M.range_contains_position(range, pos)
 	return (range[1] < pos[1] or (range[1] == pos[1] and range[2] <= pos[2]))
-			and (range[3] > pos[1] or (range[3] == pos[1] and range[4] >= pos[2]))
+		and (range[3] > pos[1] or (range[3] == pos[1] and range[4] >= pos[2]))
 end
 
 --- Gets the zero-based start and end lines from user command range arguments, defaulting to the

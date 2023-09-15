@@ -101,9 +101,9 @@ local function insert_list_item(loc)
 	---@type TSNode|nil
 	local task_marker = marker:next_named_sibling()
 	if
-			task_marker ~= nil
-			and task_marker:type() ~= TASK_MARKER_CHECKED_TYPE
-			and task_marker:type() ~= TASK_MARKER_UNCHECKED_TYPE
+		task_marker ~= nil
+		and task_marker:type() ~= TASK_MARKER_CHECKED_TYPE
+		and task_marker:type() ~= TASK_MARKER_UNCHECKED_TYPE
 	then
 		task_marker = nil
 	end
@@ -167,7 +167,7 @@ local function is_task_list_item(node)
 
 	local tm_type = task_marker:type()
 	return tm_type == TASK_MARKER_CHECKED_TYPE
-			or tm_type == TASK_MARKER_UNCHECKED_TYPE
+		or tm_type == TASK_MARKER_UNCHECKED_TYPE
 end
 
 --- Toggles list item task markers.

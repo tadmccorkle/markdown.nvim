@@ -102,7 +102,7 @@ local function get_emphasis_group_ranges(emphasis)
 	local outer_start_row, outer_start_col, outer_end_row, outer_end_col = outer_node:range()
 	local inner_start_row, inner_start_col, inner_end_row, inner_end_col = inner_node:range()
 	return { outer_start_row, outer_start_col, inner_start_row, inner_start_col + inner_delim_len },
-			{ inner_end_row, inner_end_col - inner_delim_len, outer_end_row, outer_end_col }
+		{ inner_end_row, inner_end_col - inner_delim_len, outer_end_row, outer_end_col }
 end
 
 --- Gets emphasis node adjusted for grammar rules the treesitter parser does not account for.
@@ -113,9 +113,9 @@ local function get_adjusted_emphasis_node(emphasis)
 	if emphasis:type() == STRIKETHROUGH_TYPE then
 		local parent = emphasis:parent()
 		if
-				parent ~= nil
-				and parent:type() == STRIKETHROUGH_TYPE
-				and md_ts.spans_parent_range(emphasis)
+			parent ~= nil
+			and parent:type() == STRIKETHROUGH_TYPE
+			and md_ts.spans_parent_range(emphasis)
 		then
 			return parent
 		end
@@ -140,7 +140,6 @@ local function get_emphasis_delim_len(emphasis)
 
 	return md_ts.child_count(emphasis, is_emphasis_delim) / 2
 end
-
 
 --- {toggle}{motion}{emphasis_key}: toggle emphasis over motion
 ---@param motion? string
@@ -200,8 +199,8 @@ function M.toggle_emphasis(motion)
 			emphasis_start_range[4] = emphasis_start_range[4] + 1
 			emphasis_end_range[2] = emphasis_end_range[2] - 1
 			if
-					util.range_contains_position(emphasis_start_range, { overlap[1], overlap[2] })
-					and util.range_contains_position(emphasis_end_range, { overlap[3], overlap[4] })
+				util.range_contains_position(emphasis_start_range, { overlap[1], overlap[2] })
+				and util.range_contains_position(emphasis_end_range, { overlap[3], overlap[4] })
 			then
 				table.insert(existing_emphasis, get_adjusted_emphasis_node(emphasis_node))
 				found_existing = true
@@ -269,9 +268,9 @@ function M.change_surrounding_emphasis()
 	local from_ok, from_key = util.try_get_char_input()
 	local to_ok, to_key = util.try_get_char_input()
 	if
-			not from_ok or not to_ok
-			or emphasis_by_key[from_key] == nil
-			or emphasis_by_key[to_key] == nil
+		not from_ok or not to_ok
+		or emphasis_by_key[from_key] == nil
+		or emphasis_by_key[to_key] == nil
 	then
 		return
 	end
