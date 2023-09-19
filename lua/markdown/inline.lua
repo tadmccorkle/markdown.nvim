@@ -55,6 +55,12 @@ end
 
 ---@param node TSNode
 ---@return boolean
+local function is_inline(node)
+	return node:type() == "inline"
+end
+
+---@param node TSNode
+---@return boolean
 local function is_emphasis_delim(node)
 	local node_type = node:type()
 	return node_type == EMPHASIS_DELIM_TYPE or node_type == CODE_SPAN_DELIM_TYPE
@@ -152,7 +158,9 @@ function M.toggle_emphasis(motion)
 	end
 
 	local is_visual = motion == nil
+	local is_visual_block = is_visual and vim.fn.visualmode() == "\22"
 
+	-- get start and end mark positions, adjusted to be zero-based
 	local s, e
 	if not is_visual then
 		s, e = api.nvim_buf_get_mark(0, "["), api.nvim_buf_get_mark(0, "]")
@@ -164,10 +172,13 @@ function M.toggle_emphasis(motion)
 		end
 	else
 		s, e = api.nvim_buf_get_mark(0, "<"), api.nvim_buf_get_mark(0, ">")
+		if vim.o.selection == "exclusive" then
+			e[2] = e[2] - 1
+		end
 		e[2] = math.min(e[2] + 1, vim.fn.charcol({ e[1], "$" }) - 1)
 	end
-
-	local mark_range = { s[1] - 1, s[2], e[1] - 1, e[2] }
+	s[1] = s[1] - 1
+	e[1] = e[1] - 1
 
 	local parser = ts.get_parser(0, "markdown")
 	local t = parser:parse()[1]
@@ -179,21 +190,12 @@ function M.toggle_emphasis(motion)
 	---@type R4[]
 	local needs_emphasis = {}
 
-	local inline_count = 0
-	for _, inline_node, _ in inline_query:iter_captures(t:root(), 0, mark_range[1], mark_range[3] + 1) do
-		inline_count = inline_count + 1
-
-		local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
-		if inline_t == nil then
-			local inline_txt = ts.get_node_text(inline_node, 0, nil)
-			notify.error("Failed to find inline tree for node '%s'", inline_txt)
-			return
-		end
-
-		local overlap = util.get_overlapping_range(mark_range, { inline_node:range() })
-
+	--- Adds to the `existing_emphasis` and `needs_emphasis` tables based on the specified
+	--- `overlap` region.
+	local function process_overlap(overlap, inline_tree)
 		local found_existing = false
-		for _, emphasis_node, _ in emphasis_query:iter_captures(inline_t:root(), 0, overlap[1], overlap[3] + 1) do
+		local root, os, oe = inline_tree:root(), overlap[1], overlap[3] + 1
+		for _, emphasis_node, _ in emphasis_query:iter_captures(root, 0, os, oe) do
 			local emphasis_start_range, emphasis_end_range = get_emphasis_group_ranges(emphasis_node)
 			-- adjust to match motion range directly within emphasis range
 			emphasis_start_range[4] = emphasis_start_range[4] + 1
@@ -210,6 +212,49 @@ function M.toggle_emphasis(motion)
 
 		if not found_existing then
 			table.insert(needs_emphasis, overlap)
+		end
+	end
+
+	local inline_count = 0
+	if is_visual_block then
+		local start_row, end_row = math.min(s[1], e[1]), math.max(s[1], e[1])
+		local start_col, end_col = math.min(s[2], e[2]), math.max(s[2], e[2])
+		for row = start_row, end_row, 1 do
+			local eol_col = vim.fn.charcol({ row + 1, "$" }) - 1
+			local row_start_col = math.min(start_col, eol_col)
+			local row_end_col = math.min(end_col, eol_col)
+			local inline_node = md_ts.find_node(is_inline, { pos = { row, math.max(row_end_col - 1, 0) } })
+			if inline_node ~= nil and row_start_col ~= eol_col then
+				inline_count = inline_count + 1
+
+				local overlap = util.get_overlapping_range(
+					{ row, row_start_col, row, row_end_col },
+					{ inline_node:range() }
+				)
+				local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
+				if inline_t == nil then
+					local inline_txt = ts.get_node_text(inline_node, 0, nil)
+					notify.error("Failed to find inline tree for node '%s'", inline_txt)
+					return
+				end
+				process_overlap(overlap, inline_t)
+			end
+		end
+	else
+		for _, inline_node, _ in inline_query:iter_captures(t:root(), 0, s[1], e[1] + 1) do
+			inline_count = inline_count + 1
+
+			local overlap = util.get_overlapping_range(
+				{ s[1], s[2], e[1], e[2] },
+				{ inline_node:range() }
+			)
+			local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
+			if inline_t == nil then
+				local inline_txt = ts.get_node_text(inline_node, 0, nil)
+				notify.error("Failed to find inline tree for node '%s'", inline_txt)
+				return
+			end
+			process_overlap(overlap, inline_t)
 		end
 	end
 
