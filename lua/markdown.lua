@@ -94,29 +94,46 @@ end
 
 local function setup_usr_keymaps(cfg, bufnr)
 	if cfg.inline_surround.enable then
-		set_cached_keymap("n", cfg.inline_surround.mappings.toggle, "<Plug>(markdown_toggle_emphasis)", {
-			buffer = bufnr,
-			desc = "Toggle emphasis around a motion",
-		})
-		set_cached_keymap("n", cfg.inline_surround.mappings.toggle_line,
+		set_cached_keymap(
+			"n",
+			cfg.inline_surround.mappings.toggle,
+			"<Plug>(markdown_toggle_emphasis)",
+			{
+				buffer = bufnr,
+				desc = "Toggle emphasis around a motion",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.inline_surround.mappings.toggle_line,
 			"<Plug>(markdown_toggle_emphasis_current_line)",
 			{
 				buffer = bufnr,
 				desc = "Toggle emphasis around the current line",
 			})
-		set_cached_keymap("x", cfg.inline_surround.mappings.toggle,
-			"<Plug>(markdown_toggle_emphasis_visual)", {
+		set_cached_keymap(
+			"x",
+			cfg.inline_surround.mappings.toggle,
+			"<Plug>(markdown_toggle_emphasis_visual)",
+			{
 				buffer = bufnr,
 				desc = "Toggle emphasis around a visual selection",
 			})
-		set_cached_keymap("n", cfg.inline_surround.mappings.delete, "<Plug>(markdown_delete_emphasis)", {
-			buffer = bufnr,
-			desc = "Delete emphasis around the cursor",
-		})
-		set_cached_keymap("n", cfg.inline_surround.mappings.change, "<Plug>(markdown_change_emphasis)", {
-			buffer = bufnr,
-			desc = "Change emphasis around the cursor",
-		})
+		set_cached_keymap(
+			"n",
+			cfg.inline_surround.mappings.delete,
+			"<Plug>(markdown_delete_emphasis)",
+			{
+				buffer = bufnr,
+				desc = "Delete emphasis around the cursor",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.inline_surround.mappings.change,
+			"<Plug>(markdown_change_emphasis)",
+			{
+				buffer = bufnr,
+				desc = "Change emphasis around the cursor",
+			})
 	end
 end
 
