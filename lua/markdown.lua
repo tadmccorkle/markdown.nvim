@@ -146,17 +146,17 @@ end
 --- Setup with user options.
 ---@param cfg? MarkdownConfig
 function M.setup(cfg)
-	config:setup(cfg)
+	cfg = config:setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("BufEnter", {
 		group = group,
-		pattern = { "*.md" },
+		pattern = cfg.file_patterns,
 		callback = on_attach_cb,
 	})
 	api.nvim_create_autocmd("FileType", {
 		group = group,
-		pattern = "markdown",
+		pattern = cfg.file_types,
 		callback = on_attach_cb,
 	})
 end

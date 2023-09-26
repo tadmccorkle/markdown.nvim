@@ -15,6 +15,8 @@
 ---@field code KeyToTxt
 
 ---@class MarkdownConfig
+---@field file_types string|string[]
+---@field file_patterns string|string[]
 ---@field inline_surround InlineSurroundOpts
 ---@field on_attach fun(bufnr: integer)|nil
 
@@ -26,10 +28,12 @@ MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
 --- Setup config with user options.
 ---@param cfg? MarkdownConfig
+---@return MarkdownConfig
 function MarkdownConfigWrapper:setup(cfg)
 	if cfg then
 		self.cfg = vim.tbl_deep_extend("force", self.cfg, cfg)
 	end
+	return self.cfg
 end
 
 --- Gets the current configuration.
@@ -40,6 +44,8 @@ end
 
 return setmetatable({
 	cfg = {
+		file_types = "markdown",
+		file_patterns = { "*.md" },
 		inline_surround = {
 			enable = true,
 			mappings = {
