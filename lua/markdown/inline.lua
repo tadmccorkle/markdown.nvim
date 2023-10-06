@@ -291,6 +291,7 @@ function M.delete_surrounding_emphasis()
 		return
 	end
 
+	ts.get_parser(0, "markdown"):parse()
 	local emphasis = emphasis_by_key[key]
 	local curr_node = ts.get_node({ ignore_injections = false })
 	while curr_node ~= nil and curr_node:type() ~= emphasis.type do
@@ -320,6 +321,7 @@ function M.change_surrounding_emphasis()
 		return
 	end
 
+	ts.get_parser(0, "markdown"):parse()
 	local from_emphasis = emphasis_by_key[from_key]
 	local curr_node = ts.get_node({ ignore_injections = false })
 	while curr_node ~= nil and curr_node:type() ~= from_emphasis.type do
