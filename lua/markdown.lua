@@ -14,47 +14,47 @@ local function set_keymaps()
 		"<Plug>(markdown_toggle_emphasis)",
 		function()
 			return OpFunc("markdown.inline", "toggle_emphasis")
-		end, {
+		end,
+		{
 			expr = true,
 			silent = true,
 			desc = "Toggle emphasis around a motion",
-		}
-	)
+		})
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_toggle_emphasis_current_line)",
 		function()
 			return "^" .. tostring(vim.v.count1) .. "<Plug>(markdown_toggle_emphasis)g_"
-		end, {
+		end,
+		{
 			expr = true,
 			silent = true,
 			desc = "Toggle emphasis around the current line",
-		}
-	)
+		})
 	vim.keymap.set(
 		"x",
 		"<Plug>(markdown_toggle_emphasis_visual)",
-		"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis()<CR>", {
+		"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis()<CR>",
+		{
 			silent = true,
 			desc = "Toggle emphasis around a visual selection",
-		}
-	)
+		})
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_delete_emphasis)",
-		inline.delete_surrounding_emphasis, {
+		inline.delete_surrounding_emphasis,
+		{
 			silent = true,
 			desc = "Delete emphasis around the cursor",
-		}
-	)
+		})
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_change_emphasis)",
-		inline.change_surrounding_emphasis, {
+		inline.change_surrounding_emphasis,
+		{
 			silent = true,
 			desc = "Change emphasis around the cursor",
-		}
-	)
+		})
 end
 
 ---@type table<integer, { cmds: table, maps: table }>
