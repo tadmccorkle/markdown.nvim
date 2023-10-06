@@ -26,6 +26,38 @@
 local MarkdownConfigWrapper = {}
 MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
+---@type MarkdownConfig
+local default_cfg = {
+	file_types = "markdown",
+	file_patterns = { "*.md" },
+	inline_surround = {
+		enable = true,
+		mappings = {
+			toggle = "gs",
+			toggle_line = "gss",
+			delete = "ds",
+			change = "cs",
+		},
+		emphasis = {
+			key = "i",
+			txt = "*",
+		},
+		strong = {
+			key = "b",
+			txt = "**",
+		},
+		strikethrough = {
+			key = "s",
+			txt = "~~",
+		},
+		code = {
+			key = "c",
+			txt = "`",
+		},
+	},
+	on_attach = nil,
+}
+
 --- Setup config with user options.
 ---@param cfg? MarkdownConfig
 ---@return MarkdownConfig
@@ -42,35 +74,11 @@ function MarkdownConfigWrapper:get()
 	return self.cfg
 end
 
+--- Resets the current configuration defaults.
+function MarkdownConfigWrapper:reset()
+	self.cfg = default_cfg
+end
+
 return setmetatable({
-	cfg = {
-		file_types = "markdown",
-		file_patterns = { "*.md" },
-		inline_surround = {
-			enable = true,
-			mappings = {
-				toggle = "gs",
-				toggle_line = "gss",
-				delete = "ds",
-				change = "cs",
-			},
-			emphasis = {
-				key = "i",
-				txt = "*",
-			},
-			strong = {
-				key = "b",
-				txt = "**",
-			},
-			strikethrough = {
-				key = "s",
-				txt = "~~",
-			},
-			code = {
-				key = "c",
-				txt = "`",
-			},
-		},
-		on_attach = nil,
-	}
+	cfg = default_cfg
 }, MarkdownConfigWrapper)
