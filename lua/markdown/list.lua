@@ -181,7 +181,7 @@ function M.toggle_task(opts)
 
 	local last_node
 	for row = start_row, end_row, 1 do
-		local eol = vim.fn.charcol({ row, "$" }) - 1
+		local eol = vim.fn.charcol({ row + 1, "$" }) - 1
 		local node = md_ts.find_node(is_task_list_item, { pos = { row, eol } })
 		if node ~= nil and node ~= last_node then
 			table.insert(task_markers, node:named_child(1))
