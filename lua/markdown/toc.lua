@@ -100,16 +100,17 @@ local function get_document_sections()
 end
 
 ---@param toc Section
+---@param tab string
 ---@param lines? string[]
 ---@param indent? integer
 ---@return string[]
-local function build_toc_lines(toc, lines, indent)
+local function build_toc_lines(toc, tab, lines, indent)
 	lines = lines or {}
 	indent = indent or 0
 	for _, sub in pairs(toc.children) do
-		local line = (string.rep("  ", indent) .. "- [" .. sub.name .. "](#" .. util.slugify(sub.name) .. ")")
+		local line = (string.rep(tab, indent) .. "- [" .. sub.name .. "](#" .. util.slugify(sub.name) .. ")")
 		table.insert(lines, line)
-		build_toc_lines(sub, lines, indent + 1)
+		build_toc_lines(sub, tab, lines, indent + 1)
 	end
 	return lines
 end
@@ -120,7 +121,8 @@ end
 ---@see nvim_create_user_command
 function M.insert_toc(opts)
 	local toc = get_document_sections()
-	local lines = build_toc_lines(toc)
+	local tab = util.get_tab_str()
+	local lines = build_toc_lines(toc, tab)
 	local start_row, end_row = util.get_user_command_range(opts)
 	if start_row ~= end_row then
 		end_row = end_row + 1

@@ -106,4 +106,13 @@ function M.get_user_command_range(opts)
 	return opts.line1 - 1, opts.line2 - 1
 end
 
+--- Gets a "tab" for the current buffer based on buffer options.
+---@return string
+function M.get_tab_str()
+	if api.nvim_buf_get_option(0, "expandtab") then
+		return string.rep(" ", api.nvim_buf_get_option(0, "tabstop"))
+	end
+	return "\t"
+end
+
 return M
