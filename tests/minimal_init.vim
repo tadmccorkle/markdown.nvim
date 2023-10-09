@@ -1,0 +1,1 @@
+packadd nvim-treesitter

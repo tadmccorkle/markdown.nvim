@@ -1,5 +1,7 @@
 # markdown.nvim <!-- omit in toc -->
 
+![tests](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests.yml/badge.svg?branch=master)
+
 Tools to make working with markdown in Neovim more enjoyable.
 
 ---
