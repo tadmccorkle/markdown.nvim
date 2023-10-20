@@ -31,7 +31,7 @@ convenience features like table of contents insertion and auto-numbering of
 ordered lists.
 
 ================================================================================
-USAGE                                                    *markdown.nvim.usage*
+USAGE                                                         *markdown.usage*
 
 |markdown.nvim| is broken up into different feature categories:
 
