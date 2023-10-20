@@ -22,14 +22,14 @@ local function set_keymaps()
 		})
 	vim.keymap.set(
 		"n",
-		"<Plug>(markdown_toggle_emphasis_current_line)",
+		"<Plug>(markdown_toggle_emphasis_line)",
 		function()
 			return "^" .. tostring(vim.v.count1) .. "<Plug>(markdown_toggle_emphasis)g_"
 		end,
 		{
 			expr = true,
 			silent = true,
-			desc = "Toggle emphasis around the current line",
+			desc = "Toggle emphasis around a line",
 		})
 	vim.keymap.set(
 		"x",
@@ -105,10 +105,10 @@ local function setup_usr_keymaps(cfg, bufnr)
 		set_cached_keymap(
 			"n",
 			cfg.inline_surround.mappings.toggle_line,
-			"<Plug>(markdown_toggle_emphasis_current_line)",
+			"<Plug>(markdown_toggle_emphasis_line)",
 			{
 				buffer = bufnr,
-				desc = "Toggle emphasis around the current line",
+				desc = "Toggle emphasis around a line",
 			})
 		set_cached_keymap(
 			"x",
