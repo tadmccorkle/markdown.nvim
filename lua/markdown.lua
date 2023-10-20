@@ -93,7 +93,7 @@ local function setup_usr_cmds(bufnr)
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
-	if cfg.inline_surround.enable then
+	if cfg.inline_surround.mappings.enable then
 		set_cached_keymap(
 			"n",
 			cfg.inline_surround.mappings.toggle,

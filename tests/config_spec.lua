@@ -70,8 +70,8 @@ describe("config", function()
 		assert_buf_eq(bufnr, { "*test*" })
 	end)
 
-	it("can disable inline surround", function()
-		require("markdown").setup({ inline_surround = { enable = false } })
+	it("can disable inline surround mappings", function()
+		require("markdown").setup({ inline_surround = { mappings = { enable = false } } })
 
 		local bufnr = new_buf()
 		set_buf(bufnr, { "test" })

@@ -1,4 +1,5 @@
 ---@class InlineSurroundMappings
+---@field enable boolean
 ---@field toggle string
 ---@field toggle_line string
 ---@field delete string
@@ -7,7 +8,6 @@
 ---@alias KeyToTxt { key: string , txt: string }
 
 ---@class InlineSurroundOpts
----@field enable boolean
 ---@field mappings InlineSurroundMappings
 ---@field emphasis KeyToTxt
 ---@field strong KeyToTxt
@@ -31,8 +31,8 @@ local default_cfg = {
 	file_types = "markdown",
 	file_patterns = { "*.md" },
 	inline_surround = {
-		enable = true,
 		mappings = {
+			enable = true,
 			toggle = "gs",
 			toggle_line = "gss",
 			delete = "ds",
