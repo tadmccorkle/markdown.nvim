@@ -1,0 +1,393 @@
+*markdown.nvim.txt* Make working with markdown in Neovim more enjoyable.
+
+                                MARKDOWN.NVIM
+
+Author: Tad McCorkle <https://www.github.com/tadmccorkle>
+License: MIT License
+
+================================================================================
+CONTENTS                                              *markdown.nvim.contents*
+
+    Introduction ............................................ |markdown.nvim|
+    Usage .................................................. |markdown.usage|
+        Inline Surround ................................... |markdown.inline|
+            Toggle ................................. |markdown.inline.toggle|
+            Delete ................................. |markdown.inline.delete|
+            Change ................................. |markdown.inline.change|
+        Table of Contents .................................... |markdown.toc|
+            Omit Headings ............................... |markdown.toc.omit|
+        List Editing ....................................... |markdown.lists|
+            Insert Items ....................... |markdown.lists.insert_item|
+            Reset Numbering ................ |markdown.lists.reset_numbering|
+            Toggle Tasks ....................... |markdown.lists.toggle_task|
+    Configuration .................................. |markdown.configuration|
+
+================================================================================
+INTRODUCTION                                                   *markdown.nvim*
+
+|markdown.nvim| is a plugin that provides tools for working with markdown
+files in Neovim, including inline-style keybindings over vim motions and
+convenience features like table of contents insertion and auto-numbering of
+ordered lists.
+
+================================================================================
+USAGE                                                    *markdown.nvim.usage*
+
+|markdown.nvim| is broken up into different feature categories:
+
+* Inline Surround (|markdown.inline|)
+* Table of Contents (|markdown.toc|)
+* List Editing (|markdown.lists|)
+
+--------------------------------------------------------------------------------
+INLINE SURROUND                                              *markdown.inline*
+
+|markdown.nvim| provides inline keymaps to toggle, delete, and change emphasis
+and code spans, which will also be referred to in this section as "styles".
+The supported styles and the default keys used to refer to them are:
+
+* emphasis (typically rendered in italic)   "i"
+* strong (typically rendered in bold)       "b"
+* strikethrough                             "s"
+* code span                                 "c"
+
+Keymaps are set up after |markdown.nvim| is either configured with a call to
+|markdown.setup()| or registered as an |nvim-treesitter| module (see
+|markdown.configuration|). |<Plug>| mappings are created regardless of
+configuration (see |markdown.plug_mappings|).
+
+TOGGLE                                                *markdown.inline.toggle*
+
+Inline styles can be toggled over vim motions in normal and visual mode.
+Toggled styles are only applied to appropriate markdown elements (i.e., not
+blank lines, list markers, etc.). For example, a motion that includes a list
+marker and multiple blocks will only apply the style to inline content:
+
+                       toggle strong over five lines ~
+>
+            paragraph block                    **paragraph block**
+            - list item                        - **list item**
+                                   ---->
+            another paragraph                  **another pargraph
+            over two lines                     over two lines**
+<
+In normal mode this is done with *gs{motion}{emphasis}*, where *{emphasis}* is
+the key corresponding to the style to toggle (by default "i", "b", "s", or
+"c"). Like other vim motions, a |[count]| can be specified before and after
+the *gs*. Emphasis can also be toggled over the current line using
+*gss{emphasis}*. A |[count]| can be specified to toggle over multiple lines.
+
+        Before                  Command             After ~
+>
+        ^some text              gs2es               ~~some text~~
+        some t^ext              gsiwb               some **text**
+        some *t^ext*            gsiwi               some text
+        ***some^ text***        gssb                *some text*
+<
+`^` denotes cursor position
+
+Styles can be toggled in visual mode based on a visual selection using
+*gs{emphasis}*.
+
+        Before                  Command             After ~
+>
+        ^some text$             gss                 ~~some text~~
+        some ^text$             gsb                 some **text**
+        some *^text$*           gsi                 some text
+        ***^some text$***       gsb                 *some text*
+<
+`^` and `$` denote selection start and end, respectively
+
+Styles can also be toggled in visual block mode.
+
+        Before                  Command             After ~
+>
+        - list ^item$ 1                             - list *item* 1
+        - li2                                       - li2
+                                gsi
+        - list ^item$ 3                             - list *item* 3
+        - list ^item$ 4                             - list *item* 4
+<
+`^` and `$` denote block selection start and end on each line, respectively
+
+DELETE                                                *markdown.inline.delete*
+
+Inline styles around the cursor can be deleted in normal mode using
+*ds{emphasis}*, where *{emphasis}* is the key corresponding to the style to
+delete (by default "i", "b", "s", or "c"). Only the style directly surrounding
+the cursor will be deleted.
+
+        Before                  Command             After ~
+>
+        **some^ *text***        dsb                 some *text*
+        **some *t^ext***        dsb                 some *text*
+        **some **t^ext****      dsb                 **some text**
+<
+`^` denotes cursor position
+
+CHANGE                                                *markdown.inline.change*
+
+Inline styles around the cursor can be changed in normal mode using
+*cs{from}{to}*, where *{from}* and *{to}* are the keys corresponding to the
+current style (*{from}*) and the new style (*{to}*) (by default "i", "b", "s",
+or "c"). Only the matching *{from}* style directly surrounding the cursor will
+be changed.
+
+        Before                  Command             After ~
+>
+        **some^ *text***        csbi                *some *text**
+        **some *t^ext***        csbi                *some *text**
+        **some **t^ext****      csbs                **some ~~text~~**
+<
+`^` denotes cursor position
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS                                               *markdown.toc*
+
+By default, table of contents (TOC) commands are only created for markdown
+buffers.
+
+                                                                *:MDInsertToc*
+:MDInsertToc            Adds a table of contents (TOC) for the current
+                        markdown buffer by inserting (normal mode) or
+                        replacing selected lines (visual mode). The TOC is
+                        based on ATX and setext headings.
+
+OMIT HEADINGS                                              *markdown.toc.omit*
+
+Headings can be omitted from the TOC by flagging them with
+`<!-- omit in toc -->`. The flag can either be placed directly above (i.e., on
+the line immediately preceding) or within the heading content. For example,
+the following headings would be omitted:
+>markdown
+        # heading 1 <!-- omit in toc -->
+
+        <!-- omit in toc -->
+        ## heading 2
+
+        ## heading <!-- omit in toc --> 3
+
+        Heading 4 <!-- omit in toc -->
+        ------------------------------
+
+        <!-- omit in toc -->
+        Heading 5
+        ------------------------------
+<
+--------------------------------------------------------------------------------
+LIST EDITING                                                  *markdown.lists*
+
+By default, list editing commands are only created for markdown buffers.
+
+INSERT ITEMS                                      *markdown.lists.insert_item*
+
+The list item insertion commands are intended to be invoked by custom keymaps.
+(see |markdown.config.on_attach|). Both commands maintain the same
+indentation and list marker as the item under the cursor. The commands do
+nothing if the cursor is not within an existing list.
+
+When inserting an item in an ordered list, numbering is reset automatically
+for that list. To reset numbering for all ordered lists in a buffer, see
+|markdown.lists.reset_numbering|.
+
+                                                            *:MDListItemBelow*
+:MDListItemBelow        Inserts a new list item below the current cursor
+                        position.
+
+                                                            *:MDListItemAbove*
+:MDListItemAbove        Inserts a new list item above the current cursor
+                        position.
+
+RESET NUMBERING                               *markdown.lists.reset_numbering*
+
+                                                       *:MDResetListNumbering*
+:MDResetListNumbering   Resets the numbering of all ordered lists in the
+                        current buffer.
+
+TOGGLE TASKS                                      *markdown.lists.toggle_task*
+
+                                                               *:MDTaskToggle*
+:MDTaskToggle           Toggles the task(s) on the current cursor line (normal
+                        mode) or under selected lines (visual mode).
+
+================================================================================
+CONFIGURATION                                         *markdown.configuration*
+
+|markdown.nvim| can be configured either as a standalone plugin or as an
+|nvim-treesitter| module. As a standalone plugin configurable file types and
+patterns are used to activate features on attachment to a buffer, while in the
+latter configuration features are activated by |nvim-treesitter| in markdown
+buffers.
+
+To configure as a standalone plugin, call `require("markdown").setup()`.
+
+To configure as an |nvim-treesitter| module, call:
+>lua
+        require("nvim-treesitter.configs").setup({
+            markdown = {
+                enable = true,
+                -- user configuration goes here
+                inline_surround = { --[[ ... ]] },
+                on_attach = function(bufnr) --[[ ... ]] end,
+            }
+        })
+<
+                                                      *markdown.plug_mappings*
+The following plug |<Plug>| mappings are used by |markdown.inline| and are
+always set up, so they can be used without explicit configuration:
+>vim
+        <Plug>(markdown_toggle_emphasis)
+        <Plug>(markdown_toggle_emphasis_line)
+        <Plug>(markdown_toggle_emphasis_visual)
+        <Plug>(markdown_delete_emphasis)
+        <Plug>(markdown_change_emphasis)
+<
+markdown.setup({opts})                                      *markdown.setup()*
+    Both the standalone plugin and |nvim-treesitter| module configurations
+    accept the same table argument:
+>lua
+        require("markdown").setup({
+            file_types = "markdown",
+            file_patterns = { "*.md" },
+            inline_surround = {
+                mappings = {
+                    enable = true,
+                    toggle = "gs",
+                    toggle_line = "gss",
+                    delete = "ds",
+                    change = "cs",
+                },
+                emphasis = {
+                    key = "i",
+                    txt = "*",
+                },
+                strong = {
+                    key = "b",
+                    txt = "**",
+                },
+                strikethrough = {
+                    key = "s",
+                    txt = "~~",
+                },
+                code = {
+                    key = "c",
+                    txt = "`",
+                },
+            },
+            on_attach = nil,
+        })
+<
+    The `file_types` and `file_patterns` fields are only used by the
+    standalone plugin configuration to determine when features should be
+    activated.
+
+                                                  *markdown.config.file_types*
+    file_types: ~
+        File types for which |markdown.nvim| features should be activated.
+
+        This field is ignored when the plugin is configured as an
+        |nvim-treesitter| module.
+
+        Type: string|string[]
+        Default: "markdown"
+
+        See: |filetypes|, |FileType|
+
+                                               *markdown.config.file_patterns*
+    file_patterns: ~
+        File patterns for which |markdown.nvim| features should be activated.
+
+        This field is ignored when the plugin is configured as an
+        |nvim-treesitter| module.
+
+        Type: string|string[]
+        Default: "*.md"
+
+        See: |autocmd-pattern|
+
+                                    *markdown.config.inline_surround.mappings*
+    inline_surround.mappings: ~
+        Defines |markdown.inline| mappings.
+
+        Fields:
+            * enable        enables keymaps (Note: |<Plug>| mappings are still
+                            created if `enable = false`. See
+                            |markdown.plug_mappings|.)
+                            Default: true
+
+            * toggle        begins |{motion}| to toggle emphasis
+                            Default: "gs"
+                            See: |markdown.inline.toggle|
+
+            * toggle_line   toggles emphasis around a line
+                            Default: "gss"
+                            See: |markdown.inline.toggle|
+
+            * delete        deletes emphasis around the cursor
+                            Default: "ds"
+                            See: |markdown.inline.delete|
+
+            * change        changes emphasis around the cursor
+                            Default: "cs"
+                            See: |markdown.inline.change|
+
+                                    *markdown.config.inline_surround.emphasis*
+                                      *markdown.config.inline_surround.strong*
+                               *markdown.config.inline_surround.strikethrough*
+                                        *markdown.config.inline_surround.code*
+    inline_surround.emphasis: ~
+    inline_surround.strong: ~
+    inline_surround.strikethrough: ~
+    inline_surround.code: ~
+        Defines keys and text for each inline style.
+
+        Keys are used when toggling, deleting, and changing inline styles.
+
+        Text is only used to specify what should be inserted when toggling or
+        changing inline styles. Otherwise, when removing emphasis or code span
+        characters in toggle, delete, and change operations, |treesitter| nodes
+        are used. As such, take care to specify valid inline style characters
+        for each `txt` field. Invalid inline styles will be able to be
+        inserted, but they will have to be removed manually.
+
+        Fields:
+            * key           key associated with each inline style
+                            Defaults:
+                            * emphasis: "i"
+                            * strong: "b"
+                            * strikethrough: "s"
+                            * code: "c"
+
+            * txt           text inserted when toggling or changing the
+                            corresponding inline style
+                            Defaults:
+                            * emphasis: "*"
+                            * strong: "**"
+                            * strikethrough: "~~"
+                            * code: "`"
+
+                                                   *markdown.config.on_attach*
+    on_attach: ~
+        Function called when |markdown.nvim| attaches to a buffer. Useful for
+        creating additional buffer-only keymaps.
+
+        Signature: fun(bufnr: integer)
+        Default: nil
+
+        Usage:
+>lua
+            require("markdown").setup({
+                on_attach = function(bufnr)
+                    local map = vim.keymap.set
+                    local opts = { buffer = bufnr }
+                    map({ 'n', 'i' }, '<M-l><M-o>', '<Cmd>MDListItemBelow<CR>', opts)
+                    map({ 'n', 'i' }, '<M-L><M-O>', '<Cmd>MDListItemAbove<CR>', opts)
+                    map('n', '<M-c>', '<Cmd>MDTaskToggle<CR>', opts)
+                    map('x', '<M-c>', ':MDTaskToggle<CR>', opts)
+                end,
+            })
+<
+
+
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
