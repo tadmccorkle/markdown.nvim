@@ -71,11 +71,11 @@ marker and multiple blocks will only apply the style to inline content:
             another paragraph                  **another pargraph
             over two lines                     over two lines**
 <
-In normal mode this is done with *gs{motion}{emphasis}*, where *{emphasis}* is
+In normal mode this is done with *gs{motion}{style}*, where *{style}* is
 the key corresponding to the style to toggle (by default "i", "b", "s", or
 "c"). Like other vim motions, a |[count]| can be specified before and after
 the *gs*. Emphasis can also be toggled over the current line using
-*gss{emphasis}*. A |[count]| can be specified to toggle over multiple lines.
+*gss{style}*. A |[count]| can be specified to toggle over multiple lines.
 
         Before                  Command             After ~
 >
@@ -87,7 +87,7 @@ the *gs*. Emphasis can also be toggled over the current line using
 `^` denotes cursor position
 
 Styles can be toggled in visual mode based on a visual selection using
-*gs{emphasis}*.
+*gs{style}*.
 
         Before                  Command             After ~
 >
@@ -113,7 +113,7 @@ Styles can also be toggled in visual block mode.
 DELETE                                                *markdown.inline.delete*
 
 Inline styles around the cursor can be deleted in normal mode using
-*ds{emphasis}*, where *{emphasis}* is the key corresponding to the style to
+*ds{style}*, where *{style}* is the key corresponding to the style to
 delete (by default "i", "b", "s", or "c"). Only the style directly surrounding
 the cursor will be deleted.
 
@@ -168,11 +168,11 @@ the following headings would be omitted:
         ## heading <!-- omit in toc --> 3
 
         Heading 4 <!-- omit in toc -->
-        ------------------------------
+        ---------
 
         <!-- omit in toc -->
         Heading 5
-        ------------------------------
+        ---------
 <
 --------------------------------------------------------------------------------
 LIST EDITING                                                  *markdown.lists*
@@ -187,7 +187,7 @@ indentation and list marker as the item under the cursor. The commands do
 nothing if the cursor is not within an existing list.
 
 When inserting an item in an ordered list, numbering is reset automatically
-for that list. To reset numbering for all ordered lists in a buffer, see
+for that list. To reset numbering for all ordered lists in a buffer see
 |markdown.lists.reset_numbering|.
 
                                                             *:MDListItemBelow*
