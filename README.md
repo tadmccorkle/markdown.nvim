@@ -103,6 +103,8 @@ Install **markdown.nvim** with your preferred plugin manager.
 
 ## Configuration
 
+Detailed plugin configuration information can be found in the help doc (`:h markdown.configuration`).
+
 A call to `require("markdown").setup()` is necessary for commands and keybindings to be registered in markdown buffers.
 
 A table of configuration options can optionally be passed to the `setup()` function. Any fields in the table will overwrite the corresponding default. **markdown.nvim** uses the following defaults:
@@ -156,7 +158,19 @@ on_attach = function(bufnr)
 end,
 ```
 
-Detailed plugin configuration information can be found in the help doc (`:h markdown.configuration`).
+**markdown.nvim** can even be configured to support standard/typical inline style keybindings in visual mode like `<C-b>` for strong/bold and `<C-i>` for emphasis/italic:
+
+```lua
+on_attach = function(bufnr)
+  local function toggle(key)
+    return "<Esc>gv<Cmd>lua require'markdown.inline'"
+      .. ".toggle_emphasis_visual'" .. key .. "'<CR>"
+  end
+
+  vim.keymap.set("x", "<C-b>", toggle("b"), { buffer = bufnr })
+  vim.keymap.set("x", "<C-i>", toggle("i"), { buffer = bufnr })
+end,
+```
 
 ## Usage
 

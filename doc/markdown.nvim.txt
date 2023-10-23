@@ -110,6 +110,10 @@ Styles can also be toggled in visual block mode.
 <
 `^` and `$` denote block selection start and end on each line, respectively
 
+See |markdown.config.on_attach| for an example of how to configure
+standard/typical inline style keybindings in visual mode like *<C-b>* for
+strong/bold and *<C-i>* for for emphasis/italic.
+
 DELETE                                                *markdown.inline.delete*
 
 Inline styles around the cursor can be deleted in normal mode using
@@ -386,6 +390,20 @@ markdown.setup({opts})                                      *markdown.setup()*
                     map('x', '<M-c>', ':MDTaskToggle<CR>', opts)
                 end,
             })
+<
+        `on_attach` can be used to support standard/typical inline style
+        keybindings in visual mode like *<C-b>* for strong/bold and *<C-i>*
+        for for emphasis/italic:
+>lua
+            on_attach = function(bufnr)
+                local function toggle(key)
+                    return "<Esc>gv<Cmd>lua require'markdown.inline'"
+                        .. ".toggle_emphasis_visual('" .. key .. "')<CR>"
+                end
+
+                vim.keymap.set("x", "<C-b>", toggle("b"), { buffer = bufnr })
+                vim.keymap.set("x", "<C-i>", toggle("i"), { buffer = bufnr })
+            end,
 <
 
 

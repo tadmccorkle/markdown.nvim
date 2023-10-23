@@ -15,6 +15,10 @@ local function assert_buf_eq(bufnr, lines)
 	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
 end
 
+local function feed(keys)
+	api.nvim_feedkeys(keys, "x", true)
+end
+
 describe("inline", function()
 	vim.cmd("runtime plugin/markdown.lua")
 	require("markdown").setup()
@@ -292,6 +296,15 @@ describe("inline", function()
 				set_buf(bufnr, { "text" })
 				vim.cmd("normal viwgsjcnew text")
 				assert_buf_eq(bufnr, { "new text" })
+			end)
+
+			it("can specify inline key without reading input", function()
+				local bufnr = new_md_buf()
+				set_buf(bufnr, { "text" })
+				vim.cmd("normal viw")
+				feed("<Esc>")
+				require("markdown.inline").toggle_emphasis_visual("i")
+				assert_buf_eq(bufnr, { "*text*" })
 			end)
 		end)
 

@@ -34,7 +34,7 @@ local function set_keymaps()
 	vim.keymap.set(
 		"x",
 		"<Plug>(markdown_toggle_emphasis_visual)",
-		"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis()<CR>",
+		"<Esc>gv<Cmd>lua require'markdown.inline'.toggle_emphasis_visual()<CR>",
 		{
 			silent = true,
 			desc = "Toggle emphasis around a visual selection",

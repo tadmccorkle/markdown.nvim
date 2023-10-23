@@ -147,13 +147,27 @@ local function get_emphasis_delim_len(emphasis)
 	return md_ts.child_count(emphasis, is_emphasis_delim) / 2
 end
 
+--- {toggle}{emphasis_key}: toggle emphasis over visual selection
+---@param key? string
+function M.toggle_emphasis_visual(key)
+	M.toggle_emphasis(nil, key)
+end
+
 --- {toggle}{motion}{emphasis_key}: toggle emphasis over motion
----@param motion? string
-function M.toggle_emphasis(motion)
-	local ok, char = util.try_get_char_input()
+---@param motion string|nil
+---@param key? string
+function M.toggle_emphasis(motion, key)
+	if key == nil then
+		local ok, char = util.try_get_char_input()
+		if ok then
+			M.toggle_emphasis(motion, char)
+		end
+		return
+	end
+
 	local emphasis_by_key = get_emphasis_by_key()
-	local emphasis = emphasis_by_key[char]
-	if not ok or emphasis == nil then
+	local emphasis = emphasis_by_key[key]
+	if emphasis == nil then
 		return
 	end
 
