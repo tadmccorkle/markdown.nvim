@@ -260,11 +260,11 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
   Inline styles around the cursor can be changed in normal mode using **cs{from}{to}**, where **{from}** and **{to}** are the keys corresponding to the current style (**{from}**) and the new style (**{to}**). Only the matching **{from}** style directly surrounding the cursor will be changed.
 
-  | Before              | Command | After              |
-  |:--------------------|:-------:|:-------------------|
-  | `**some^ *text***   |  csbi   | `*some *text**     |
-  | `**some *t^ext***   |  csbi   | `*some *text**     |
-  | `**some **t^ext**** |  csbs   | `**some ~~text~~** |
+  | Before               | Command | After               |
+  |:---------------------|:-------:|:--------------------|
+  | `**some^ *text***`   |  csbi   | `*some *text**`     |
+  | `**some *t^ext***`   |  csbi   | `*some *text**`     |
+  | `**some **t^ext****` |  csbs   | `**some ~~text~~**` |
 
   `^` denotes cursor position
 
