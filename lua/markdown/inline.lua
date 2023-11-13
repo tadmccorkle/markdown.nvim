@@ -183,7 +183,11 @@ function M.toggle_emphasis(motion, key)
 
 	local parser = ts.get_parser(0, "markdown")
 	local t = parser:parse()[1]
-	local inline_trees = parser:children().markdown_inline:parse()
+	local md_inline = parser:children().markdown_inline
+	if md_inline == nil then
+		return
+	end
+	local inline_trees = md_inline:parse()
 	local emphasis_query = emphasis_queries[emphasis.type]
 
 	---@type TSNode[]
