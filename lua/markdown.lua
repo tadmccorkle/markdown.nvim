@@ -5,6 +5,7 @@ local OpFunc = require("markdown.opfunc")
 local config = require("markdown.config")
 local inline = require("markdown.inline")
 local list = require("markdown.list")
+local notify = require("markdown.notify")
 local toc = require("markdown.toc")
 
 local M = {}
@@ -144,6 +145,19 @@ local function setup_usr_keymaps(cfg, bufnr)
 	end
 end
 
+local function check_compat()
+	local has_markdown = #(api.nvim_get_runtime_file("parser/markdown.so", true)) > 0
+	local has_markdown_inline = #(api.nvim_get_runtime_file("parser/markdown_inline.so", true)) > 0
+	if not (has_markdown and has_markdown_inline) then
+		local err = "Missing required tree-sitter parser:"
+		if not has_markdown then err = err .. " 'markdown'" end
+		if not has_markdown_inline then err = err .. " 'markdown_inline'" end
+		notify.error(err)
+		return false
+	end
+	return true
+end
+
 local function on_attach(bufnr)
 	local cfg = config:get()
 
@@ -170,6 +184,10 @@ end
 --- Setup with user options.
 ---@param cfg? MarkdownConfig
 function M.setup(cfg)
+	if not check_compat() then
+		return
+	end
+
 	cfg = config:setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
@@ -190,9 +208,13 @@ function M.init()
 	nvim_ts.define_modules({
 		markdown = {
 			attach = function(bufnr, _)
+				if not check_compat() then
+					return
+				end
+
 				local mod_cfgs = require("nvim-treesitter.configs")
-				local has_cfg, mod_cfg = pcall(mod_cfgs.get_module, "markdown")
-				if has_cfg then
+				local mod_cfg = mod_cfgs.get_module("markdown")
+				if mod_cfg ~= nil then
 					config:setup(mod_cfg --[[@as MarkdownConfig]])
 				end
 
