@@ -111,8 +111,6 @@ A table of configuration options can optionally be passed to the `setup()` funct
 
 ```lua
 {
-  file_types = "markdown", -- (string|string[]) file types that activate plugin features
-  file_patterns = "*.md", -- (string|string[]) file extensions that activate plugin features
   inline_surround = {
     mappings = {
       enable = true, -- whether to enable inline keymaps
@@ -383,7 +381,7 @@ The following code snippets show how to install **markdown.nvim** as an **nvim-t
 
 ### Module configuration <!-- omit in toc -->
 
-When **markdown.nvim** is configured as an **nvim-treesitter** module, configuration options are passed to the `require("nvim-treesitter.configs").setup()` function. All configuration options are the same as described in the [configuration](#configuration) section, but the `file_types` and `file_patterns` fields are ignored (plugin features are activated by **nvim-treesitter**).
+When **markdown.nvim** is configured as an **nvim-treesitter** module, configuration options are passed to the `require("nvim-treesitter.configs").setup()` function. All configuration options are the same as described in the [configuration](#configuration) section.
 
 ```lua
 local configs = require("nvim-treesitter.configs")

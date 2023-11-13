@@ -218,14 +218,9 @@ TOGGLE TASKS                                      *markdown.lists.toggle_task*
 CONFIGURATION                                         *markdown.configuration*
 
 |markdown.nvim| can be configured either as a standalone plugin or as an
-|nvim-treesitter| module. As a standalone plugin configurable file types and
-patterns are used to activate features on attachment to a buffer, while in the
-latter configuration features are activated by |nvim-treesitter| in markdown
-buffers.
-
-To configure as a standalone plugin, call `require("markdown").setup()`.
-
-To configure as an |nvim-treesitter| module, call:
+|nvim-treesitter| module. To configure as a standalone plugin, call
+`require("markdown").setup()`. To configure as an |nvim-treesitter| module,
+call:
 >lua
         require("nvim-treesitter.configs").setup({
             markdown = {
@@ -251,8 +246,6 @@ markdown.setup({opts})                                      *markdown.setup()*
     accept the same table argument:
 >lua
         require("markdown").setup({
-            file_types = "markdown",
-            file_patterns = { "*.md" },
             inline_surround = {
                 mappings = {
                     enable = true,
@@ -281,34 +274,6 @@ markdown.setup({opts})                                      *markdown.setup()*
             on_attach = nil,
         })
 <
-    The `file_types` and `file_patterns` fields are only used by the
-    standalone plugin configuration to determine when features should be
-    activated.
-
-                                                  *markdown.config.file_types*
-    file_types: ~
-        File types for which |markdown.nvim| features should be activated.
-
-        This field is ignored when the plugin is configured as an
-        |nvim-treesitter| module.
-
-        Type: string|string[]
-        Default: "markdown"
-
-        See: |filetypes|, |FileType|
-
-                                               *markdown.config.file_patterns*
-    file_patterns: ~
-        File patterns for which |markdown.nvim| features should be activated.
-
-        This field is ignored when the plugin is configured as an
-        |nvim-treesitter| module.
-
-        Type: string|string[]
-        Default: "*.md"
-
-        See: |autocmd-pattern|
-
                                     *markdown.config.inline_surround.mappings*
     inline_surround.mappings: ~
         Defines |markdown.inline| mappings.

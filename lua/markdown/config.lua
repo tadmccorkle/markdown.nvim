@@ -15,8 +15,6 @@
 ---@field code KeyToTxt
 
 ---@class MarkdownConfig
----@field file_types string|string[]
----@field file_patterns string|string[]
 ---@field inline_surround InlineSurroundOpts
 ---@field on_attach fun(bufnr: integer)|nil
 
@@ -28,8 +26,6 @@ MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
 ---@type MarkdownConfig
 local default_cfg = {
-	file_types = "markdown",
-	file_patterns = { "*.md" },
 	inline_surround = {
 		mappings = {
 			enable = true,

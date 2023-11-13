@@ -1,4 +1,5 @@
 local api = vim.api
+local ts = vim.treesitter
 
 local OpFunc = require("markdown.opfunc")
 local config = require("markdown.config")
@@ -166,14 +167,9 @@ function M.setup(cfg)
 	cfg = config:setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
-	api.nvim_create_autocmd("BufEnter", {
-		group = group,
-		pattern = cfg.file_patterns,
-		callback = on_attach_cb,
-	})
 	api.nvim_create_autocmd("FileType", {
 		group = group,
-		pattern = cfg.file_types,
+		pattern = ts.language.get_filetypes("markdown"),
 		callback = on_attach_cb,
 	})
 end
