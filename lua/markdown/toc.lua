@@ -22,6 +22,13 @@ local TOC_HTML_ID = 7
 
 local html_tag_query = ts.query.parse("markdown_inline", "(html_tag) @html")
 
+---@param node TSNode
+---@return boolean
+local function is_container(node)
+	local type = node:type()
+	return type == "list" or type == "block_quote"
+end
+
 ---@param html TSNode|string
 ---@return boolean
 local function is_comment(html)
@@ -64,11 +71,8 @@ local function get_document_sections()
 	local last_omit_flag_end_row
 	for _, match, _ in toc_heading_query:iter_matches(t:root(), 0, 0, -1) do
 		local _, n = next(match)
-		local container_parent = md_ts.find_parent(n, function(p)
-			local parent_type = p:type()
-			return parent_type == "list" or parent_type == "block_quote"
-		end)
-		if not container_parent then
+		local in_container = md_ts.find_parent(n, is_container)
+		if not in_container then
 			local html = match[TOC_HTML_ID]
 			if html ~= nil then
 				if is_omit_flag(html) then

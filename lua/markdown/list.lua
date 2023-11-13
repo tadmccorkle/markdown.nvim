@@ -22,6 +22,18 @@ local ordered_list_query = ts.query.parse("markdown", [[
 			(list_marker_parenthesis)
 		])) @l
 ]])
+--
+---@param node TSNode
+---@return boolean
+local function is_list_item(node)
+	return node:type() == LIST_ITEM_TYPE
+end
+
+---@param node TSNode
+---@return boolean
+local function is_list(node)
+	return node:type() == LIST_TYPE
+end
 
 ---@param list_item TSNode
 local function set_list_item_num(list_item, num)
@@ -87,9 +99,7 @@ local function insert_list_item(loc)
 	local curr_row, curr_eol = get_curr_eol_pos()
 
 	ts.get_parser(0, "markdown"):parse()
-	local list_item = md_ts.find_node(function(n)
-		return n:type() == LIST_ITEM_TYPE
-	end, { pos = { curr_row, curr_eol } })
+	local list_item = md_ts.find_node(is_list_item, { pos = { curr_row, curr_eol } })
 	if list_item == nil then
 		return
 	end
@@ -128,9 +138,7 @@ local function insert_list_item(loc)
 
 	if marker_type == LIST_MARKER_DOT_TYPE or marker_type == LIST_MARKER_PAREN_TYPE then
 		ts.get_parser(0, "markdown"):parse()
-		local list = md_ts.find_node(function(n)
-			return n:type() == LIST_TYPE
-		end, { pos = { curr_row, curr_eol } })
+		local list = md_ts.find_node(is_list, { pos = { curr_row, curr_eol } })
 		if list ~= nil then
 			reset_list_numbering(list)
 		end
