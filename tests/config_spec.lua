@@ -15,16 +15,6 @@ local function assert_buf_eq(bufnr, lines)
 	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
 end
 
-local function provide_input(trigger, input)
-	-- HACK: is there a more appropriate way to do this?
-	-- input consumes remaining characters from a mapping,
-	-- so while this feels a little weird, it works...
-	local map = "provideinput"
-	vim.keymap.set({ "n", "x" }, map, trigger .. input .. "<CR>", { remap = true })
-	vim.cmd("normal " .. map)
-	vim.keymap.del({ "n", "x" }, map)
-end
-
 describe("config", function()
 	vim.cmd("runtime plugin/markdown.lua")
 
@@ -167,7 +157,7 @@ describe("config", function()
 
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		provide_input("gliw", "destination")
+		vim.cmd("normal gliw")
 		assert_buf_eq(bufnr, { "test" })
 
 		set_buf(bufnr, { "[test](#test)", "", "# test" })
@@ -183,7 +173,7 @@ describe("config", function()
 
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		provide_input("gliw", "destination")
+		vim.cmd("normal gliw")
 		assert_buf_eq(bufnr, { "test" })
 
 		set_buf(bufnr, { "[test](#test)", "", "# test" })
@@ -206,8 +196,8 @@ describe("config", function()
 
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		provide_input("yxiw", "destination")
-		assert_buf_eq(bufnr, { "[test](destination)" })
+		vim.cmd("normal yxiw")
+		assert_buf_eq(bufnr, { "[test]()" })
 
 		set_buf(bufnr, { "[test](#test)", "", "# test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })

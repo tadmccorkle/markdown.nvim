@@ -134,12 +134,7 @@ function M.add(motion)
 		return
 	end
 
-	local ok, input = util.try_get_input("Link destination: ")
-	if not ok then
-		return
-	end
-
-	util.insert_text(r[3], r[4], "](" .. input .. ")")
+	util.insert_text(r[3], r[4], "]()")
 	util.insert_text(r[1], r[2], "[")
 
 	-- leave visual mode if successful
@@ -147,6 +142,14 @@ function M.add(motion)
 		local esc = api.nvim_replace_termcodes("<Esc>", true, false, true)
 		api.nvim_feedkeys(esc, "n", false)
 	end
+
+	-- enter insert mode to type destination
+	local col = r[4] + 2
+	if r[1] == r[3] then
+		col = col + 1
+	end
+	api.nvim_win_set_cursor(0, { r[3] + 1, col })
+	vim.cmd("startinsert")
 end
 
 ---@param dest string

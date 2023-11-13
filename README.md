@@ -25,7 +25,7 @@ Tools for working with markdown files in Neovim.
 - Table of contents
   - Supports ATX and setext headings
   - Omit headings with an HTML tag
-- Improved list editing
+- Lists
   - Insert new items
   - Auto-number ordered lists
   - Toggle task list items (GFM)
@@ -41,8 +41,6 @@ Tools for working with markdown files in Neovim.
   - Configurable default list marker type
   - Specify list marker type
   - Omit section with HTML tag
-- Links
-  - Completion when adding heading and relative file links
 - Tables (GFM)
   - Formatting
   - Insert rows and columns

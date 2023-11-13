@@ -17,16 +17,6 @@ local function assert_buf_eq(bufnr, lines)
 	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
 end
 
-local function provide_input(trigger, input)
-	-- HACK: is there a more appropriate way to do this?
-	-- input consumes remaining characters from a mapping,
-	-- so while this feels a little weird, it works...
-	local map = "provideinput"
-	vim.keymap.set({ "n", "x" }, map, trigger .. input .. "<CR>", { remap = true })
-	vim.cmd("normal " .. map)
-	vim.keymap.del({ "n", "x" }, map)
-end
-
 describe("link", function()
 	vim.cmd("runtime plugin/markdown.lua")
 	require("markdown").setup()
@@ -35,7 +25,9 @@ describe("link", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		provide_input("gliw", "destination")
+		vim.cmd("normal gliw")
+		assert_buf_eq(bufnr, { "[test]()" })
+		vim.cmd("normal adestination")
 		assert_buf_eq(bufnr, { "[test](destination)" })
 	end)
 
@@ -43,8 +35,9 @@ describe("link", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal vl")
-		provide_input("gl", "destination")
+		vim.cmd("normal vlgl")
+		assert_buf_eq(bufnr, { "t[es]()t" })
+		vim.cmd("normal adestination")
 		assert_buf_eq(bufnr, { "t[es](destination)t" })
 	end)
 

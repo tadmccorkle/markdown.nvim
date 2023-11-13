@@ -146,9 +146,7 @@ local function insert_list_item(loc)
 
 	new_row = new_row + 1
 	api.nvim_win_set_cursor(0, { new_row, vim.fn.charcol({ new_row, "$" }) })
-	if api.nvim_get_mode().mode == "n" then
-		api.nvim_feedkeys("a", "n", true)
-	end
+	vim.cmd("startinsert!")
 end
 
 --- Inserts a list item above the cursor in the current buffer.

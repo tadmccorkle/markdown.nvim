@@ -30,10 +30,18 @@ function M.try_get_char_input()
 end
 
 ---@param prompt string|nil
+---@param completion (fun(a: string, c: string): string[])|nil
 ---@return boolean, string|nil
-function M.try_get_input(prompt)
+function M.try_get_input(prompt, completion)
 	prompt = prompt or ""
-	local ok, input = pcall(vim.fn.input, prompt)
+
+	local ok, input
+	if completion ~= nil then
+		ok, input = pcall(vim.fn["markdown_nvim#input"], prompt, "", completion)
+	else
+		ok, input = pcall(vim.fn.input, prompt)
+	end
+
 	if not ok or input == "" then
 		return false, nil
 	end

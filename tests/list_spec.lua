@@ -13,10 +13,6 @@ local function set_buf(bufnr, lines)
 	api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 end
 
-local function feed(keys)
-	api.nvim_feedkeys(keys, "x", true)
-end
-
 local function assert_buf_eq(bufnr, lines)
 	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
 end
@@ -27,13 +23,13 @@ describe("list", function()
 	local function insert_li_above(pos, text)
 		api.nvim_win_set_cursor(0, pos)
 		list.insert_list_item_above()
-		feed(text)
+		vim.cmd("normal a" .. text)
 	end
 
 	local function insert_li_below(pos, text)
 		api.nvim_win_set_cursor(0, pos)
 		list.insert_list_item_below()
-		feed(text)
+		vim.cmd("normal a" .. text)
 	end
 
 	it("resets list numbering in buffer", function()
