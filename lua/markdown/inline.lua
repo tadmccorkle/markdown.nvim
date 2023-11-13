@@ -174,25 +174,12 @@ function M.toggle_emphasis(motion, key)
 	local is_visual = motion == nil
 	local is_visual_block = is_visual and vim.fn.visualmode() == "\22"
 
-	-- get start and end mark positions, adjusted to be zero-based
-	local s, e
-	if not is_visual then
-		s, e = api.nvim_buf_get_mark(0, "["), api.nvim_buf_get_mark(0, "]")
-		if motion == "line" then
-			s[2] = 0
-			e[2] = vim.fn.charcol({ e[1], "$" }) - 1
-		else
-			e[2] = e[2] + 1
-		end
+	local r
+	if is_visual then
+		r = util.get_visual_range()
 	else
-		s, e = api.nvim_buf_get_mark(0, "<"), api.nvim_buf_get_mark(0, ">")
-		if vim.o.selection == "exclusive" then
-			e[2] = e[2] - 1
-		end
-		e[2] = math.min(e[2] + 1, vim.fn.charcol({ e[1], "$" }) - 1)
+		r = util.get_motion_range(motion --[[@as string]])
 	end
-	s[1] = s[1] - 1
-	e[1] = e[1] - 1
 
 	local parser = ts.get_parser(0, "markdown")
 	local t = parser:parse()[1]
@@ -231,8 +218,8 @@ function M.toggle_emphasis(motion, key)
 
 	local inline_count = 0
 	if is_visual_block then
-		local start_row, end_row = math.min(s[1], e[1]), math.max(s[1], e[1])
-		local start_col, end_col = math.min(s[2], e[2]), math.max(s[2], e[2])
+		local start_row, end_row = math.min(r[1], r[3]), math.max(r[1], r[3])
+		local start_col, end_col = math.min(r[2], r[4]), math.max(r[2], r[4])
 		for row = start_row, end_row, 1 do
 			local eol_col = vim.fn.charcol({ row + 1, "$" }) - 1
 			local row_start_col = math.min(start_col, eol_col)
@@ -255,13 +242,10 @@ function M.toggle_emphasis(motion, key)
 			end
 		end
 	else
-		for _, inline_node, _ in inline_query:iter_captures(t:root(), 0, s[1], e[1] + 1) do
+		for _, inline_node, _ in inline_query:iter_captures(t:root(), 0, r[1], r[3] + 1) do
 			inline_count = inline_count + 1
 
-			local overlap = util.get_overlapping_range(
-				{ s[1], s[2], e[1], e[2] },
-				{ inline_node:range() }
-			)
+			local overlap = util.get_overlapping_range(r, { inline_node:range() })
 			local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
 			if inline_t == nil then
 				local inline_txt = ts.get_node_text(inline_node, 0, nil)

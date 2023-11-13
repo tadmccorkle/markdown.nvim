@@ -117,4 +117,35 @@ function M.get_tab_str()
 	return "\t"
 end
 
+--- Gets the range corresponding to the last visual selection.
+---@return R4
+function M.get_visual_range()
+	local s, e = api.nvim_buf_get_mark(0, "<"), api.nvim_buf_get_mark(0, ">")
+	if vim.o.selection == "exclusive" then
+		e[2] = e[2] - 1
+	end
+	e[2] = math.min(e[2] + 1, vim.fn.charcol({ e[1], "$" }) - 1)
+	s[1] = s[1] - 1
+	e[1] = e[1] - 1
+
+	return { s[1], s[2], e[1], e[2] }
+end
+
+--- Gets the range corresponding to the last vim motion.
+---@param motion string
+---@return R4
+function M.get_motion_range(motion)
+	local s, e = api.nvim_buf_get_mark(0, "["), api.nvim_buf_get_mark(0, "]")
+	if motion == "line" then
+		s[2] = 0
+		e[2] = vim.fn.charcol({ e[1], "$" }) - 1
+	else
+		e[2] = e[2] + 1
+	end
+	s[1] = s[1] - 1
+	e[1] = e[1] - 1
+
+	return { s[1], s[2], e[1], e[2] }
+end
+
 return M
