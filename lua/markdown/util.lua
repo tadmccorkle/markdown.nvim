@@ -15,7 +15,9 @@ end
 ---@param s string
 ---@return string
 function M.slugify(s)
-	return s:gsub(" ", "-"):lower()
+	return s:gsub("%s", "-")
+		:gsub("[^%w_-]", "")
+		:lower()
 end
 
 ---@return boolean, string|nil

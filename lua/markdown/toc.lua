@@ -108,7 +108,10 @@ local function build_toc_lines(toc, tab, lines, indent)
 	lines = lines or {}
 	indent = indent or 0
 	for _, sub in pairs(toc.children) do
-		local line = (string.rep(tab, indent) .. "- [" .. sub.name .. "](#" .. util.slugify(sub.name) .. ")")
+		local text = sub.name
+		local dest = md_ts.remove_nodes(sub.name, "markdown_inline", "emphasis_delimiter")
+		dest = util.slugify(dest)
+		local line = (string.rep(tab, indent) .. "- [" .. text .. "](#" .. dest .. ")")
 		table.insert(lines, line)
 		build_toc_lines(sub, tab, lines, indent + 1)
 	end

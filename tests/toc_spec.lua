@@ -44,11 +44,11 @@ describe("toc", function()
 			"",
 			"table of contents",
 			"- [h1](#h1)",
-			"  - [h1.2](#h1.2)",
-			"  - [h1.3](#h1.3)",
-			"    - [h1.3.1](#h1.3.1)",
-			"      - [h1.3.1.1](#h1.3.1.1)",
-			"  - [h1.4](#h1.4)",
+			"  - [h1.2](#h12)",
+			"  - [h1.3](#h13)",
+			"    - [h1.3.1](#h131)",
+			"      - [h1.3.1.1](#h1311)",
+			"  - [h1.4](#h14)",
 			"will be placed here",
 			"",
 			"## h1.2",
@@ -78,11 +78,11 @@ describe("toc", function()
 			"# h1",
 			"",
 			"- [h1](#h1)",
-			"  - [h1.2](#h1.2)",
-			"  - [h1.3](#h1.3)",
-			"    - [h1.3.1](#h1.3.1)",
-			"      - [h1.3.1.1](#h1.3.1.1)",
-			"  - [h1.4](#h1.4)",
+			"  - [h1.2](#h12)",
+			"  - [h1.3](#h13)",
+			"    - [h1.3.1](#h131)",
+			"      - [h1.3.1.1](#h1311)",
+			"  - [h1.4](#h14)",
 			"",
 			"## h1.2",
 			"## h1.3",
@@ -105,11 +105,11 @@ describe("toc", function()
 		api.nvim_win_set_cursor(0, { 1, 0 })
 		toc.insert_toc({ range = 0 })
 		assert_buf_eq(bufnr, {
-			"- [h1.2](#h1.2)",
-			"  - [h1.3](#h1.3)",
-			"  - [h1.3.1](#h1.3.1)",
-			"    - [h1.3.1.1](#h1.3.1.1)",
-			"- [h1.4](#h1.4)",
+			"- [h1.2](#h12)",
+			"  - [h1.3](#h13)",
+			"  - [h1.3.1](#h131)",
+			"    - [h1.3.1.1](#h1311)",
+			"- [h1.4](#h14)",
 			"",
 			"## h1.2",
 			"#### h1.3",
@@ -196,9 +196,9 @@ describe("toc", function()
 		toc.insert_toc({ range = 0 })
 		assert_buf_eq(bufnr, {
 			"# h1 will be omitted <!-- omit in toc -->",
-			"- [h1.2](#h1.2)",
-			"  - [h1.3.1](#h1.3.1)",
-			"- [h1.4](#h1.4)",
+			"- [h1.2](#h12)",
+			"  - [h1.3.1](#h131)",
+			"- [h1.4](#h14)",
 			"- [setext](#setext)",
 			"## h1.2",
 			"<!-- omit in toc -->",
@@ -295,6 +295,60 @@ describe("toc", function()
 			"- it won't be included either",
 			"### h3",
 			"## h4",
+		})
+	end)
+
+	it("removes inline styles from link destination", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# _h1 this __is__ styled_",
+			"## *h2* `code`",
+			"### _h3 is_styled_ too_",
+			"## h4 word_word_",
+		})
+		api.nvim_win_set_cursor(0, { 1, 0 })
+		toc.insert_toc({ range = 0 })
+		assert_buf_eq(bufnr, {
+			"- [_h1 this __is__ styled_](#h1-this-is-styled)",
+			"  - [*h2* `code`](#h2-code)",
+			"    - [_h3 is_styled_ too_](#h3-is_styled-too_)",
+			"  - [h4 word_word_](#h4-word_word_)",
+			"",
+			"# _h1 this __is__ styled_",
+			"## *h2* `code`",
+			"### _h3 is_styled_ too_",
+			"## h4 word_word_",
+		})
+	end)
+
+	it("santizes and slugifies destination", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# h1~`!@#$%^&*()-_+={[]}|\\:;\"'<,>.?/ content",
+		})
+		api.nvim_win_set_cursor(0, { 1, 0 })
+		toc.insert_toc({ range = 0 })
+		assert_buf_eq(bufnr, {
+			"- [h1~`!@#$%^&*()-_+={[]}|\\:;\"'<,>.?/ content](#h1-_-content)",
+			"",
+			"# h1~`!@#$%^&*()-_+={[]}|\\:;\"'<,>.?/ content",
+		})
+	end)
+
+	it("santizes text", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# h1 <!-- comment --> c<!--comment-->ontent",
+		})
+		api.nvim_win_set_cursor(0, { 1, 0 })
+		toc.insert_toc({ range = 0 })
+		assert_buf_eq(bufnr, {
+			"- [h1  content](#h1--content)",
+			"",
+			"# h1 <!-- comment --> c<!--comment-->ontent",
 		})
 	end)
 end)

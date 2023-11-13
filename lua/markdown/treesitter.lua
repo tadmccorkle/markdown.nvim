@@ -84,4 +84,31 @@ function M.find_tree_in_node(trees, node)
 	end
 end
 
+---@param text string
+---@param node_type string
+---@param root TSNode
+---@return string
+local function remove_nodes(text, node_type, root)
+	for i = root:named_child_count() - 1, 0, -1 do
+		local child = root:named_child(i)
+		if child:type() == node_type then
+			local _, s, _, e = child:range()
+			text = string.sub(text, 1, s) .. string.sub(text, e + 1)
+		else
+			text = remove_nodes(text, node_type, child)
+		end
+	end
+	return text
+end
+
+--- Returns the provided text with the specified nodes removed.
+---@param text string Text to parse
+---@param lang string Language of text
+---@param node_type string Type of nodes to remove
+---@return string
+function M.remove_nodes(text, lang, node_type)
+	local t = ts.get_string_parser(text, lang):parse()[1]:root()
+	return remove_nodes(text, node_type, t)
+end
+
 return M
