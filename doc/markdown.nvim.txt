@@ -248,7 +248,6 @@ markdown.setup({opts})                                      *markdown.setup()*
         require("markdown").setup({
             inline_surround = {
                 mappings = {
-                    enable = true,
                     toggle = "gs",
                     toggle_line = "gss",
                     delete = "ds",
@@ -276,14 +275,11 @@ markdown.setup({opts})                                      *markdown.setup()*
 <
                                     *markdown.config.inline_surround.mappings*
     inline_surround.mappings: ~
-        Defines |markdown.inline| mappings.
+        Defines |markdown.inline| mappings. Mappings can be selectively
+        disabled by setting the corresponding field to "false". Disable all
+        inline mappings by setting the entire field to "false".
 
         Fields:
-            * enable        enables keymaps (Note: |<Plug>| mappings are still
-                            created if `enable = false`. See
-                            |markdown.plug_mappings|.)
-                            Default: true
-
             * toggle        begins |{motion}| to toggle emphasis
                             Default: "gs"
                             See: |markdown.inline.toggle|

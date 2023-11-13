@@ -1,7 +1,8 @@
 local api = vim.api
 
-local function new_buf()
+local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
+	api.nvim_buf_set_option(bufnr, "filetype", "markdown")
 	api.nvim_win_set_buf(0, bufnr)
 	return bufnr
 end
@@ -21,13 +22,41 @@ describe("config", function()
 		require("markdown.config"):reset()
 	end)
 
-	it("can disable inline surround mappings", function()
-		require("markdown").setup({ inline_surround = { mappings = { enable = false } } })
+	it("can disable all inline surround mappings", function()
+		require("markdown").setup({ inline_surround = { mappings = false } })
 
-		local bufnr = new_buf()
-		set_buf(bufnr, { "test" })
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "*test*" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
 		vim.cmd("normal gsiwi")
+		assert_buf_eq(bufnr, { "*witest*" })
+
+		set_buf(bufnr, { "*test*" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gssi")
+		assert_buf_eq(bufnr, { "*iest*" })
+
+		set_buf(bufnr, { "*test*" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal dsi")
+		assert_buf_eq(bufnr, { "*test*" })
+
+		set_buf(bufnr, { "*test*" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal csib")
+		assert_buf_eq(bufnr, { "*test*" })
+	end)
+
+	it("can disable inline surround mappings selectively", function()
+		require("markdown").setup({ inline_surround = { mappings = { toggle = false } } })
+
+		local bufnr = new_md_buf()
+		set_buf(bufnr, { "*test*" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gsiwi")
+		assert_buf_eq(bufnr, { "*witest*" })
+		vim.cmd("normal gssi")
 		assert_buf_eq(bufnr, { "witest" })
 	end)
 
@@ -43,9 +72,8 @@ describe("config", function()
 			},
 		})
 
-		local bufnr = new_buf()
+		local bufnr = new_md_buf()
 		set_buf(bufnr, { "test" })
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
 
 		api.nvim_win_set_cursor(0, { 1, 1 })
 		vim.cmd("normal ysiwi")
@@ -74,8 +102,7 @@ describe("config", function()
 			},
 		})
 
-		local bufnr = new_buf()
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+		local bufnr = new_md_buf()
 
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
@@ -108,8 +135,7 @@ describe("config", function()
 			},
 		})
 
-		local bufnr = new_buf()
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+		local bufnr = new_md_buf()
 
 		set_buf(bufnr, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
@@ -125,16 +151,15 @@ describe("config", function()
 	end)
 
 	it("calls `on_attach`", function()
-		local bufnr = new_buf()
-
 		local attached_bufnr = -1
-		local on_attach = function(b)
-			attached_bufnr = b
-		end
+		require("markdown").setup({
+			on_attach = function(b)
+				attached_bufnr = b
+			end
+		})
 
-		require("markdown").setup({ on_attach = on_attach })
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
-
+		local bufnr = new_md_buf()
 		assert.are.equal(bufnr, attached_bufnr)
+		assert.are_not.equal(-1, attached_bufnr)
 	end)
 end)

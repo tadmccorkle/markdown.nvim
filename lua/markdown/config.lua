@@ -1,9 +1,8 @@
 ---@class InlineSurroundMappings
----@field enable boolean
----@field toggle string
----@field toggle_line string
----@field delete string
----@field change string
+---@field toggle string|boolean
+---@field toggle_line string|boolean
+---@field delete string|boolean
+---@field change string|boolean
 
 ---@alias KeyToTxt { key: string , txt: string }
 
@@ -28,7 +27,6 @@ MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 local default_cfg = {
 	inline_surround = {
 		mappings = {
-			enable = true,
 			toggle = "gs",
 			toggle_line = "gss",
 			delete = "ds",

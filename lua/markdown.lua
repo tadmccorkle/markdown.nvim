@@ -3,9 +3,9 @@ local ts = vim.treesitter
 
 local OpFunc = require("markdown.opfunc")
 local config = require("markdown.config")
+local inline = require("markdown.inline")
 local list = require("markdown.list")
 local toc = require("markdown.toc")
-local inline = require("markdown.inline")
 
 local M = {}
 
@@ -63,7 +63,9 @@ local cache
 
 local function create_cached_buf_usr_cmd(bufnr, name, cmd, range)
 	api.nvim_buf_create_user_command(bufnr, name, cmd, { force = true, range = range })
-	if cache ~= nil then table.insert(cache[bufnr].cmds, name) end
+	if cache ~= nil then
+		table.insert(cache[bufnr].cmds, name)
+	end
 end
 
 local function del_cached_buf_usr_cmds(bufnr)
@@ -73,14 +75,18 @@ local function del_cached_buf_usr_cmds(bufnr)
 end
 
 local function set_cached_keymap(mode, lhs, rhs, opts)
+	if not lhs then return end
+
 	vim.keymap.set(mode, lhs, rhs, opts)
-	if cache ~= nil then table.insert(cache[opts.buffer].maps, { mode, rhs }) end
+	if cache ~= nil then
+		table.insert(cache[opts.buffer].maps, { mode, rhs })
+	end
 end
 
 local function del_cached_keymaps(bufnr)
+	local opts = bufnr ~= nil and { buffer = bufnr } or nil
 	for i = 1, #cache[bufnr].maps, 1 do
 		local map = cache[bufnr].maps[i]
-		local opts = bufnr ~= nil and { buffer = bufnr } or nil
 		vim.keymap.del(map[1], map[2], opts)
 	end
 end
@@ -94,7 +100,7 @@ local function setup_usr_cmds(bufnr)
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
-	if cfg.inline_surround.mappings.enable then
+	if cfg.inline_surround.mappings then
 		set_cached_keymap(
 			"n",
 			cfg.inline_surround.mappings.toggle,

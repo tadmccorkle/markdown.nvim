@@ -17,7 +17,8 @@ Tools for working with markdown files in Neovim.
 
 ## Features
 
-- Inline-style keybindings over vim motions
+- Inline-style
+  - Keybindings over vim motions / visual selection
   - Toggle, delete, and change emphasis and code spans
   - Configurable keybindings and emphasis indicators
 - Table of contents
@@ -112,12 +113,13 @@ A table of configuration options can optionally be passed to the `setup()` funct
 ```lua
 {
   inline_surround = {
+    -- disable all inline keymaps by setting mappings field to "false"
+    -- selectively disable keymaps by setting corresponding field to "false"
     mappings = {
-      enable = true, -- whether to enable inline keymaps
-      toggle = "gs", -- toggle inline style
-      toggle_line = "gss", -- line-wise toggle inline style
-      delete = "ds", -- delete emphasis surrounding cursor
-      change = "cs", -- change emphasis surrounding cursor
+      toggle = "gs", -- (string|boolean) toggle inline style
+      toggle_line = "gss", -- (string|boolean) line-wise toggle inline style
+      delete = "ds", -- (string|boolean) delete emphasis surrounding cursor
+      change = "cs", -- (string|boolean) change emphasis surrounding cursor
     },
     -- for the emphasis, strong, strikethrough, and code fields:
     -- * key: used to specify an inline style in toggle, delete, and change operations
