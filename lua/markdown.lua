@@ -4,6 +4,7 @@ local ts = vim.treesitter
 local OpFunc = require("markdown.opfunc")
 local config = require("markdown.config")
 local inline = require("markdown.inline")
+local link = require("markdown.link")
 local list = require("markdown.list")
 local notify = require("markdown.notify")
 local toc = require("markdown.toc")
@@ -56,6 +57,33 @@ local function set_keymaps()
 		{
 			silent = true,
 			desc = "Change emphasis around the cursor",
+		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_add_link)",
+		function()
+			return OpFunc("markdown.link", "add")
+		end,
+		{
+			expr = true,
+			silent = true,
+			desc = "Add link around a motion",
+		})
+	vim.keymap.set(
+		"x",
+		"<Plug>(markdown_add_link_visual)",
+		"<Esc>gv<Cmd>lua require'markdown.link'.add_visual()<CR>",
+		{
+			silent = true,
+			desc = "Add link around a visual selection",
+		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_follow_link)",
+		link.follow,
+		{
+			silent = true,
+			desc = "Follow link under the cursor",
 		})
 end
 
@@ -143,6 +171,33 @@ local function setup_usr_keymaps(cfg, bufnr)
 				desc = "Change emphasis around the cursor",
 			})
 	end
+
+	if cfg.link.mappings then
+		set_cached_keymap(
+			"n",
+			cfg.link.mappings.add,
+			"<Plug>(markdown_add_link)",
+			{
+				buffer = bufnr,
+				desc = "Add link around a motion",
+			})
+		set_cached_keymap(
+			"x",
+			cfg.link.mappings.add,
+			"<Plug>(markdown_add_link_visual)",
+			{
+				buffer = bufnr,
+				desc = "Add link around a visual selection",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.link.mappings.follow,
+			"<Plug>(markdown_follow_link)",
+			{
+				buffer = bufnr,
+				desc = "Follow link under the cursor",
+			})
+	end
 end
 
 local function check_compat()
@@ -159,10 +214,16 @@ local function check_compat()
 end
 
 local function on_attach(bufnr)
+	api.nvim_buf_set_var(bufnr, "markdown_nvim_attached", 1)
+
 	local cfg = config:get()
 
 	setup_usr_cmds(bufnr)
 	setup_usr_keymaps(cfg, bufnr)
+
+	if cfg.link.paste.enable then
+		link.register_paste_handler()
+	end
 
 	if cfg.on_attach ~= nil then
 		cfg.on_attach(bufnr)
@@ -171,13 +232,9 @@ end
 
 local group = api.nvim_create_augroup("markdown.nvim", {})
 
----@type table<integer, boolean>
-local attached = {}
-
 local function on_attach_cb(opts)
-	if not attached[opts.buf] then
+	if vim.b.markdown_nvim_attached ~= 1 then
 		on_attach(opts.buf)
-		attached[opts.buf] = true
 	end
 end
 

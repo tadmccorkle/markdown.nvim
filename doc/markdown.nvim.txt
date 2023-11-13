@@ -20,6 +20,10 @@ CONTENTS                                              *markdown.nvim.contents*
             Insert Items ....................... |markdown.lists.insert_item|
             Reset Numbering ................ |markdown.lists.reset_numbering|
             Toggle Tasks ....................... |markdown.lists.toggle_task|
+        Links .............................................. |markdown.links|
+            Add ........................................ |markdown.links.add|
+            Follow .................................. |markdown.links.follow|
+            Paste URLs ............................... |markdown.links.paste|
     Configuration .................................. |markdown.configuration|
 
 ================================================================================
@@ -38,6 +42,7 @@ USAGE                                                         *markdown.usage*
 * Inline Surround (|markdown.inline|)
 * Table of Contents (|markdown.toc|)
 * List Editing (|markdown.lists|)
+* Links (|markdown.links|)
 
 --------------------------------------------------------------------------------
 INLINE SURROUND                                              *markdown.inline*
@@ -214,6 +219,41 @@ TOGGLE TASKS                                      *markdown.lists.toggle_task*
 :MDTaskToggle           Toggles the task(s) on the current cursor line (normal
                         mode) or under selected lines (visual mode).
 
+--------------------------------------------------------------------------------
+LINKS                                                         *markdown.links*
+
+Link keymaps are set up after |markdown.nvim| is either configured with a call
+to |markdown.setup()| or registered as an |nvim-treesitter| module (see
+|markdown.configuration|). |<Plug>| mappings are created regardless of
+configuration (see |markdown.plug_mappings|).
+
+ADD                                                       *markdown.links.add*
+
+Links can be added over vim motions in normal and visual mode. Links are only
+added when the motion is within one inline block (i.e., not over list markers,
+blank lines, etc.). In normal mode this is done with *gl{motion}* and over a
+visual selection with *gl*.
+
+FOLLOW                                                 *markdown.links.follow*
+
+Follow links under the cursor in normal mode with *gx*. The following link
+destinations are supported for in-editor navigation:
+
+* `#destination`: Headings in the current buffer
+* `./destination`: Files and directories relative to the current buffer
+* `/destination`: Files and directories relative to the working directory
+* Other absolute path destinations are opened if they exist
+
+Link destination URLs that begin with `https://`, `http://`, and `www.` are
+also supported and are opened in the browser.
+
+PASTE URLS                                              *markdown.links.paste*
+
+URLs can be pasted over a visual selection (not a visual block selection) from
+the system clipboard as markdown links. The visual selection must be contained
+by one inline block (i.e., conversion to a link will not occur if the visual
+selection includes blank lines, list markers, etc.).
+
 ================================================================================
 CONFIGURATION                                         *markdown.configuration*
 
@@ -232,14 +272,18 @@ call:
         })
 <
                                                       *markdown.plug_mappings*
-The following plug |<Plug>| mappings are used by |markdown.inline| and are
-always set up, so they can be used without explicit configuration:
+The following plug |<Plug>| mappings are used by |markdown.inline| and
+|markdown.link|. They are always set up and can be used without explicit
+configuration:
 >vim
         <Plug>(markdown_toggle_emphasis)
         <Plug>(markdown_toggle_emphasis_line)
         <Plug>(markdown_toggle_emphasis_visual)
         <Plug>(markdown_delete_emphasis)
         <Plug>(markdown_change_emphasis)
+        <Plug>(markdown_add_link)
+        <Plug>(markdown_add_link_visual)
+        <Plug>(markdown_follow_link)
 <
 markdown.setup({opts})                                      *markdown.setup()*
     Both the standalone plugin and |nvim-treesitter| module configurations
@@ -269,6 +313,18 @@ markdown.setup({opts})                                      *markdown.setup()*
                     key = "c",
                     txt = "`",
                 },
+            },
+            link = {
+                paste = {
+                    enable = true,
+                },
+                mappings = {
+                    add = "gl",
+                    follow = "gx",
+                },
+            },
+            hooks = {
+                follow_link = nil,
             },
             on_attach = nil,
         })
@@ -330,6 +386,41 @@ markdown.setup({opts})                                      *markdown.setup()*
                             * strong: "**"
                             * strikethrough: "~~"
                             * code: "`"
+
+                                                  *markdown.config.link.paste*
+    link.paste: ~
+        Defines |markdown.links.paste| behavior for pasting URLs from the
+        clipboard.
+
+        Fields:
+            * enable        enables URL-to-link conversion on paste
+                            Default: true
+
+                                               *markdown.config.link.mappings*
+    link.mappings: ~
+        Defines |markdown.links| mappings. Mappings can be selectively
+        disabled by setting the corresponding field to "false". Disable all
+        link mappings by setting the entire field to "false".
+
+        Fields:
+            * add           begins |{motion}| to toggle emphasis
+                            Default: "gl"
+                            See: |markdown.links.add|
+
+            * follow        follows link under the cursor
+                            Default: "gx"
+                            See: |markdown.links.follow|
+
+                                                       *markdown.config.hooks*
+    hooks: ~
+        Functions that allow for overriding or extending default behavior.
+        Fallback function with default behavior is provided as argument.
+
+        Fields:
+            * follow_link   called when following links with `dest` as the
+                            link destination
+                            Signature: fun(dest: string, fallback: fun())
+                            Default: nil
 
                                                    *markdown.config.on_attach*
     on_attach: ~

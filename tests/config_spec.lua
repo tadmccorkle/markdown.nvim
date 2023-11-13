@@ -15,6 +15,16 @@ local function assert_buf_eq(bufnr, lines)
 	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
 end
 
+local function provide_input(trigger, input)
+	-- HACK: is there a more appropriate way to do this?
+	-- input consumes remaining characters from a mapping,
+	-- so while this feels a little weird, it works...
+	local map = "provideinput"
+	vim.keymap.set({ "n", "x" }, map, trigger .. input .. "<CR>", { remap = true })
+	vim.cmd("normal " .. map)
+	vim.keymap.del({ "n", "x" }, map)
+end
+
 describe("config", function()
 	vim.cmd("runtime plugin/markdown.lua")
 
@@ -148,6 +158,88 @@ describe("config", function()
 		vim.cmd("normal ft")
 		vim.cmd("normal gsiwc")
 		assert_buf_eq(bufnr, { "~```___test___```~" })
+	end)
+
+	it("can disable all link mappings", function()
+		require("markdown").setup({ link = { mappings = false } })
+
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		provide_input("gliw", "destination")
+		assert_buf_eq(bufnr, { "test" })
+
+		set_buf(bufnr, { "[test](#test)", "", "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gx")
+		assert.are.same({ 1, 1 }, api.nvim_win_get_cursor(0))
+	end)
+
+	it("can disable link mappings selectively", function()
+		require("markdown").setup({ link = { mappings = { add = false } } })
+
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		provide_input("gliw", "destination")
+		assert_buf_eq(bufnr, { "test" })
+
+		set_buf(bufnr, { "[test](#test)", "", "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gx")
+		assert.are.same({ 3, 0 }, api.nvim_win_get_cursor(0))
+	end)
+
+	it("can change link mappings", function()
+		require("markdown").setup({
+			link = {
+				mappings = {
+					add = "yx",
+					follow = "yy",
+				},
+			},
+		})
+
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		provide_input("yxiw", "destination")
+		assert_buf_eq(bufnr, { "[test](destination)" })
+
+		set_buf(bufnr, { "[test](#test)", "", "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal yy")
+		assert.are.same({ 3, 0 }, api.nvim_win_get_cursor(0))
+	end)
+
+	it("can extend link following behavior", function()
+		local last_dest
+		require("markdown").setup({
+			hooks = {
+				follow_link = function(dest, fallback)
+					last_dest = dest
+					if dest ~= "#1" then
+						fallback()
+					end
+				end,
+			},
+		})
+
+		local bufnr = new_md_buf()
+		set_buf(bufnr, { "[test](#1)", "[test](#2)", "# 1", "# 2" })
+
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gx")
+		assert.are.same({ 1, 1 }, api.nvim_win_get_cursor(0))
+		assert.are.equal("#1", last_dest)
+
+		api.nvim_win_set_cursor(0, { 2, 1 })
+		vim.cmd("normal gx")
+		assert.are.same({ 4, 0 }, api.nvim_win_get_cursor(0))
+		assert.are.equal("#2", last_dest)
 	end)
 
 	it("calls `on_attach`", function()

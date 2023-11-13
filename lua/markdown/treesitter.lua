@@ -19,12 +19,25 @@ end
 --- Finds parent of `node` satisfying `predicate`.
 ---@param node TSNode
 ---@param predicate fun(node: TSNode): boolean
+---@return TSNode|nil
 function M.find_parent(node, predicate)
 	local p = node:parent()
 	while p ~= nil and not predicate(p) do
 		p = p:parent()
 	end
 	return p
+end
+
+--- Finds immediate child of `node` satisfying `predicate`.
+---@param node TSNode
+---@param predicate fun(node: TSNode): boolean
+---@return TSNode|nil
+function M.find_child(node, predicate)
+	for child in node:iter_children() do
+		if predicate(child) then
+			return child
+		end
+	end
 end
 
 --- Gets the number of `node`'s children that satisfy `predicate`.

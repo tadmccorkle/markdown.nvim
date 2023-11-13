@@ -13,8 +13,21 @@
 ---@field strikethrough KeyToTxt
 ---@field code KeyToTxt
 
+---@class LinkMappings
+---@field add string|boolean
+---@field follow string|boolean
+
+---@class LinkOpts
+---@field paste { enable: boolean }
+---@field mappings LinkMappings
+
+---@class HookOpts
+---@field follow_link fun(dest: string, fallback: fun())|nil
+
 ---@class MarkdownConfig
 ---@field inline_surround InlineSurroundOpts
+---@field link LinkOpts
+---@field hooks HookOpts
 ---@field on_attach fun(bufnr: integer)|nil
 
 ---@private
@@ -48,6 +61,18 @@ local default_cfg = {
 			key = "c",
 			txt = "`",
 		},
+	},
+	link = {
+		paste = {
+			enable = true,
+		},
+		mappings = {
+			add = "gl",
+			follow = "gx",
+		},
+	},
+	hooks = {
+		follow_link = nil,
 	},
 	on_attach = nil,
 }

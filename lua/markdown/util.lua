@@ -29,6 +29,25 @@ function M.try_get_char_input()
 	return true, char
 end
 
+---@param prompt string|nil
+---@return boolean, string|nil
+function M.try_get_input(prompt)
+	prompt = prompt or ""
+	local ok, input = pcall(vim.fn.input, prompt)
+	if not ok or input == "" then
+		return false, nil
+	end
+	return true, input
+end
+
+--- Gets text from a single line in the current buffer.
+---@param row integer zero-based row
+---@param col integer zero-based column
+---@param len integer number of characters to get
+function M.get_text(row, col, len)
+	return api.nvim_buf_get_text(0, row, col, row, col + len, {})[1]
+end
+
 --- Inserts text on a single line in the current buffer.
 ---@param row integer zero-based row for insertion
 ---@param col integer zero-based column for insertion
@@ -91,6 +110,47 @@ end
 function M.range_contains_position(range, pos)
 	return (range[1] < pos[1] or (range[1] == pos[1] and range[2] <= pos[2]))
 		and (range[3] > pos[1] or (range[3] == pos[1] and range[4] >= pos[2]))
+end
+
+---@param a_row integer
+---@param a_col integer
+---@param b_row integer
+---@param b_col integer
+---@return integer
+--- 1: a > b
+--- 0: a == b
+--- -1: a < b
+local function cmp_pos(a_row, a_col, b_row, b_col)
+	if a_row == b_row then
+		if a_col > b_col then
+			return 1
+		elseif a_col < b_col then
+			return -1
+		else
+			return 0
+		end
+	elseif a_row > b_row then
+		return 1
+	end
+	return -1
+end
+
+--- Determines if two ranges overlap.
+---@param r1 R4
+---@param r2 R4
+---@return boolean
+function M.ranges_overlap(r1, r2)
+	-- r1 is above r2
+	if cmp_pos(r1[3], r1[4], r2[1], r2[2]) ~= 1 then
+		return false
+	end
+
+	-- r1 is below r2
+	if cmp_pos(r1[1], r1[2], r2[3], r2[4]) ~= -1 then
+		return false
+	end
+
+	return true
 end
 
 --- Gets the zero-based start and end lines from user command range arguments, defaulting to the

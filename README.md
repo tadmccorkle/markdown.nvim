@@ -13,6 +13,7 @@ Tools for working with markdown files in Neovim.
   - [Inline surround](#inline-surround)
   - [Table of contents](#table-of-contents)
   - [List editing](#list-editing)
+  - [Links](#links)
 - [*nvim-treesitter* module](#nvim-treesitter-module)
 
 ## Features
@@ -28,6 +29,10 @@ Tools for working with markdown files in Neovim.
   - Insert new items
   - Auto-number ordered lists
   - Toggle task list items (GFM)
+- Links
+  - Add links over vim motions / visual selection
+  - Follow links under the cursor
+  - Paste URLs from clipboard over visual selection as links
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/) module support
 
 ### Planned features
@@ -37,9 +42,7 @@ Tools for working with markdown files in Neovim.
   - Specify list marker type
   - Omit section with HTML tag
 - Links
-  - Create links around highlighted text (visual mode)
-  - Paste link/image from clipboard (visual mode)
-  - Follow links
+  - Completion when adding heading and relative file links
 - Tables (GFM)
   - Formatting
   - Insert rows and columns
@@ -140,6 +143,23 @@ A table of configuration options can optionally be passed to the `setup()` funct
       txt = "`",
     },
   },
+  link = {
+    paste = {
+      enable = true, -- whether to convert URLs to links on paste
+    },
+    -- disable all link keymaps by setting mappings field to "false"
+    -- selectively disable keymaps by setting corresponding field to "false"
+    mappings = {
+      add = "gl", -- (string|boolean) add link
+      follow = "gx", -- (string|boolean) follow link
+    }
+  },
+  -- hook functions allow for overriding or extending default behavior
+  -- fallback function with default behavior is provided as argument
+  hooks = {
+    -- called when following links with `dest` as the link destination
+    follow_link = nil, -- fun(dest: string, fallback: fun())
+  },
   on_attach = nil, -- (fun(bufnr: integer)) callback when plugin attaches to a buffer
 }
 ```
@@ -180,6 +200,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 - [Inline Surround](#inline-surround)
 - [Table of Contents](#table-of-contents)
 - [List Editing](#list-editing)
+- [Links](#links)
 
 ### Inline surround
 
@@ -299,6 +320,27 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 - #### Toggle tasks <!-- omit in toc -->
 
   The `:MDTaskToggle` command toggles the task(s) on the current cursor line (normal mode) or under the current visual selection (visual mode).
+
+### Links
+
+- #### Add <!-- omit in toc -->
+
+  Links can be added over vim motions in normal and visual mode. Links are only added when the motion is within one inline block (i.e., not over list markers, blank lines, etc.). In normal mode this is done with **gl{motion}** and over a visual selection with **gl**.
+
+- #### Follow <!-- omit in toc -->
+
+  Follow links under the cursor in normal mode with **gx**. Supported in-editor navigation:
+
+  - `#destination`: headings in the current buffer
+  - `./destination`: files and directories relative to the current buffer
+  - `/destination`: files and directories relative to the working directory
+  - Other absolute path destinations are opened if they exist
+
+  URL destinations are opened in the browser.
+
+- #### Paste URLs <!-- omit in toc -->
+
+  URLs can be pasted over a visual selection (not a visual block selection) from the system clipboard as markdown links. The visual selection must be contained by one inline block (i.e., conversion to a link will not occur if the visual selection includes blank lines, list markers, etc.).
 
 ## *nvim-treesitter* module
 
