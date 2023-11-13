@@ -152,6 +152,7 @@ end
 ---@param dest string
 ---@param root TSNode
 local function follow_heading_link(dest, root)
+	dest = string.sub(dest, 2)
 	for _, match, _ in heading_query:iter_matches(root, 0, 0, -1) do
 		local _, content = next(match)
 		local _, heading = next(match)
@@ -193,9 +194,24 @@ local function open_path(path)
 		path = vim.fn.getcwd() .. path
 	end
 
+	-- try to navigate to headings in the linked file
+	local inner_dest
+	local s = string.find(path, "%.md#[%w_-]+$")
+	if s ~= nil then
+		inner_dest = string.sub(path, s + 3)
+		path = string.sub(path, 1, s + 2)
+	end
+
 	local normalized = vim.fs.normalize(path)
 	if vim.fn.filereadable(normalized) ~= 0 or vim.fn.isdirectory(normalized) ~= 0 then
 		vim.cmd.edit(path)
+
+		if inner_dest ~= nil then
+			local p = ts.get_parser(0, "markdown")
+			if p ~= nil then
+				follow_heading_link(inner_dest, p:parse()[1]:root())
+			end
+		end
 	else
 		notify.info("path not found")
 	end
@@ -217,7 +233,6 @@ function M.follow()
 
 	local function follow_link()
 		if vim.startswith(dest, "#") then
-			dest = string.sub(dest, 2)
 			follow_heading_link(dest, t:root())
 		elseif M.is_url(dest) then
 			open_url(dest)
