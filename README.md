@@ -35,7 +35,6 @@ Tools for working with markdown files in Neovim.
 - Table of contents
   - Configurable default list marker type
   - Specify list marker type
-  - Configure omit heading tag
   - Omit section with HTML tag
 - Links
   - Create links around highlighted text (visual mode)
