@@ -12,7 +12,7 @@ Tools for working with markdown files in Neovim.
 - [Usage](#usage)
   - [Inline surround](#inline-surround)
   - [Table of contents](#table-of-contents)
-  - [List editing](#list-editing)
+  - [Lists](#lists)
   - [Links](#links)
 - [*nvim-treesitter* module](#nvim-treesitter-module)
 
@@ -197,7 +197,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
 - [Inline Surround](#inline-surround)
 - [Table of Contents](#table-of-contents)
-- [List Editing](#list-editing)
+- [Lists](#lists)
 - [Links](#links)
 
 ### Inline surround
@@ -301,7 +301,7 @@ Headings can be omitted from the TOC by flagging them with `<!-- omit in toc -->
 ## heading 2
 ```
 
-### List editing
+### Lists
 
 Most list editing commands are intended to be invoked by custom keymaps (see notes on the `on_attach` field under [configuration](#configuration)).
 
