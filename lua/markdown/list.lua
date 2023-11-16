@@ -87,7 +87,6 @@ local function get_curr_eol_pos()
 	return curr_row, curr_eol
 end
 
----@diagnostic disable-next-line: duplicate-doc-alias
 ---@enum rel_pos relative position
 local REL_POS = {
 	above = 1,

@@ -232,12 +232,6 @@ end
 
 local group = api.nvim_create_augroup("markdown.nvim", {})
 
-local function on_attach_cb(opts)
-	if vim.b.markdown_nvim_attached ~= 1 then
-		on_attach(opts.buf)
-	end
-end
-
 --- Setup with user options.
 ---@param cfg? MarkdownConfig
 function M.setup(cfg)
@@ -250,8 +244,12 @@ function M.setup(cfg)
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("FileType", {
 		group = group,
-		pattern = ts.language.get_filetypes("markdown"),
-		callback = on_attach_cb,
+		callback = function(opts)
+			---@diagnostic disable-next-line: undefined-field
+			if vim.b.markdown_nvim_attached ~= 1 then
+				on_attach(opts.buf)
+			end
+		end,
 	})
 end
 

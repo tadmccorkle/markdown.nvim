@@ -62,6 +62,7 @@ local function paste_handler(overridden)
 	return function(lines, phase)
 		local mode = api.nvim_get_mode().mode
 		local is_visual = mode == "v" or mode == "V"
+		---@diagnostic disable-next-line: undefined-field
 		local is_md = vim.b.markdown_nvim_attached == 1
 		if not (is_visual and is_md and #lines == 1) then
 			overridden(lines, phase)
@@ -232,6 +233,9 @@ function M.follow()
 	end
 
 	local dest_node = md_ts.find_child(link, is_link_dest)
+	if dest_node == nil then
+		return
+	end
 	local dest = ts.get_node_text(dest_node, 0, nil)
 
 	local function follow_link()

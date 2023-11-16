@@ -1,4 +1,4 @@
----@diagnostic disable: duplicate-doc-field, duplicate-set-field
+---@diagnostic disable: duplicate-doc-field
 
 ---@class Section
 ---@field name string
