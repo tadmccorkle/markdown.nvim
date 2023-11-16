@@ -309,7 +309,7 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
   Use the `:MDListItemBelow` and `:MDListItemAbove` commands to insert a new list item below and above the current cursor position, respectively. Both commands maintain the same indentation and list marker as the item under the cursor. The commands do nothing if the cursor is not within an existing list.
 
-  When inserting an item in an ordered list, numbering is reset automatically for that list. To reset numbering for all ordered lists in a buffer see [reset numbering](#reset-numbering).
+  When inserting an item in an ordered list, numbering is reset automatically for that list.
 
 - #### Reset numbering <!-- omit in toc -->
 
