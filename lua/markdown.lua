@@ -1,13 +1,4 @@
 local api = vim.api
-local ts = vim.treesitter
-
-local OpFunc = require("markdown.opfunc")
-local config = require("markdown.config")
-local inline = require("markdown.inline")
-local link = require("markdown.link")
-local list = require("markdown.list")
-local notify = require("markdown.notify")
-local toc = require("markdown.toc")
 
 local M = {}
 
@@ -16,7 +7,7 @@ local function set_keymaps()
 		"n",
 		"<Plug>(markdown_toggle_emphasis)",
 		function()
-			return OpFunc("markdown.inline", "toggle_emphasis")
+			return require("markdown.opfunc")("markdown.inline", "toggle_emphasis")
 		end,
 		{
 			expr = true,
@@ -45,7 +36,7 @@ local function set_keymaps()
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_delete_emphasis)",
-		inline.delete_surrounding_emphasis,
+		"<Cmd>lua require'markdown.inline'.delete_surrounding_emphasis()<CR>",
 		{
 			silent = true,
 			desc = "Delete emphasis around the cursor",
@@ -53,7 +44,7 @@ local function set_keymaps()
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_change_emphasis)",
-		inline.change_surrounding_emphasis,
+		"<Cmd>lua require'markdown.inline'.change_surrounding_emphasis()<CR>",
 		{
 			silent = true,
 			desc = "Change emphasis around the cursor",
@@ -62,7 +53,7 @@ local function set_keymaps()
 		"n",
 		"<Plug>(markdown_add_link)",
 		function()
-			return OpFunc("markdown.link", "add")
+			return require("markdown.opfunc")("markdown.link", "add")
 		end,
 		{
 			expr = true,
@@ -80,7 +71,7 @@ local function set_keymaps()
 	vim.keymap.set(
 		"n",
 		"<Plug>(markdown_follow_link)",
-		link.follow,
+		"<Cmd>lua require'markdown.link'.follow()<CR>",
 		{
 			silent = true,
 			desc = "Follow link under the cursor",
@@ -121,7 +112,10 @@ local function del_cached_keymaps(bufnr)
 end
 
 local function setup_usr_cmds(bufnr)
+	local toc = require("markdown.toc")
 	create_cached_buf_usr_cmd(bufnr, "MDInsertToc", toc.insert_toc, true)
+
+	local list = require("markdown.list")
 	create_cached_buf_usr_cmd(bufnr, "MDListItemBelow", list.insert_list_item_below, false)
 	create_cached_buf_usr_cmd(bufnr, "MDListItemAbove", list.insert_list_item_above, false)
 	create_cached_buf_usr_cmd(bufnr, "MDResetListNumbering", list.reset_list_numbering, false)
@@ -200,14 +194,14 @@ local function setup_usr_keymaps(cfg, bufnr)
 	end
 end
 
-local function check_compat()
+local function check_deps()
 	local has_markdown = #(api.nvim_get_runtime_file("parser/markdown.so", true)) > 0
 	local has_markdown_inline = #(api.nvim_get_runtime_file("parser/markdown_inline.so", true)) > 0
 	if not (has_markdown and has_markdown_inline) then
 		local err = "Missing required tree-sitter parser:"
 		if not has_markdown then err = err .. " 'markdown'" end
 		if not has_markdown_inline then err = err .. " 'markdown_inline'" end
-		notify.error(err)
+		require("markdown.notify").error(err)
 		return false
 	end
 	return true
@@ -216,12 +210,13 @@ end
 local function on_attach(bufnr)
 	api.nvim_buf_set_var(bufnr, "markdown_nvim_attached", 1)
 
-	local cfg = config:get()
+	local cfg = require("markdown.config"):get()
 
 	setup_usr_cmds(bufnr)
 	setup_usr_keymaps(cfg, bufnr)
 
 	if cfg.link.paste.enable then
+		local link = require("markdown.link")
 		link.register_paste_handler()
 	end
 
@@ -235,15 +230,16 @@ local group = api.nvim_create_augroup("markdown.nvim", {})
 --- Setup with user options.
 ---@param cfg? MarkdownConfig
 function M.setup(cfg)
-	if not check_compat() then
+	if not check_deps() then
 		return
 	end
 
-	cfg = config:setup(cfg)
+	cfg = require("markdown.config"):setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("FileType", {
 		group = group,
+		pattern = vim.treesitter.language.get_filetypes("markdown"),
 		callback = function(opts)
 			---@diagnostic disable-next-line: undefined-field
 			if vim.b.markdown_nvim_attached ~= 1 then
@@ -263,14 +259,14 @@ function M.init()
 	nvim_ts.define_modules({
 		markdown = {
 			attach = function(bufnr, _)
-				if not check_compat() then
+				if not check_deps() then
 					return
 				end
 
 				local mod_cfgs = require("nvim-treesitter.configs")
 				local mod_cfg = mod_cfgs.get_module("markdown")
 				if mod_cfg ~= nil then
-					config:setup(mod_cfg --[[@as MarkdownConfig]])
+					require("markdown.config"):setup(mod_cfg --[[@as MarkdownConfig]])
 				end
 
 				if cache == nil then
