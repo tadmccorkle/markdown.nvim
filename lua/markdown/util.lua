@@ -29,25 +29,6 @@ function M.try_get_char_input()
 	return true, char
 end
 
----@param prompt string|nil
----@param completion (fun(a: string, c: string): string[])|nil
----@return boolean, string|nil
-function M.try_get_input(prompt, completion)
-	prompt = prompt or ""
-
-	local ok, input
-	if completion ~= nil then
-		ok, input = pcall(vim.fn["markdown_nvim#input"], prompt, "", completion)
-	else
-		ok, input = pcall(vim.fn.input, prompt)
-	end
-
-	if not ok or input == "" then
-		return false, nil
-	end
-	return true, input
-end
-
 --- Gets text from a single line in the current buffer.
 ---@param row integer zero-based row
 ---@param col integer zero-based column
