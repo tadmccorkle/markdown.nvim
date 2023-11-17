@@ -24,4 +24,4 @@ jobs:
             -c 'q'
       - name: Run tests
         run: |
-          nvim --headless --noplugin -c 'packadd plenary.nvim' -c "PlenaryBustedDirectory tests/ { minimal_init = 'tests/minimal_init.vim' }"
+          nvim --headless --noplugin -c 'packadd plenary.nvim' -c "PlenaryBustedDirectory tests/ { minimal_init = 'tests/init.vim' }"
