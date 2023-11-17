@@ -16,4 +16,5 @@ jobs:
         with:
           neovim: true
       - name: Run tests
-        run: ./tests/scripts/run
+        run: |
+          nvim --headless -u ./tests/init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init.lua'}"
