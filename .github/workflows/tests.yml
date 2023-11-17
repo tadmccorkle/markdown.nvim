@@ -15,13 +15,6 @@ jobs:
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-      - name: Prepare test environment
-        run: |
-          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
-          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter ~/.local/share/nvim/site/pack/vendor/start/nvim-treesitter
-          nvim --headless \
-            -c 'TSInstallSync markdown markdown_inline' \
-            -c 'q'
       - name: Run tests
         run: |
-          nvim --headless --noplugin -c 'packadd plenary.nvim' -c "PlenaryBustedDirectory tests/ { minimal_init = 'tests/init.vim' }"
+          nvim --headless -u ./tests/init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init.lua'}"
