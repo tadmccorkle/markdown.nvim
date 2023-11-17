@@ -1,30 +1,27 @@
----@class InlineSurroundMappings
----@field toggle string|boolean
----@field toggle_line string|boolean
----@field delete string|boolean
----@field change string|boolean
+---@class MappingOpts
+---@field inline_surround_toggle string|boolean
+---@field inline_surround_toggle_line string|boolean
+---@field inline_surround_delete string|boolean
+---@field inline_surround_change string|boolean
+---@field link_add string|boolean
+---@field link_follow string|boolean
 
 ---@alias KeyToTxt { key: string , txt: string }
 
 ---@class InlineSurroundOpts
----@field mappings InlineSurroundMappings
 ---@field emphasis KeyToTxt
 ---@field strong KeyToTxt
 ---@field strikethrough KeyToTxt
 ---@field code KeyToTxt
 
----@class LinkMappings
----@field add string|boolean
----@field follow string|boolean
-
 ---@class LinkOpts
 ---@field paste { enable: boolean }
----@field mappings LinkMappings
 
 ---@class HookOpts
 ---@field follow_link fun(dest: string, fallback: fun())|nil
 
 ---@class MarkdownConfig
+---@field mappings MappingOpts|boolean
 ---@field inline_surround InlineSurroundOpts
 ---@field link LinkOpts
 ---@field hooks HookOpts
@@ -38,13 +35,15 @@ MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
 ---@type MarkdownConfig
 local default_cfg = {
+	mappings = {
+		inline_surround_toggle = "gs",
+		inline_surround_toggle_line = "gss",
+		inline_surround_delete = "ds",
+		inline_surround_change = "cs",
+		link_add = "gl",
+		link_follow = "gx",
+	},
 	inline_surround = {
-		mappings = {
-			toggle = "gs",
-			toggle_line = "gss",
-			delete = "ds",
-			change = "cs",
-		},
 		emphasis = {
 			key = "i",
 			txt = "*",
@@ -65,10 +64,6 @@ local default_cfg = {
 	link = {
 		paste = {
 			enable = true,
-		},
-		mappings = {
-			add = "gl",
-			follow = "gx",
 		},
 	},
 	hooks = {

@@ -112,15 +112,17 @@ A table of configuration options can optionally be passed to the `setup()` funct
 
 ```lua
 {
+  -- disable all keymaps by setting mappings field to 'false'
+  -- selectively disable keymaps by setting corresponding field to 'false'
+  mappings = {
+    inline_surround_toggle = "gs", -- (string|boolean) toggle inline style
+    inline_surround_toggle_line = "gss", -- (string|boolean) line-wise toggle inline style
+    inline_surround_delete = "ds", -- (string|boolean) delete emphasis surrounding cursor
+    inline_surround_change = "cs", -- (string|boolean) change emphasis surrounding cursor
+    link_add = "gl", -- (string|boolean) add link
+    link_follow = "gx", -- (string|boolean) follow link
+  },
   inline_surround = {
-    -- disable all inline keymaps by setting mappings field to "false"
-    -- selectively disable keymaps by setting corresponding field to "false"
-    mappings = {
-      toggle = "gs", -- (string|boolean) toggle inline style
-      toggle_line = "gss", -- (string|boolean) line-wise toggle inline style
-      delete = "ds", -- (string|boolean) delete emphasis surrounding cursor
-      change = "cs", -- (string|boolean) change emphasis surrounding cursor
-    },
     -- for the emphasis, strong, strikethrough, and code fields:
     -- * key: used to specify an inline style in toggle, delete, and change operations
     -- * txt: text inserted when toggling or changing to the corresponding inline style
@@ -145,12 +147,6 @@ A table of configuration options can optionally be passed to the `setup()` funct
     paste = {
       enable = true, -- whether to convert URLs to links on paste
     },
-    -- disable all link keymaps by setting mappings field to "false"
-    -- selectively disable keymaps by setting corresponding field to "false"
-    mappings = {
-      add = "gl", -- (string|boolean) add link
-      follow = "gx", -- (string|boolean) follow link
-    }
   },
   -- hook functions allow for overriding or extending default behavior
   -- fallback function with default behavior is provided as argument
@@ -202,7 +198,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
 ### Inline surround
 
-**markdown.nvim** provides inline keymaps to toggle, delete, and change emphasis and code spans, referred to in this section as "styles". The supported styles and the default keys used to refer to them are:
+**markdown.nvim** provides keymaps to toggle, delete, and change emphasis and code spans, referred to in this section as "styles". The supported styles and the default keys used to refer to them are:
 
 | Style                                   | Key |
 |:----------------------------------------|:---:|

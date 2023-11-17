@@ -123,10 +123,10 @@ local function setup_usr_cmds(bufnr)
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
-	if cfg.inline_surround.mappings then
+	if cfg.mappings then
 		set_cached_keymap(
 			"n",
-			cfg.inline_surround.mappings.toggle,
+			cfg.mappings.inline_surround_toggle,
 			"<Plug>(markdown_toggle_emphasis)",
 			{
 				buffer = bufnr,
@@ -134,7 +134,7 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"n",
-			cfg.inline_surround.mappings.toggle_line,
+			cfg.mappings.inline_surround_toggle_line,
 			"<Plug>(markdown_toggle_emphasis_line)",
 			{
 				buffer = bufnr,
@@ -142,7 +142,7 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"x",
-			cfg.inline_surround.mappings.toggle,
+			cfg.mappings.inline_surround_toggle,
 			"<Plug>(markdown_toggle_emphasis_visual)",
 			{
 				buffer = bufnr,
@@ -150,7 +150,7 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"n",
-			cfg.inline_surround.mappings.delete,
+			cfg.mappings.inline_surround_delete,
 			"<Plug>(markdown_delete_emphasis)",
 			{
 				buffer = bufnr,
@@ -158,18 +158,15 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"n",
-			cfg.inline_surround.mappings.change,
+			cfg.mappings.inline_surround_change,
 			"<Plug>(markdown_change_emphasis)",
 			{
 				buffer = bufnr,
 				desc = "Change emphasis around the cursor",
 			})
-	end
-
-	if cfg.link.mappings then
 		set_cached_keymap(
 			"n",
-			cfg.link.mappings.add,
+			cfg.mappings.link_add,
 			"<Plug>(markdown_add_link)",
 			{
 				buffer = bufnr,
@@ -177,7 +174,7 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"x",
-			cfg.link.mappings.add,
+			cfg.mappings.link_add,
 			"<Plug>(markdown_add_link_visual)",
 			{
 				buffer = bufnr,
@@ -185,7 +182,7 @@ local function setup_usr_keymaps(cfg, bufnr)
 			})
 		set_cached_keymap(
 			"n",
-			cfg.link.mappings.follow,
+			cfg.mappings.link_follow,
 			"<Plug>(markdown_follow_link)",
 			{
 				buffer = bufnr,

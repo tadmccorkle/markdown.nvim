@@ -47,9 +47,9 @@ USAGE                                                         *markdown.usage*
 --------------------------------------------------------------------------------
 INLINE SURROUND                                              *markdown.inline*
 
-|markdown.nvim| provides inline keymaps to toggle, delete, and change emphasis
-and code spans, which will also be referred to in this section as "styles".
-The supported styles and the default keys used to refer to them are:
+|markdown.nvim| provides keymaps to toggle, delete, and change emphasis and
+code spans, which will also be referred to in this section as "styles". The
+supported styles and the default keys used to refer to them are:
 
 * emphasis (typically rendered in italic)   "i"
 * strong (typically rendered in bold)       "b"
@@ -290,13 +290,15 @@ markdown.setup({opts})                                      *markdown.setup()*
     accept the same table argument:
 >lua
         require("markdown").setup({
+            mappings = {
+                inline_surround_toggle = "gs",
+                inline_surround_toggle_line = "gss",
+                inline_surround_delete = "ds",
+                inline_surround_change = "cs",
+                link_add = "gl",
+                link_follow = "gx",
+            },
             inline_surround = {
-                mappings = {
-                    toggle = "gs",
-                    toggle_line = "gss",
-                    delete = "ds",
-                    change = "cs",
-                },
                 emphasis = {
                     key = "i",
                     txt = "*",
@@ -318,10 +320,6 @@ markdown.setup({opts})                                      *markdown.setup()*
                 paste = {
                     enable = true,
                 },
-                mappings = {
-                    add = "gl",
-                    follow = "gx",
-                },
             },
             hooks = {
                 follow_link = nil,
@@ -329,28 +327,37 @@ markdown.setup({opts})                                      *markdown.setup()*
             on_attach = nil,
         })
 <
-                                    *markdown.config.inline_surround.mappings*
-    inline_surround.mappings: ~
-        Defines |markdown.inline| mappings. Mappings can be selectively
-        disabled by setting the corresponding field to "false". Disable all
-        inline mappings by setting the entire field to "false".
+                                                    *markdown.config.mappings*
+    mappings: ~
+        Defines keymaps. Mappings can be selectively disabled by setting the
+        corresponding field to "false". Disable all mappings by setting the
+        entire field to "false".
 
         Fields:
-            * toggle        begins |{motion}| to toggle emphasis
-                            Default: "gs"
-                            See: |markdown.inline.toggle|
+            * inline_surround_toggle        begins |{motion}| to toggle
+                                            emphasis
+                                            Default: "gs"
+                                            See: |markdown.inline.toggle|
 
-            * toggle_line   toggles emphasis around a line
-                            Default: "gss"
-                            See: |markdown.inline.toggle|
+            * inline_surround_toggle_line   toggles emphasis around a line
+                                            Default: "gss"
+                                            See: |markdown.inline.toggle|
 
-            * delete        deletes emphasis around the cursor
-                            Default: "ds"
-                            See: |markdown.inline.delete|
+            * inline_surround_delete        deletes emphasis around the cursor
+                                            Default: "ds"
+                                            See: |markdown.inline.delete|
 
-            * change        changes emphasis around the cursor
-                            Default: "cs"
-                            See: |markdown.inline.change|
+            * inline_surround_change        changes emphasis around the cursor
+                                            Default: "cs"
+                                            See: |markdown.inline.change|
+
+            * link_add                      begins |{motion}| to add link
+                                            Default: "gl"
+                                            See: |markdown.links.add|
+
+            * link_follow                   follows link under the cursor
+                                            Default: "gx"
+                                            See: |markdown.links.follow|
 
                                     *markdown.config.inline_surround.emphasis*
                                       *markdown.config.inline_surround.strong*
@@ -395,21 +402,6 @@ markdown.setup({opts})                                      *markdown.setup()*
         Fields:
             * enable        enables URL-to-link conversion on paste
                             Default: true
-
-                                               *markdown.config.link.mappings*
-    link.mappings: ~
-        Defines |markdown.links| mappings. Mappings can be selectively
-        disabled by setting the corresponding field to "false". Disable all
-        link mappings by setting the entire field to "false".
-
-        Fields:
-            * add           begins |{motion}| to toggle emphasis
-                            Default: "gl"
-                            See: |markdown.links.add|
-
-            * follow        follows link under the cursor
-                            Default: "gx"
-                            See: |markdown.links.follow|
 
                                                        *markdown.config.hooks*
     hooks: ~

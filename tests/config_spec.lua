@@ -22,8 +22,8 @@ describe("config", function()
 		require("markdown.config"):reset()
 	end)
 
-	it("can disable all inline surround mappings", function()
-		require("markdown").setup({ inline_surround = { mappings = false } })
+	it("can disable all mappings", function()
+		require("markdown").setup({ mappings = false })
 
 		local bufnr = new_md_buf()
 
@@ -46,10 +46,20 @@ describe("config", function()
 		api.nvim_win_set_cursor(0, { 1, 1 })
 		vim.cmd("normal csib")
 		assert_buf_eq(bufnr, { "*test*" })
+
+		set_buf(bufnr, { "test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gliw")
+		assert_buf_eq(bufnr, { "test" })
+
+		set_buf(bufnr, { "[test](#test)", "", "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal gx")
+		assert.are.same({ 1, 1 }, api.nvim_win_get_cursor(0))
 	end)
 
-	it("can disable inline surround mappings selectively", function()
-		require("markdown").setup({ inline_surround = { mappings = { toggle = false } } })
+	it("can disable mappings selectively", function()
+		require("markdown").setup({ mappings = { inline_surround_toggle = false } })
 
 		local bufnr = new_md_buf()
 		set_buf(bufnr, { "*test*" })
@@ -62,13 +72,11 @@ describe("config", function()
 
 	it("can change inline mappings", function()
 		require("markdown").setup({
-			inline_surround = {
-				mappings = {
-					toggle = "ys",
-					toggle_line = "yS",
-					delete = "yd",
-					change = "yc",
-				},
+			mappings = {
+				inline_surround_toggle = "ys",
+				inline_surround_toggle_line = "yS",
+				inline_surround_delete = "yd",
+				inline_surround_change = "yc",
 			},
 		})
 
@@ -150,45 +158,11 @@ describe("config", function()
 		assert_buf_eq(bufnr, { "~```___test___```~" })
 	end)
 
-	it("can disable all link mappings", function()
-		require("markdown").setup({ link = { mappings = false } })
-
-		local bufnr = new_md_buf()
-
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gliw")
-		assert_buf_eq(bufnr, { "test" })
-
-		set_buf(bufnr, { "[test](#test)", "", "# test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gx")
-		assert.are.same({ 1, 1 }, api.nvim_win_get_cursor(0))
-	end)
-
-	it("can disable link mappings selectively", function()
-		require("markdown").setup({ link = { mappings = { add = false } } })
-
-		local bufnr = new_md_buf()
-
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gliw")
-		assert_buf_eq(bufnr, { "test" })
-
-		set_buf(bufnr, { "[test](#test)", "", "# test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gx")
-		assert.are.same({ 3, 0 }, api.nvim_win_get_cursor(0))
-	end)
-
 	it("can change link mappings", function()
 		require("markdown").setup({
-			link = {
-				mappings = {
-					add = "yx",
-					follow = "yy",
-				},
+			mappings = {
+				link_add = "yx",
+				link_follow = "yy",
 			},
 		})
 
@@ -232,7 +206,7 @@ describe("config", function()
 		assert.are.equal("#2", last_dest)
 	end)
 
-	it("calls `on_attach`", function()
+	it("calls 'on_attach'", function()
 		local attached_bufnr = -1
 		require("markdown").setup({
 			on_attach = function(b)
