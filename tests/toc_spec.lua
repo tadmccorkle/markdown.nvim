@@ -174,20 +174,20 @@ describe("toc", function()
 		})
 	end)
 
-	it("omits flagged sections", function()
+	it("omits flagged headings", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
-			"# h1 will be omitted <!-- omit in toc -->",
+			"# h1 will be omitted <!-- toc omit heading -->",
 			"## h1.2",
-			"<!-- omit in toc -->",
+			"<!-- toc omit heading -->",
 			"#### h1.3 will be omitted",
 			"### h1.3.1",
-			"#### <!-- omit in toc --> h1.3.1.1 will be omitted",
+			"#### <!-- toc omit heading --> h1.3.1.1 will be omitted",
 			"## h1.4",
-			"<!-- omit in toc -->",
+			"<!-- toc omit heading -->",
 			"omitted setext",
 			"===",
-			"another omitted setext <!-- omit in toc -->",
+			"another omitted setext <!-- toc omit heading -->",
 			"---",
 			"setext",
 			"==="
@@ -195,21 +195,64 @@ describe("toc", function()
 		api.nvim_win_set_cursor(0, { 2, 0 })
 		toc.insert_toc({ range = 0 })
 		assert_buf_eq(bufnr, {
-			"# h1 will be omitted <!-- omit in toc -->",
+			"# h1 will be omitted <!-- toc omit heading -->",
 			"- [h1.2](#h12)",
 			"  - [h1.3.1](#h131)",
 			"- [h1.4](#h14)",
 			"- [setext](#setext)",
 			"## h1.2",
-			"<!-- omit in toc -->",
+			"<!-- toc omit heading -->",
 			"#### h1.3 will be omitted",
 			"### h1.3.1",
-			"#### <!-- omit in toc --> h1.3.1.1 will be omitted",
+			"#### <!-- toc omit heading --> h1.3.1.1 will be omitted",
 			"## h1.4",
-			"<!-- omit in toc -->",
+			"<!-- toc omit heading -->",
 			"omitted setext",
 			"===",
-			"another omitted setext <!-- omit in toc -->",
+			"another omitted setext <!-- toc omit heading -->",
+			"---",
+			"setext",
+			"==="
+		})
+	end)
+
+	it("omits flagged sections", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# h1",
+			"<!-- toc omit section -->",
+			"## h1.1 section will be omitted",
+			"### in section",
+			"##### also in section",
+			"## h1.2",
+			"### h1.2.1 <!-- toc omit section -->",
+			"#### in section, too",
+			"<!-- toc omit section -->",
+			"setext section omitted",
+			"===",
+			"setext in section",
+			"---",
+			"setext",
+			"==="
+		})
+		api.nvim_win_set_cursor(0, { 2, 0 })
+		toc.insert_toc({ range = 0 })
+		assert_buf_eq(bufnr, {
+			"# h1",
+			"- [h1](#h1)",
+			"  - [h1.2](#h12)",
+			"- [setext](#setext)",
+			"<!-- toc omit section -->",
+			"## h1.1 section will be omitted",
+			"### in section",
+			"##### also in section",
+			"## h1.2",
+			"### h1.2.1 <!-- toc omit section -->",
+			"#### in section, too",
+			"<!-- toc omit section -->",
+			"setext section omitted",
+			"===",
+			"setext in section",
 			"---",
 			"setext",
 			"==="

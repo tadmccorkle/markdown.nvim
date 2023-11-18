@@ -15,7 +15,7 @@ CONTENTS                                              *markdown.nvim.contents*
             Delete ................................. |markdown.inline.delete|
             Change ................................. |markdown.inline.change|
         Table of Contents .................................... |markdown.toc|
-            Omit Headings ............................... |markdown.toc.omit|
+            Omit Sections/Headings ...................... |markdown.toc.omit|
         List Editing ....................................... |markdown.lists|
             Insert Items ....................... |markdown.lists.insert_item|
             Reset Numbering ................ |markdown.lists.reset_numbering|
@@ -164,24 +164,29 @@ buffers.
 
 OMIT HEADINGS                                              *markdown.toc.omit*
 
-Headings can be omitted from the TOC by flagging them with
-`<!-- omit in toc -->`. The flag can either be placed directly above (i.e., on
-the line immediately preceding) or within the heading content. For example,
-the following headings would be omitted:
+Headings and entire sections can be omitted from the TOC by flagging them with
+`<!-- toc omit heading -->` and `<!-- toc omit section -->`, respectively. The
+flag can either be placed directly above (i.e., on the line immediately
+preceding) or within the heading content. For example, the following headings
+would be omitted:
 >markdown
-        # heading 1 <!-- omit in toc -->
+        # heading 1 <!-- toc omit heading -->
 
-        <!-- omit in toc -->
+        <!-- toc omit heading -->
         ## heading 2
 
-        ## heading <!-- omit in toc --> 3
+        ## heading <!-- toc omit heading --> 3
 
-        Heading 4 <!-- omit in toc -->
+        Heading 4 <!-- toc omit heading -->
         ---------
 
-        <!-- omit in toc -->
+        <!-- toc omit heading -->
         Heading 5
         ---------
+
+        <!-- toc omit section -->
+        # section heading omitted
+        ## subsection heading also omitted
 <
 --------------------------------------------------------------------------------
 LIST EDITING                                                  *markdown.lists*
@@ -321,6 +326,10 @@ markdown.setup({opts})                                      *markdown.setup()*
                     enable = true,
                 },
             },
+            toc = {
+                omit_heading = "toc omit heading",
+                omit_section = "toc omit section",
+            },
             hooks = {
                 follow_link = nil,
             },
@@ -402,6 +411,18 @@ markdown.setup({opts})                                      *markdown.setup()*
         Fields:
             * enable        enables URL-to-link conversion on paste
                             Default: true
+
+                                            *markdown.config.toc.omit_heading*
+                                            *markdown.config.toc.omit_section
+    toc.omit_heading: ~
+    toc.omit_section: ~
+        Defines comment text to flag headings and sections for omission in
+        table of contents.
+
+        Defaults:
+            * omit_heading: "toc omit heading"
+            * omit_section: "toc omit section"
+        See: |markdown.toc.omit|
 
                                                        *markdown.config.hooks*
     hooks: ~

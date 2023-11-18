@@ -1,4 +1,4 @@
-# markdown.nvim <!-- omit in toc -->
+# markdown.nvim <!-- toc omit heading -->
 
 ![tests](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests.yml/badge.svg?branch=master)
 
@@ -24,7 +24,7 @@ Tools for working with markdown files in Neovim.
   - Configurable keybindings and emphasis indicators
 - Table of contents
   - Supports ATX and setext headings
-  - Omit headings with an HTML tag
+  - Omit entire sections and individual headings with an HTML tag
 - Lists
   - Insert new items
   - Auto-number ordered lists
@@ -40,7 +40,6 @@ Tools for working with markdown files in Neovim.
 - Table of contents
   - Configurable default list marker type
   - Specify list marker type
-  - Omit section with HTML tag
 - Tables (GFM)
   - Formatting
   - Insert rows and columns
@@ -148,6 +147,11 @@ A table of configuration options can optionally be passed to the `setup()` funct
       enable = true, -- whether to convert URLs to links on paste
     },
   },
+  toc = {
+    -- comment text to flag headings/sections for omission in table of contents
+    omit_heading = "toc omit heading",
+    omit_section = "toc omit section",
+  },
   -- hook functions allow for overriding or extending default behavior
   -- fallback function with default behavior is provided as argument
   hooks = {
@@ -207,7 +211,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 | strikethrough                           | "s" |
 | code span                               | "c" |
 
-- #### Toggle <!-- omit in toc -->
+- #### Toggle
 
   Inline styles can be toggled over vim motions in normal and visual mode. Toggled styles are only applied to appropriate markdown elements (i.e., not blank lines, list markers, etc.). For example, a motion that includes a list marker and multiple blocks will only apply the style to inline content:
 
@@ -258,7 +262,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
   `^` and `$` denote block selection start and end on each line, respectively
   ```
 
-- #### Delete <!-- omit in toc -->
+- #### Delete
 
   Inline styles around the cursor can be deleted in normal mode using **ds{style}**, where **{style}** is the key corresponding to the style to delete. Only the style directly surrounding the cursor will be deleted.
 
@@ -270,7 +274,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
   `^` denotes cursor position
 
-- #### Change <!-- omit in toc -->
+- #### Change
 
   Inline styles around the cursor can be changed in normal mode using **cs{from}{to}**, where **{from}** and **{to}** are the keys corresponding to the current style (**{from}**) and the new style (**{to}**). Only the matching **{from}** style directly surrounding the cursor will be changed.
 
@@ -286,42 +290,46 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
 The `:MDInsertToc` command adds a table of contents (TOC) for the current markdown buffer by inserting (normal mode) or replacing selected lines (visual mode). The TOC is based on ATX and setext headings.
 
-#### Omit headings <!-- omit in toc -->
+#### Omit sections and headings <!-- toc omit heading -->
 
-Headings can be omitted from the TOC by flagging them with `<!-- omit in toc -->`. The flag can either be placed directly above (i.e., on the line immediately preceding) or within the heading content. For example, the following headings would be omitted:
+Headings and entire sections can be omitted from the TOC by flagging them with `<!-- toc omit heading -->` and `<!-- toc omit section -->`, respectively. The flag can either be placed directly above (i.e., on the line immediately preceding) or within the heading content. For example, the following headings would be omitted:
 
 ```md
-# heading 1 <!-- omit in toc -->
+# heading 1 <!-- toc omit heading -->
 
-<!-- omit in toc -->
+<!-- toc omit heading -->
 ## heading 2
+
+<!-- toc omit section -->
+# section heading omitted
+## subsection heading also omitted
 ```
 
 ### Lists
 
 Most list editing commands are intended to be invoked by custom keymaps (see notes on the `on_attach` field under [configuration](#configuration)).
 
-- #### Inserting items <!-- omit in toc -->
+- #### Inserting items
 
   Use the `:MDListItemBelow` and `:MDListItemAbove` commands to insert a new list item below and above the current cursor position, respectively. Both commands maintain the same indentation and list marker as the item under the cursor. The commands do nothing if the cursor is not within an existing list.
 
   When inserting an item in an ordered list, numbering is reset automatically for that list.
 
-- #### Reset numbering <!-- omit in toc -->
+- #### Reset numbering
 
   The `:MDResetListNumbering` command resets the numbering of all ordered lists in the current buffer.
 
-- #### Toggle tasks <!-- omit in toc -->
+- #### Toggle tasks
 
   The `:MDTaskToggle` command toggles the task(s) on the current cursor line (normal mode) or under the current visual selection (visual mode).
 
 ### Links
 
-- #### Add <!-- omit in toc -->
+- #### Add
 
   Links can be added over vim motions in normal and visual mode. Links are only added when the motion is within one inline block (i.e., not over list markers, blank lines, etc.). In normal mode this is done with **gl{motion}** and over a visual selection with **gl**.
 
-- #### Follow <!-- omit in toc -->
+- #### Follow
 
   Follow links under the cursor in normal mode with **gx**. Supported in-editor navigation:
 
@@ -332,7 +340,7 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
   URL destinations are opened in the browser.
 
-- #### Paste URLs <!-- omit in toc -->
+- #### Paste URLs
 
   URLs can be pasted over a visual selection (not a visual block selection) from the system clipboard as markdown links. The visual selection must be contained by one inline block (i.e., conversion to a link will not occur if the visual selection includes blank lines, list markers, etc.).
 
@@ -341,7 +349,7 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 <details>
 <summary><strong>markdown.nvim</strong> can also be configured as an <a href="https://github.com/nvim-treesitter/nvim-treesitter/">nvim-treesitter</a> module.</summary>
 
-### Module installation <!-- omit in toc -->
+### Module installation <!-- toc omit heading -->
 
 The following code snippets show how to install **markdown.nvim** as an **nvim-treesitter** module. Refer to [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/) for the appropriate way to install and manage parsers.
 
@@ -416,7 +424,7 @@ The following code snippets show how to install **markdown.nvim** as an **nvim-t
   };
   ```
 
-### Module configuration <!-- omit in toc -->
+### Module configuration <!-- toc omit heading -->
 
 When **markdown.nvim** is configured as an **nvim-treesitter** module, configuration options are passed to the `require("nvim-treesitter.configs").setup()` function. All configuration options are the same as described in the [configuration](#configuration) section.
 

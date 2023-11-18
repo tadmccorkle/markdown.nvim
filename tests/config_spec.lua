@@ -179,6 +179,32 @@ describe("config", function()
 		assert.are.same({ 3, 0 }, api.nvim_win_get_cursor(0))
 	end)
 
+	it("can change toc omit flags", function()
+		require("markdown").setup({
+			toc = {
+				omit_heading = "asdf",
+				omit_section = "qwer",
+			},
+		})
+
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("MDInsertToc")
+		assert_buf_eq(bufnr, { "- [test](#test)", "# test" })
+
+		set_buf(bufnr, { "# test <!-- asdf -->" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("MDInsertToc")
+		assert_buf_eq(bufnr, { "# test <!-- asdf -->" })
+
+		set_buf(bufnr, { "# test <!-- qwer -->" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("MDInsertToc")
+		assert_buf_eq(bufnr, { "# test <!-- qwer -->" })
+	end)
+
 	it("can extend link following behavior", function()
 		local last_dest
 		require("markdown").setup({

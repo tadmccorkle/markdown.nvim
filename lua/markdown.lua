@@ -231,7 +231,7 @@ function M.setup(cfg)
 		return
 	end
 
-	cfg = require("markdown.config"):setup(cfg)
+	require("markdown.config"):setup(cfg)
 
 	api.nvim_clear_autocmds({ group = group })
 	api.nvim_create_autocmd("FileType", {

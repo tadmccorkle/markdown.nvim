@@ -17,6 +17,10 @@
 ---@class LinkOpts
 ---@field paste { enable: boolean }
 
+---@class TocOpts
+---@field omit_heading string
+---@field omit_section string
+
 ---@class HookOpts
 ---@field follow_link fun(dest: string, fallback: fun())|nil
 
@@ -24,6 +28,7 @@
 ---@field mappings MappingOpts|boolean
 ---@field inline_surround InlineSurroundOpts
 ---@field link LinkOpts
+---@field toc TocOpts
 ---@field hooks HookOpts
 ---@field on_attach fun(bufnr: integer)|nil
 
@@ -65,6 +70,10 @@ local default_cfg = {
 		paste = {
 			enable = true,
 		},
+	},
+	toc = {
+		omit_heading = "toc omit heading",
+		omit_section = "toc omit section",
 	},
 	hooks = {
 		follow_link = nil,

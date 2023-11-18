@@ -8,8 +8,6 @@ local util = require("markdown.util")
 
 local M = {}
 
-local is_registered = false
-
 local heading_query = ts.query.parse("markdown", [[
 	[
 		(atx_heading
@@ -92,6 +90,8 @@ local function paste_handler(overridden)
 	end
 end
 
+local is_registered = false
+
 --- Registers a paste handler to convert URLs into markdown links.
 ---
 --- URLs are only converted to markdown links when:
@@ -153,21 +153,28 @@ function M.add(motion)
 	vim.cmd("startinsert")
 end
 
+--- Gets the sanitized text and slugified destination of a heading link.
+---@param text string Heading text
+---@return string text, string destination
+function M.get_heading_link(text)
+	local content = util.sanitize(text)
+	local dest = md_ts.remove_nodes(content, "markdown_inline", "emphasis_delimiter")
+	return content, util.slugify(dest)
+end
+
 ---@param dest string
 ---@param root TSNode
 local function follow_heading_link(dest, root)
 	dest = string.sub(dest, 2)
 	for _, match, _ in heading_query:iter_matches(root, 0, 0, -1) do
-		local _, content = next(match)
-		local _, heading = next(match)
+		local content = match[1] or match[2]
+		local heading = match[3]
 		local in_container = md_ts.find_parent(heading, is_container)
 		if not in_container then
 			local text = ts.get_node_text(content, 0, nil)
-			text = util.sanitize(text)
-			text = md_ts.remove_nodes(text, "markdown_inline", "emphasis_delimiter")
-			text = util.slugify(text)
+			_, text = M.get_heading_link(text)
 			if text == dest then
-				local row, _, _ = heading:start()
+				local row = heading:start()
 				api.nvim_win_set_cursor(0, { row + 1, 0 })
 				return
 			end
