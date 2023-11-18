@@ -244,6 +244,13 @@ function M.setup(cfg)
 			end
 		end,
 	})
+
+	-- exec autocmd for existing buffers in case we were lazy-loaded
+	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_loaded(bufnr) then
+			vim.api.nvim_exec_autocmds("FileType", { group = group, buffer = bufnr })
+		end
+	end
 end
 
 --- Sets plugin keymaps and attempts to initialize plugin as treesitter module.
