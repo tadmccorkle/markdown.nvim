@@ -76,6 +76,38 @@ local function set_keymaps()
 			silent = true,
 			desc = "Follow link under the cursor",
 		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_go_current_heading)",
+		"<Cmd>lua require'markdown.nav'.curr_heading()<CR>",
+		{
+			silent = true,
+			desc = "Set cursor to current section heading",
+		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_go_parent_heading)",
+		"<Cmd>lua require'markdown.nav'.parent_heading()<CR>",
+		{
+			silent = true,
+			desc = "Set cursor to parent section heading",
+		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_go_next_heading)",
+		"<Cmd>lua require'markdown.nav'.next_heading()<CR>",
+		{
+			silent = true,
+			desc = "Set cursor to next section heading",
+		})
+	vim.keymap.set(
+		"n",
+		"<Plug>(markdown_go_prev_heading)",
+		"<Cmd>lua require'markdown.nav'.prev_heading()<CR>",
+		{
+			silent = true,
+			desc = "Set cursor to previous section heading",
+		})
 end
 
 ---@type table<integer, { cmds: table, maps: table }>
@@ -238,6 +270,38 @@ local function setup_usr_keymaps(cfg, bufnr)
 			{
 				buffer = bufnr,
 				desc = "Follow link under the cursor",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.mappings.go_curr_heading,
+			"<Plug>(markdown_go_current_heading)",
+			{
+				buffer = bufnr,
+				desc = "Set cursor to current section heading",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.mappings.go_parent_heading,
+			"<Plug>(markdown_go_parent_heading)",
+			{
+				buffer = bufnr,
+				desc = "Set cursor to parent section heading",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.mappings.go_next_heading,
+			"<Plug>(markdown_go_next_heading)",
+			{
+				buffer = bufnr,
+				desc = "Set cursor to next section heading",
+			})
+		set_cached_keymap(
+			"n",
+			cfg.mappings.go_prev_heading,
+			"<Plug>(markdown_go_prev_heading)",
+			{
+				buffer = bufnr,
+				desc = "Set cursor to previous section heading",
 			})
 	end
 end

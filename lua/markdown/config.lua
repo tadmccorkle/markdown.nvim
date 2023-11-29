@@ -1,10 +1,16 @@
+---@alias MarkdownMapping string|boolean
+
 ---@class MappingOpts
----@field inline_surround_toggle string|boolean
----@field inline_surround_toggle_line string|boolean
----@field inline_surround_delete string|boolean
----@field inline_surround_change string|boolean
----@field link_add string|boolean
----@field link_follow string|boolean
+---@field inline_surround_toggle MarkdownMapping
+---@field inline_surround_toggle_line MarkdownMapping
+---@field inline_surround_delete MarkdownMapping
+---@field inline_surround_change MarkdownMapping
+---@field link_add MarkdownMapping
+---@field link_follow MarkdownMapping
+---@field go_curr_heading MarkdownMapping
+---@field go_parent_heading MarkdownMapping
+---@field go_next_heading MarkdownMapping
+---@field go_prev_heading MarkdownMapping
 
 ---@alias KeyToTxt { key: string , txt: string }
 
@@ -48,6 +54,10 @@ local default_cfg = {
 		inline_surround_change = "cs",
 		link_add = "gl",
 		link_follow = "gx",
+		go_curr_heading = "]c",
+		go_parent_heading = "]p",
+		go_next_heading = "]]",
+		go_prev_heading = "[[",
 	},
 	inline_surround = {
 		emphasis = {

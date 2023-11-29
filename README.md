@@ -14,6 +14,7 @@ Tools for working with markdown files in Neovim.
   - [Table of contents](#table-of-contents)
   - [Lists](#lists)
   - [Links](#links)
+  - [Navigation](#navigation)
 - [*nvim-treesitter* module](#nvim-treesitter-module)
 
 ## Features
@@ -33,6 +34,8 @@ Tools for working with markdown files in Neovim.
   - Add links over vim motions / visual selection
   - Follow links under the cursor
   - Paste URLs from clipboard over visual selection as links
+- Navigation
+  - Jump to the current, parent, next, and previous heading
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/) module support
 
 ### Planned features
@@ -117,6 +120,10 @@ A table of configuration options can optionally be passed to the `setup()` funct
     inline_surround_change = "cs", -- (string|boolean) change emphasis surrounding cursor
     link_add = "gl", -- (string|boolean) add link
     link_follow = "gx", -- (string|boolean) follow link
+    go_curr_heading = "]c", -- (string|boolean) set cursor to current section heading
+    go_parent_heading = "]p", -- (string|boolean) set cursor to parent section heading
+    go_next_heading = "]]", -- (string|boolean) set cursor to next section heading
+    go_prev_heading = "[[", -- (string|boolean) set cursor to previous section heading
   },
   inline_surround = {
     -- for the emphasis, strong, strikethrough, and code fields:
@@ -199,6 +206,7 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 - [Table of Contents](#table-of-contents)
 - [Lists](#lists)
 - [Links](#links)
+- [Navigation](#navigation)
 
 ### Inline surround
 
@@ -347,6 +355,15 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 - #### Paste URLs
 
   URLs can be pasted over a visual selection (not a visual block selection) from the system clipboard as markdown links. The visual selection must be contained by one inline block (i.e., conversion to a link will not occur if the visual selection includes blank lines, list markers, etc.).
+
+### Navigation
+
+Markdown buffers can be navigated with the following keymaps:
+
+- **]c**: go to the current section heading
+- **]p**: go to the parent section heading
+- **]]**: go to the next section heading
+- **[[**: go to the previous section heading
 
 ## *nvim-treesitter* module
 

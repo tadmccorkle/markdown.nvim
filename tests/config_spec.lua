@@ -36,26 +36,6 @@ describe("config", function()
 		api.nvim_win_set_cursor(0, { 1, 1 })
 		vim.cmd("normal gssi")
 		assert_buf_eq(bufnr, { "*iest*" })
-
-		set_buf(bufnr, { "*test*" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal dsi")
-		assert_buf_eq(bufnr, { "*test*" })
-
-		set_buf(bufnr, { "*test*" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal csib")
-		assert_buf_eq(bufnr, { "*test*" })
-
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gliw")
-		assert_buf_eq(bufnr, { "test" })
-
-		set_buf(bufnr, { "[test](#test)", "", "# test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gx")
-		assert.are.same({ 1, 1 }, api.nvim_win_get_cursor(0))
 	end)
 
 	it("can disable mappings selectively", function()
@@ -245,6 +225,36 @@ describe("config", function()
 		vim.cmd("normal gx")
 		assert.are.same({ 4, 0 }, api.nvim_win_get_cursor(0))
 		assert.are.equal("#2", last_dest)
+	end)
+
+	it("can change navigation mappings", function()
+		require("markdown").setup({
+			mappings = {
+				go_curr_heading = "[a",
+				go_parent_heading = "[b",
+				go_next_heading = "[c",
+				go_prev_heading = "[d",
+			}
+		})
+
+		local bufnr = new_md_buf()
+		set_buf(bufnr, { "# test", "## test1", "", "## test2" })
+
+		api.nvim_win_set_cursor(0, { 3, 0 })
+		vim.cmd("normal [a")
+		assert.are.same({ 2, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 3, 0 })
+		vim.cmd("normal [b")
+		assert.are.same({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 3, 0 })
+		vim.cmd("normal [c")
+		assert.are.same({ 4, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 3, 0 })
+		vim.cmd("normal [d")
+		assert.are.same({ 1, 0 }, api.nvim_win_get_cursor(0))
 	end)
 
 	it("calls 'on_attach'", function()

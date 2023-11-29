@@ -24,6 +24,7 @@ CONTENTS                                              *markdown.nvim.contents*
             Add ........................................ |markdown.links.add|
             Follow .................................. |markdown.links.follow|
             Paste URLs ............................... |markdown.links.paste|
+        Navigation .................................... |markdown.navigation|
     Configuration .................................. |markdown.configuration|
 
 ================================================================================
@@ -43,6 +44,7 @@ USAGE                                                         *markdown.usage*
 * Table of Contents (|markdown.toc|)
 * List Editing (|markdown.lists|)
 * Links (|markdown.links|)
+* Navigation (|markdown.navigation|)
 
 --------------------------------------------------------------------------------
 INLINE SURROUND                                              *markdown.inline*
@@ -298,6 +300,21 @@ the system clipboard as markdown links. The visual selection must be contained
 by one inline block (i.e., conversion to a link will not occur if the visual
 selection includes blank lines, list markers, etc.).
 
+--------------------------------------------------------------------------------
+NAVIGATION                                               *markdown.navigation*
+
+|markdown.nvim| provides the following keymaps to navigate markdown buffers:
+
+* Go to the current section heading     *]c*
+* Go to the parent section heading      *]p*
+* Go to the next section heading        *]]*
+* Go to the previous section heading    *[[*
+
+Keymaps are set up after |markdown.nvim| is either configured with
+a call to to |markdown.setup()| or registered as an |nvim-treesitter| module
+(see |markdown.configuration|). |<Plug>| mappings are created regardless of
+configuration (see |markdown.plug_mappings|).
+
 ================================================================================
 CONFIGURATION                                         *markdown.configuration*
 
@@ -316,9 +333,9 @@ call:
         })
 <
                                                       *markdown.plug_mappings*
-The following plug |<Plug>| mappings are used by |markdown.inline| and
-|markdown.link|. They are always set up and can be used without explicit
-configuration:
+The following plug |<Plug>| mappings are used by |markdown.inline|,
+|markdown.link|, and |markdown.navigation|. They are always set up and can be
+used without explicit configuration:
 >vim
         <Plug>(markdown_toggle_emphasis)
         <Plug>(markdown_toggle_emphasis_line)
@@ -328,6 +345,10 @@ configuration:
         <Plug>(markdown_add_link)
         <Plug>(markdown_add_link_visual)
         <Plug>(markdown_follow_link)
+        <Plug>(markdown_go_current_heading)
+        <Plug>(markdown_go_parent_heading)
+        <Plug>(markdown_go_next_heading)
+        <Plug>(markdown_go_prev_heading)
 <
 markdown.setup({opts})                                      *markdown.setup()*
     Both the standalone plugin and |nvim-treesitter| module configurations
@@ -341,6 +362,10 @@ markdown.setup({opts})                                      *markdown.setup()*
                 inline_surround_change = "cs",
                 link_add = "gl",
                 link_follow = "gx",
+                go_curr_heading = "]c",
+                go_parent_heading = "]p",
+                go_next_heading = "]]",
+                go_prev_heading = "[[",
             },
             inline_surround = {
                 emphasis = {
@@ -407,6 +432,26 @@ markdown.setup({opts})                                      *markdown.setup()*
             * link_follow                   follows link under the cursor
                                             Default: "gx"
                                             See: |markdown.links.follow|
+
+            * go_curr_heading               sets the cursor to the current
+                                            section heading
+                                            Default: "]c"
+                                            See: |markdown.navigation|
+
+            * go_parent_heading             sets the cursor to the parent
+                                            section heading
+                                            Default: "]p"
+                                            See: |markdown.navigation|
+
+            * go_next_heading               sets the cursor to the next
+                                            section heading 
+                                            Default: "]]"
+                                            See: |markdown.navigation|
+
+            * go_prev_heading               sets the cursor to the previous
+                                            section heading 
+                                            Default: "[["
+                                            See: |markdown.navigation|
 
                                     *markdown.config.inline_surround.emphasis*
                                       *markdown.config.inline_surround.strong*
