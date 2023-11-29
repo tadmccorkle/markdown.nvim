@@ -4,17 +4,26 @@
 ---@field name string
 ---@field parent Section
 ---@field level integer
----@field omit boolean
+---@field line integer
+---@field omit omit_level
 ---@field children Section[]
 local Section = {}
 Section.__index = Section
 
-local function _new(name, parent, level, omit)
+---@enum omit_level
+Section.OMIT_LEVEL = {
+	none = 0,
+	heading = 1,
+	section = 2,
+}
+
+local function _new(name, parent, level, line)
 	return setmetatable({
 		name = name or "root",
 		parent = parent,
 		level = level or (parent and parent.level + 1) or 0,
-		omit = omit or false,
+		line = line or -1,
+		omit = Section.OMIT_LEVEL.none,
 		children = {}
 	}, Section)
 end
@@ -22,13 +31,13 @@ end
 --- Adds a subsection.
 ---@param name string
 ---@param level integer
----@param omit? boolean
+---@param line integer
 ---
 --- Subsection `level` must be greater than the current level.
-function Section:add_subsection(name, level, omit)
+function Section:add_subsection(name, level, line)
 	assert(level > self.level)
 
-	local subsection = _new(name, self, level, omit)
+	local subsection = _new(name, self, level, line)
 	table.insert(self.children, subsection)
 	return subsection
 end

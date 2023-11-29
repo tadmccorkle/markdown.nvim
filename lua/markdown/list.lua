@@ -36,13 +36,38 @@ local function is_list(node)
 end
 
 ---@param list_item TSNode
+---@param change integer
+local function adjust_child_indent(list_item, change)
+	local li_row = list_item:start()
+	for child in list_item:iter_children() do
+		local start_row, start_col, end_row, _ = child:range()
+		if start_row ~= li_row and start_col ~= 0 then
+			-- final row is a block continuation and shouldn't be changed
+			for row = start_row, end_row - 1, 1 do
+				if change < 0 then
+					util.delete_text(row, 0, math.abs(change))
+				else
+					util.insert_text(row, 0, string.rep(" ", change))
+				end
+			end
+		end
+	end
+end
+
+---@param list_item TSNode
 local function set_list_item_num(list_item, num)
 	local text = ts.get_node_text(list_item, 0, nil)
 	local marker_digits = text:match("(%d+)")
-	local row, col, _, _ = list_item:range()
+	local row, col = list_item:start()
 	local num_str = tostring(num)
 	if marker_digits ~= num_str then
-		util.replace_text(row, col, #marker_digits, num_str)
+		local marker_digit_len = #marker_digits
+		util.replace_text(row, col, marker_digit_len, num_str)
+
+		local child_indent_change = #num_str - marker_digit_len
+		if child_indent_change ~= 0 then
+			adjust_child_indent(list_item, child_indent_change)
+		end
 	end
 end
 
@@ -58,9 +83,18 @@ local function reset_list_numbering(list)
 end
 
 --- Resets list numbering in the current buffer.
-function M.reset_list_numbering()
+---@param start_row integer Zero-based start row
+---@param end_row integer Zero-based end row
+---
+--- Specify start = 0 and end = -1 to reset list numbering
+--- for all lists in the current buffer.
+function M.reset_list_numbering(start_row, end_row)
+	if end_row >= 0 then
+		end_row = end_row + 1
+	end
+
 	local t = ts.get_parser(0, "markdown"):parse()[1]
-	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, 0, -1) do
+	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, start_row, end_row) do
 		reset_list_numbering(match[1])
 	end
 end
@@ -105,7 +139,7 @@ local function insert_list_item(loc)
 
 	local marker = list_item:named_child(0)
 	local marker_type = marker:type()
-	local marker_row, marker_col, _, _ = marker:range()
+	local marker_row, marker_col = marker:start()
 
 	---@type TSNode|nil
 	local task_marker = marker:next_named_sibling()
@@ -119,11 +153,11 @@ local function insert_list_item(loc)
 
 	local new_row
 	if loc == REL_POS.above then
-		new_row, _, _, _ = list_item:range()
+		new_row = list_item:start()
 	else
 		local inline = get_last_list_item_inline(list_item)
 		if inline ~= nil then
-			local _, _, inline_end, _ = inline:range()
+			local inline_end = inline:end_()
 			new_row = inline_end + 1
 		else
 			new_row = marker_row + 1
@@ -176,11 +210,9 @@ local function is_task_list_item(node)
 end
 
 --- Toggles list item task markers.
----@param opts table User command arguments table
----
----@see nvim_create_user_command
-function M.toggle_task(opts)
-	local start_row, end_row = util.get_user_command_range(opts)
+---@param start_row integer Zero-based start row
+---@param end_row integer Zero-based end row
+function M.toggle_task(start_row, end_row)
 	ts.get_parser(0, "markdown"):parse()
 	local task_markers = {}
 

@@ -153,14 +153,32 @@ be changed.
 --------------------------------------------------------------------------------
 TABLE OF CONTENTS                                               *markdown.toc*
 
-By default, table of contents (TOC) commands are only created for markdown
-buffers.
+A table of contents (TOC) is created from the top-level (i.e., not within a
+container like lists or block quotes) headings of markdown buffers.
 
                                                                 *:MDInsertToc*
-:MDInsertToc            Adds a table of contents (TOC) for the current
-                        markdown buffer by inserting (normal mode) or
-                        replacing selected lines (visual mode). The TOC is
-                        based on ATX and setext headings.
+:MDInsertToc[/max_level][/markers...]
+:MDInsertToc [max_level] [markers...]
+
+        Adds a TOC for the current buffer by inserting (normal mode) or
+        replacing selected lines (visual mode). The TOC is based on ATX and
+        setext headings.
+
+        Optional arguments can be separated by `/` or whitespace. When
+        separated by `/`, markers will include any leading or trailing
+        whitespace. Multiple markers can be specified (for example,
+        *:MDInsertTOC - +* or *:MDInsertTOC/-/+*).
+
+        Ordered lists are specified with `"."` and `")"` marker arguments.
+
+        Arguments:
+            * max_level     max heading level to include
+                            Default: "6"
+
+            * markers       markers to alternate through for each heading
+                            level
+                            Default: "-" (unless overridden by configuration)
+                            See: |markdown.config.toc.markers|
 
 OMIT HEADINGS                                              *markdown.toc.omit*
 
@@ -191,8 +209,6 @@ would be omitted:
 --------------------------------------------------------------------------------
 LIST EDITING                                                  *markdown.lists*
 
-By default, list editing commands are only created for markdown buffers.
-
 INSERT ITEMS                                      *markdown.lists.insert_item*
 
 The list item insertion commands are intended to be invoked by custom keymaps.
@@ -216,7 +232,8 @@ RESET NUMBERING                               *markdown.lists.reset_numbering*
 
                                                        *:MDResetListNumbering*
 :MDResetListNumbering   Resets the numbering of all ordered lists in the
-                        current buffer.
+                        current buffer (normal mode) or under selected lines
+                        (visual mode).
 
 TOGGLE TASKS                                      *markdown.lists.toggle_task*
 
@@ -329,6 +346,7 @@ markdown.setup({opts})                                      *markdown.setup()*
             toc = {
                 omit_heading = "toc omit heading",
                 omit_section = "toc omit section",
+                markers = { "-" },
             },
             hooks = {
                 follow_link = nil,
@@ -423,6 +441,15 @@ markdown.setup({opts})                                      *markdown.setup()*
             * omit_heading: "toc omit heading"
             * omit_section: "toc omit section"
         See: |markdown.toc.omit|
+
+                                                  *markdown.config.toc.markers
+    toc.markers: ~
+        Defines alternating markers to use for each heading level when
+        inserting a table of contents. Ordered list can be specified with `"."`
+        and `")"`.
+
+        Default: { "-" }
+        See: |:MDInsertToc|
 
                                                        *markdown.config.hooks*
     hooks: ~

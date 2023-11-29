@@ -20,6 +20,7 @@
 ---@class TocOpts
 ---@field omit_heading string
 ---@field omit_section string
+---@field markers string[]
 
 ---@class HookOpts
 ---@field follow_link fun(dest: string, fallback: fun())|nil
@@ -74,6 +75,7 @@ local default_cfg = {
 	toc = {
 		omit_heading = "toc omit heading",
 		omit_section = "toc omit section",
+		markers = { "-" },
 	},
 	hooks = {
 		follow_link = nil,

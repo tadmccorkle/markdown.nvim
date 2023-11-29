@@ -1,7 +1,5 @@
 local api = vim.api
 
-local list = require("markdown.list")
-
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
 	api.nvim_buf_set_option(bufnr, "filetype", "markdown")
@@ -19,6 +17,8 @@ end
 
 describe("list", function()
 	require("markdown").setup()
+
+	local list = require("markdown.list")
 
 	local function insert_li_above(pos, text)
 		api.nvim_win_set_cursor(0, pos)
@@ -47,7 +47,7 @@ describe("list", function()
 			"     1. bbb",
 			"  55) bb",
 		})
-		list.reset_list_numbering()
+		list.reset_list_numbering(0, -1)
 		assert_buf_eq(bufnr, {
 			"- l1",
 			"  1. a",
@@ -60,6 +60,37 @@ describe("list", function()
 			"     1. aaa",
 			"     2. bbb",
 			"  2) bb",
+		})
+	end)
+
+	it("resets list numbering in range", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"- l1",
+			"  1. a",
+			"  1. b",
+			"  3. c",
+			"  5. d",
+			"  2. e",
+			"- l2",
+			"  1) aa",
+			"     1. aaa",
+			"     1. bbb",
+			"  55) bb",
+		})
+		list.reset_list_numbering(1, 5)
+		assert_buf_eq(bufnr, {
+			"- l1",
+			"  1. a",
+			"  2. b",
+			"  3. c",
+			"  4. d",
+			"  5. e",
+			"- l2",
+			"  1) aa",
+			"     1. aaa",
+			"     1. bbb",
+			"  55) bb",
 		})
 	end)
 
@@ -144,6 +175,44 @@ describe("list", function()
 		})
 	end)
 
+	it("correctly indents ordered lists", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"1. x",
+			"2. x",
+			"3. x",
+			"4. x",
+			"5. x",
+			"6. x",
+			"7. x",
+			"8. x",
+			"   - x",
+			"9. x",
+			"   - x",
+			"10. x",
+			"    - x",
+			"11. x",
+		})
+		insert_li_above({ 1, 0 }, "y")
+		assert_buf_eq(bufnr, {
+			"1. y",
+			"2. x",
+			"3. x",
+			"4. x",
+			"5. x",
+			"6. x",
+			"7. x",
+			"8. x",
+			"9. x",
+			"   - x",
+			"10. x",
+			"    - x",
+			"11. x",
+			"    - x",
+			"12. x",
+		})
+	end)
+
 	it("maintains indentation when inserting list item", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
@@ -183,18 +252,7 @@ describe("list", function()
 	end)
 
 	describe("tasks", function()
-		it("toggles task on cursor line", function()
-			local bufnr = new_md_buf()
-			set_buf(bufnr, { "- [x] l1", "- [ ] l2" })
-			api.nvim_win_set_cursor(0, { 1, 0 })
-			list.toggle_task({ range = 0 })
-			assert_buf_eq(bufnr, { "- [ ] l1", "- [ ] l2" })
-			api.nvim_win_set_cursor(0, { 2, 0 })
-			list.toggle_task({ range = 0 })
-			assert_buf_eq(bufnr, { "- [ ] l1", "- [x] l2" })
-		end)
-
-		it("toggles multiple tasks", function()
+		it("toggles tasks", function()
 			local bufnr = new_md_buf()
 			set_buf(bufnr, {
 				"- [ ] task",
@@ -203,7 +261,15 @@ describe("list", function()
 				"- [ ] task",
 				"- [ ] task",
 			})
-			list.toggle_task({ range = 2, line1 = 2, line2 = 4 })
+			list.toggle_task(1, 1)
+			set_buf(bufnr, {
+				"- [ ] task",
+				"- [x] task",
+				"- [x] task",
+				"- [ ] task",
+				"- [ ] task",
+			})
+			list.toggle_task(1, 3)
 			assert_buf_eq(bufnr, {
 				"- [ ] task",
 				"- [x] task",
@@ -211,7 +277,7 @@ describe("list", function()
 				"- [x] task",
 				"- [ ] task",
 			})
-			list.toggle_task({ range = 2, line1 = 2, line2 = 4 })
+			list.toggle_task(1, 3)
 			assert_buf_eq(bufnr, {
 				"- [ ] task",
 				"- [ ] task",
@@ -219,7 +285,7 @@ describe("list", function()
 				"- [ ] task",
 				"- [ ] task",
 			})
-			list.toggle_task({ range = 2, line1 = 1, line2 = 5 })
+			list.toggle_task(0, 4)
 			assert_buf_eq(bufnr, {
 				"- [x] task",
 				"- [x] task",

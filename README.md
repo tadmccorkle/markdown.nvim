@@ -21,9 +21,8 @@ Tools for working with markdown files in Neovim.
 - Inline-style
   - Keybindings over vim motions / visual selection
   - Toggle, delete, and change emphasis and code spans
-  - Configurable keybindings and emphasis indicators
 - Table of contents
-  - Supports ATX and setext headings
+  - Insert as list with configurable markers
   - Omit entire sections and individual headings with an HTML tag
 - Lists
   - Insert new items
@@ -37,9 +36,6 @@ Tools for working with markdown files in Neovim.
 
 ### Planned features
 
-- Table of contents
-  - Configurable default list marker type
-  - Specify list marker type
 - Tables (GFM)
   - Formatting
   - Insert rows and columns
@@ -151,6 +147,9 @@ A table of configuration options can optionally be passed to the `setup()` funct
     -- comment text to flag headings/sections for omission in table of contents
     omit_heading = "toc omit heading",
     omit_section = "toc omit section",
+    -- cycling list markers to use in table of contents
+    -- use '.' and ')' for ordered lists
+    markers = { "-" },
   },
   -- hook functions allow for overriding or extending default behavior
   -- fallback function with default behavior is provided as argument
@@ -288,7 +287,9 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
 ### Table of contents
 
-The `:MDInsertToc` command adds a table of contents (TOC) for the current markdown buffer by inserting (normal mode) or replacing selected lines (visual mode). The TOC is based on ATX and setext headings.
+A table of contents (TOC) is created from the top-level ATX and setext headings of markdown buffers.
+
+The `:MDInsertToc [max_level] [markers]` command adds a TOC by inserting (normal mode) or replacing selected lines (visual mode). Optional arguments can be provided to set the max heading level to include and the list markers to alternate through for each heading level.
 
 #### Omit sections and headings <!-- toc omit heading -->
 
@@ -317,7 +318,7 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
 - #### Reset numbering
 
-  The `:MDResetListNumbering` command resets the numbering of all ordered lists in the current buffer.
+  The `:MDResetListNumbering` command resets the numbering of all ordered lists in the current buffer (normal mode) or under the current visual selection (visual mode).
 
 - #### Toggle tasks
 

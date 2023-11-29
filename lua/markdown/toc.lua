@@ -4,8 +4,8 @@ local ts = vim.treesitter
 local Section = require("markdown.section")
 local config = require("markdown.config")
 local link = require("markdown.link")
+local list = require("markdown.list")
 local md_ts = require("markdown.treesitter")
-local util = require("markdown.util")
 
 local M = {}
 
@@ -42,41 +42,34 @@ local function is_comment(html)
 	return #text > 3 and text:sub(1, 4) == "<!--" and text:sub(-3, -1) == "-->"
 end
 
----@enum omit_flag omit flag
-local OMIT_FLAG = {
-	none = 0,
-	heading = 1,
-	section = 2,
-}
-
 ---@param html TSNode
----@return omit_flag
+---@return omit_level
 local function to_omit_flag(html, omit_section_flag, omit_heading_flag)
 	local text = ts.get_node_text(html, 0, nil)
 	if is_comment(text) then
 		if text:match(omit_section_flag) ~= nil then
-			return OMIT_FLAG.section
+			return Section.OMIT_LEVEL.section
 		elseif text:match(omit_heading_flag) ~= nil then
-			return OMIT_FLAG.heading
+			return Section.OMIT_LEVEL.heading
 		end
 	end
-	return OMIT_FLAG.none
+	return Section.OMIT_LEVEL.none
 end
 
 ---@param inline TSNode
----@return omit_flag
+---@return omit_level
 local function get_omit_flag(inline, omit_section_flag, omit_heading_flag)
 	local inline_trees = ts.get_parser(0, "markdown"):children().markdown_inline:parse()
 	local t = md_ts.find_tree_in_node(inline_trees, inline)
 	if t ~= nil then
 		for _, html_tag, _ in html_tag_query:iter_captures(t:root(), 0, 0, -1) do
 			local flag = to_omit_flag(html_tag, omit_section_flag, omit_heading_flag)
-			if flag ~= OMIT_FLAG.none then
+			if flag ~= Section.OMIT_LEVEL.none then
 				return flag
 			end
 		end
 	end
-	return OMIT_FLAG.none
+	return Section.OMIT_LEVEL.none
 end
 
 ---@return Section
@@ -94,9 +87,9 @@ local function get_document_sections()
 		local in_container = md_ts.find_parent(html, is_container)
 		if not in_container then
 			local omit_flag = to_omit_flag(html, omit_section_flag, omit_heading_flag)
-			if omit_flag == OMIT_FLAG.section then
+			if omit_flag == Section.OMIT_LEVEL.section then
 				omit_section_flags[html:end_()] = true
-			elseif omit_flag == OMIT_FLAG.heading then
+			elseif omit_flag == Section.OMIT_LEVEL.heading then
 				omit_heading_flags[html:end_()] = true
 			end
 		end
@@ -109,25 +102,26 @@ local function get_document_sections()
 		if not in_container then
 			local marker = match[1] or match[4]
 			local content = match[2] or match[3]
-			local level = tonumber(marker:type():match("(%d+)"))
 			local name = ts.get_node_text(content, 0, nil)
+			local level = tonumber(marker:type():match("(%d+)")) --[[@as integer]]
+			local line = heading:start() + 1
 			if level > toc.level then
-				toc = toc:add_subsection(name, level --[[@as integer]])
+				toc = toc:add_subsection(name, level, line)
 			else
-				toc = toc:get_parent(level):add_subsection(name, level --[[@as integer]])
+				toc = toc:get_parent(level):add_subsection(name, level, line)
 			end
 
 			local start = heading:start()
 			if omit_section_flags[start] then
-				toc.omit = true
+				toc.omit = Section.OMIT_LEVEL.section
 			elseif omit_heading_flags[start] then
-				toc.name = ""
+				toc.omit = Section.OMIT_LEVEL.heading
 			else
 				local inner_omit_flag = get_omit_flag(content, omit_section_flag, omit_heading_flag)
-				if inner_omit_flag == OMIT_FLAG.section then
-					toc.omit = true
-				elseif inner_omit_flag == OMIT_FLAG.heading then
-					toc.name = ""
+				if inner_omit_flag == Section.OMIT_LEVEL.section then
+					toc.omit = Section.OMIT_LEVEL.section
+				elseif inner_omit_flag == Section.OMIT_LEVEL.heading then
+					toc.omit = Section.OMIT_LEVEL.heading
 				end
 			end
 		end
@@ -137,23 +131,31 @@ local function get_document_sections()
 end
 
 ---@param toc Section
----@param tab string
+---@param markers string[]
+---@param max_level integer
 ---@param lines? string[]
----@param indent? integer
+---@param depth? integer
+---@param indent? string
 ---@return string[]
-local function build_toc_lines(toc, tab, lines, indent)
+local function build_toc_lines(toc, markers, max_level, lines, depth, indent)
 	lines = lines or {}
-	indent = indent or 0
+	depth = depth or 0
+	indent = indent or ""
+
+	local marker = markers[(depth % #markers) + 1]
+	local sub_indent = indent .. string.rep(" ", #marker + 1)
 
 	for _, sub in pairs(toc.children) do
-		if not sub.omit then
+		local omit_section = sub.omit == Section.OMIT_LEVEL.section or sub.level > max_level
+		if not omit_section then
 			local text, dest = link.get_heading_link(sub.name)
-			if text ~= "" then
-				local line = string.rep(tab, indent) .. "- [" .. text .. "](#" .. dest .. ")"
+			local omit_heading = sub.omit == Section.OMIT_LEVEL.heading or text == ""
+			if not omit_heading then
+				local line = indent .. marker .. " [" .. text .. "](#" .. dest .. ")"
 				table.insert(lines, line)
-				build_toc_lines(sub, tab, lines, indent + 1)
+				build_toc_lines(sub, markers, max_level, lines, depth + 1, sub_indent)
 			else
-				build_toc_lines(sub, tab, lines, indent)
+				build_toc_lines(sub, markers, max_level, lines, depth, indent)
 			end
 		end
 	end
@@ -161,19 +163,41 @@ local function build_toc_lines(toc, tab, lines, indent)
 	return lines
 end
 
+---@class InsertOpts
+---@field markers string[] List markers
+---@field start_row integer Zero-based start row
+---@field end_row? integer Zero-based end row
+---@field max_level? integer Max heading level to include (default: '6')
+
 --- Inserts table of contents.
----@param opts table User command arguments table
+---@param opts InsertOpts
 ---
----@see nvim_create_user_command
+--- If an `end_row` is not specified, table of contents is inserted at the start row. If an
+--- `end_row` is specified, table of contents replaces the range [`start_row`-`end_row`].
 function M.insert_toc(opts)
 	local toc = get_document_sections()
-	local tab = util.get_tab_str()
-	local lines = build_toc_lines(toc, tab)
-	local start_row, end_row = util.get_user_command_range(opts)
-	if start_row ~= end_row then
-		end_row = end_row + 1
+
+	local markers = {}
+	for i, m in ipairs(opts.markers) do
+		if m == "." or m == ")" then
+			markers[i] = "1" .. m
+		else
+			markers[i] = m
+		end
 	end
-	api.nvim_buf_set_lines(0, start_row, end_row, true, lines)
+	local max_level = opts.max_level or 6
+	local lines = build_toc_lines(toc, markers, max_level)
+
+	local end_row
+	if opts.end_row ~= nil then
+		end_row = opts.end_row + 1
+	else
+		end_row = opts.start_row
+	end
+
+	api.nvim_buf_set_lines(0, opts.start_row, end_row, true, lines)
+	list.reset_list_numbering(opts.start_row, opts.start_row + #lines - 1)
+end
 end
 
 return M

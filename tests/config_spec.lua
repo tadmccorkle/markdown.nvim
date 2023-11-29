@@ -205,6 +205,21 @@ describe("config", function()
 		assert_buf_eq(bufnr, { "# test <!-- qwer -->" })
 	end)
 
+	it("can change toc list markers", function()
+		require("markdown").setup({
+			toc = {
+				markers = { "+" },
+			},
+		})
+
+		local bufnr = new_md_buf()
+
+		set_buf(bufnr, { "# test" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("MDInsertToc")
+		assert_buf_eq(bufnr, { "+ [test](#test)", "# test" })
+	end)
+
 	it("can extend link following behavior", function()
 		local last_dest
 		require("markdown").setup({

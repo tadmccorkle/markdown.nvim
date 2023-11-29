@@ -22,7 +22,7 @@ end
 describe("toc", function()
 	require("markdown").setup()
 
-	it("inserts in normal mode", function()
+	it("inserts at row position", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
 			"# h1",
@@ -36,9 +36,7 @@ describe("toc", function()
 			"#### h1.3.1.1",
 			"## h1.4",
 		})
-
-		api.nvim_win_set_cursor(0, { 4, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 3 })
 		assert_buf_eq(bufnr, {
 			"# h1",
 			"",
@@ -59,7 +57,7 @@ describe("toc", function()
 		})
 	end)
 
-	it("replaces lines in visual mode", function()
+	it("replaces line range", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
 			"# h1",
@@ -73,7 +71,7 @@ describe("toc", function()
 			"#### h1.3.1.1",
 			"## h1.4",
 		})
-		toc.insert_toc({ range = 2, line1 = 3, line2 = 4 })
+		toc.insert_toc({ markers = { "-" }, start_row = 2, end_row = 3 })
 		assert_buf_eq(bufnr, {
 			"# h1",
 			"",
@@ -102,8 +100,7 @@ describe("toc", function()
 			"#### h1.3.1.1",
 			"## h1.4",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [h1.2](#h12)",
 			"  - [h1.3](#h13)",
@@ -130,8 +127,7 @@ describe("toc", function()
 			"h3",
 			"---",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [h1](#h1)",
 			"  - [h2](#h2)",
@@ -157,8 +153,7 @@ describe("toc", function()
 			"---",
 			"### atx2",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [atx1](#atx1)",
 			"- [setext1](#setext1)",
@@ -192,8 +187,7 @@ describe("toc", function()
 			"setext",
 			"==="
 		})
-		api.nvim_win_set_cursor(0, { 2, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 1 })
 		assert_buf_eq(bufnr, {
 			"# h1 will be omitted <!-- toc omit heading -->",
 			"- [h1.2](#h12)",
@@ -235,8 +229,7 @@ describe("toc", function()
 			"setext",
 			"==="
 		})
-		api.nvim_win_set_cursor(0, { 2, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 1 })
 		assert_buf_eq(bufnr, {
 			"# h1",
 			"- [h1](#h1)",
@@ -259,56 +252,6 @@ describe("toc", function()
 		})
 	end)
 
-	it("abides by tabstop", function()
-		local bufnr = new_md_buf()
-		set_buf(bufnr, {
-			"",
-			"# h1",
-			"## h2",
-			"### h3",
-			"## h4",
-		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		api.nvim_buf_set_option(0, "tabstop", 3)
-		toc.insert_toc({ range = 0 })
-		assert_buf_eq(bufnr, {
-			"- [h1](#h1)",
-			"   - [h2](#h2)",
-			"      - [h3](#h3)",
-			"   - [h4](#h4)",
-			"",
-			"# h1",
-			"## h2",
-			"### h3",
-			"## h4",
-		})
-	end)
-
-	it("abides by expandtab", function()
-		local bufnr = new_md_buf()
-		set_buf(bufnr, {
-			"",
-			"# h1",
-			"## h2",
-			"### h3",
-			"## h4",
-		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		api.nvim_buf_set_option(0, "expandtab", false)
-		toc.insert_toc({ range = 0 })
-		assert_buf_eq(bufnr, {
-			"- [h1](#h1)",
-			"	- [h2](#h2)",
-			"		- [h3](#h3)",
-			"	- [h4](#h4)",
-			"",
-			"# h1",
-			"## h2",
-			"### h3",
-			"## h4",
-		})
-	end)
-
 	it("ignores sections within containers", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
@@ -322,8 +265,7 @@ describe("toc", function()
 			"### h3",
 			"## h4",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [h1](#h1)",
 			"  - [h2](#h2)",
@@ -350,8 +292,7 @@ describe("toc", function()
 			"### _h3 is_styled_ too_",
 			"## h4 word_word_",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [_h1 this __is__ styled_](#h1-this-is-styled)",
 			"  - [*h2* `code`](#h2-code)",
@@ -371,8 +312,7 @@ describe("toc", function()
 			"",
 			"# h1~`!@#$%^&*()-_+={[]}|\\:;\"'<,>.?/ content",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [h1~`!@#$%^&*()-_+={[]}|\\:;\"'<,>.?/ content](#h1-_-content)",
 			"",
@@ -386,12 +326,78 @@ describe("toc", function()
 			"",
 			"# h1 <!-- comment --> c<!--comment-->ontent",
 		})
-		api.nvim_win_set_cursor(0, { 1, 0 })
-		toc.insert_toc({ range = 0 })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
 		assert_buf_eq(bufnr, {
 			"- [h1  content](#h1--content)",
 			"",
 			"# h1 <!-- comment --> c<!--comment-->ontent",
+		})
+	end)
+
+	it("can omit headings by level", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
+		})
+		toc.insert_toc({ markers = { "-" }, start_row = 0, max_level = 2 })
+		assert_buf_eq(bufnr, {
+			"- [h1](#h1)",
+			"  - [h3](#h3)",
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
+		})
+	end)
+
+	it("supports alternating markers", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
+		})
+		toc.insert_toc({ markers = { "*", "+" }, start_row = 0 })
+		assert_buf_eq(bufnr, {
+			"* [h1](#h1)",
+			"  + [h2](#h2)",
+			"  + [h3](#h3)",
+			"    * [h4](#h4)",
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
+		})
+	end)
+
+	it("supports ordered markers", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
+		})
+		toc.insert_toc({ markers = { ".", ")" }, start_row = 0 })
+		assert_buf_eq(bufnr, {
+			"1. [h1](#h1)",
+			"   1) [h2](#h2)",
+			"   2) [h3](#h3)",
+			"      1. [h4](#h4)",
+			"",
+			"# h1",
+			"### h2",
+			"## h3",
+			"### h4",
 		})
 	end)
 end)

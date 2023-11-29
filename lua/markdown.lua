@@ -81,8 +81,8 @@ end
 ---@type table<integer, { cmds: table, maps: table }>
 local cache
 
-local function create_cached_buf_usr_cmd(bufnr, name, cmd, range)
-	api.nvim_buf_create_user_command(bufnr, name, cmd, { force = true, range = range })
+local function create_cached_buf_usr_cmd(bufnr, name, cmd, opts)
+	api.nvim_buf_create_user_command(bufnr, name, cmd, opts)
 	if cache ~= nil then
 		table.insert(cache[bufnr].cmds, name)
 	end
@@ -112,14 +112,49 @@ local function del_cached_keymaps(bufnr)
 end
 
 local function setup_usr_cmds(bufnr)
-	local toc = require("markdown.toc")
-	create_cached_buf_usr_cmd(bufnr, "MDInsertToc", toc.insert_toc, true)
+	local cmd = require("markdown.cmd")
+
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDInsertToc",
+		cmd.insert_toc,
+		{
+			force = true,
+			range = true,
+			nargs = "*",
+		})
 
 	local list = require("markdown.list")
-	create_cached_buf_usr_cmd(bufnr, "MDListItemBelow", list.insert_list_item_below, false)
-	create_cached_buf_usr_cmd(bufnr, "MDListItemAbove", list.insert_list_item_above, false)
-	create_cached_buf_usr_cmd(bufnr, "MDResetListNumbering", list.reset_list_numbering, false)
-	create_cached_buf_usr_cmd(bufnr, "MDTaskToggle", list.toggle_task, true)
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDListItemBelow",
+		list.insert_list_item_below,
+		{
+			force = true,
+		})
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDListItemAbove",
+		list.insert_list_item_above,
+		{
+			force = true,
+		})
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDResetListNumbering",
+		cmd.reset_list_numbering,
+		{
+			force = true,
+			range = true,
+		})
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDTaskToggle",
+		cmd.toggle_task,
+		{
+			force = true,
+			range = true,
+		})
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
