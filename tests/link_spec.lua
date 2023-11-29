@@ -1,7 +1,5 @@
 local api = vim.api
 
-local link = require("markdown.link")
-
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
 	api.nvim_buf_set_option(bufnr, "filetype", "markdown")
@@ -20,6 +18,8 @@ end
 describe("link", function()
 	vim.cmd("runtime plugin/markdown.lua")
 	require("markdown").setup()
+
+	local link = require("markdown.link")
 
 	it("can add over motion", function()
 		local bufnr = new_md_buf()
