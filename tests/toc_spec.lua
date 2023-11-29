@@ -400,4 +400,53 @@ describe("toc", function()
 			"### h4",
 		})
 	end)
+
+	it("can show headings in loclist", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# h1",
+			"## h2 <!-- toc omit section -->",
+			"### h3",
+			"## h4",
+			"### h5 <!-- toc omit heading -->",
+		})
+		toc.set_loclist_toc({ omit_flagged = true })
+		assert_buf_eq(0, {
+			"h1",
+			"  h4"
+		})
+	end)
+
+	it("can show headings with max level in loclist", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# h1",
+			"## h2",
+			"### h3",
+		})
+		toc.set_loclist_toc({ max_level = 2 })
+		assert_buf_eq(0, {
+			"h1",
+			"  h2",
+		})
+	end)
+
+	it("can show all headings in loclist", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# h1",
+			"## h2 <!-- toc omit section -->",
+			"### h3",
+			"## h4",
+			"### h5 <!-- toc omit heading -->",
+		})
+		toc.set_loclist_toc({ omit_flagged = false })
+		assert_buf_eq(0, {
+			"h1",
+			"  h2",
+			"    h3",
+			"  h4",
+			"    h5",
+		})
+	end)
 end)

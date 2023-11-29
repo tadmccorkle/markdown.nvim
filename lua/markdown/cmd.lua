@@ -41,6 +41,22 @@ function M.insert_toc(opts)
 	require("markdown.toc").insert_toc(o)
 end
 
+local function show_toc(opts, omit_flagged)
+	local o = { omit_flagged = omit_flagged }
+	if #opts.fargs > 0 then
+		o.max_level = tonumber(opts.fargs[1])
+	end
+	require("markdown.toc").set_loclist_toc(o)
+end
+
+function M.show_toc(opts)
+	show_toc(opts, true)
+end
+
+function M.show_toc_all(opts)
+	show_toc(opts, false)
+end
+
 function M.reset_list_numbering(opts)
 	local s, e
 	if opts.range ~= 0 then

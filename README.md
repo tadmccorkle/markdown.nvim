@@ -23,6 +23,7 @@ Tools for working with markdown files in Neovim.
   - Toggle, delete, and change emphasis and code spans
 - Table of contents
   - Insert as list with configurable markers
+  - Show in current window's location list
   - Omit entire sections and individual headings with an HTML tag
 - Lists
   - Insert new items
@@ -290,6 +291,8 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 A table of contents (TOC) is created from the top-level ATX and setext headings of markdown buffers.
 
 The `:MDInsertToc [max_level] [markers]` command adds a TOC by inserting (normal mode) or replacing selected lines (visual mode). Optional arguments can be provided to set the max heading level to include and the list markers to alternate through for each heading level.
+
+The `:MDToc [max_level]` and `:MDTocAll [max_level]` commands show a TOC for the current buffer in the current window's location list. `:MDToc` omits flagged headings and `MDTocAll` includes all headings. An optional argument can be provided to set the max heading level to include.
 
 #### Omit sections and headings <!-- toc omit heading -->
 

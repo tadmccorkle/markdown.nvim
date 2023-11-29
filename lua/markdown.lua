@@ -123,6 +123,22 @@ local function setup_usr_cmds(bufnr)
 			range = true,
 			nargs = "*",
 		})
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDToc",
+		cmd.show_toc,
+		{
+			force = true,
+			nargs = "?",
+		})
+	create_cached_buf_usr_cmd(
+		bufnr,
+		"MDTocAll",
+		cmd.show_toc_all,
+		{
+			force = true,
+			nargs = "?",
+		})
 
 	local list = require("markdown.list")
 	create_cached_buf_usr_cmd(

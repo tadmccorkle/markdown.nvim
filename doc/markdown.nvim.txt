@@ -180,6 +180,28 @@ container like lists or block quotes) headings of markdown buffers.
                             Default: "-" (unless overridden by configuration)
                             See: |markdown.config.toc.markers|
 
+                                                                      *:MDToc*
+:MDToc [max_level]
+
+        Shows a TOC for the current buffer in the current window's location
+        list. Any flagged headings (see |markdown.toc.omit|) will also be
+        omitted in the location list.
+
+        Arguments:
+            * max_level     max heading level to include
+                            Default: "6"
+
+                                                                   *:MDTocAll*
+:MDTocAll [max_level]
+
+        Shows a TOC for the current buffer in the current window's location
+        list. All headings, including those flagged as omitted (see
+        |markdown.toc.omit|), are included.
+
+        Arguments:
+            * max_level     max heading level to include
+                            Default: "6"
+
 OMIT HEADINGS                                              *markdown.toc.omit*
 
 Headings and entire sections can be omitted from the TOC by flagging them with

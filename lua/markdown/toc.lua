@@ -198,6 +198,64 @@ function M.insert_toc(opts)
 	api.nvim_buf_set_lines(0, opts.start_row, end_row, true, lines)
 	list.reset_list_numbering(opts.start_row, opts.start_row + #lines - 1)
 end
+
+---@param toc Section
+---@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean }
+---@param loclist? table[]
+---@param indent? string
+local function build_toc_loclist(toc, opts, loclist, indent)
+	loclist = loclist or {}
+	indent = indent or ""
+
+	local sub_indent = indent .. "  "
+
+	for _, sub in pairs(toc.children) do
+		local omit_section = opts.omit_flagged and sub.omit == Section.OMIT_LEVEL.section
+		if not omit_section and sub.level <= opts.max_level then
+			local text = link.get_heading_link(sub.name)
+			local omit_heading = opts.omit_flagged and sub.omit == Section.OMIT_LEVEL.heading
+			if not omit_heading and text ~= "" then
+				table.insert(loclist, {
+					bufnr = opts.bufnr,
+					lnum = sub.line,
+					text = indent .. text
+				})
+				build_toc_loclist(sub, opts, loclist, sub_indent)
+			else
+				build_toc_loclist(sub, opts, loclist, indent)
+			end
+		end
+	end
+
+	return loclist
+end
+
+---@class LoclistOpts
+---@field max_level? integer Max heading level to include (default: '6')
+---@field omit_flagged? boolean Whether to omit flagged sections and headings (default: 'false')
+
+--- Sets the current window's location list to the table of contents.
+---@param opts? LoclistOpts
+function M.set_loclist_toc(opts)
+	opts = opts or {}
+
+	local toc = get_document_sections()
+
+	local bufnr = api.nvim_win_get_buf(0)
+	local loclist = build_toc_loclist(toc, {
+		bufnr = bufnr,
+		max_level = opts.max_level or 6,
+		omit_flagged = opts.omit_flagged or false,
+	})
+	vim.fn.setloclist(0, loclist)
+
+	vim.cmd.lopen()
+	vim.cmd.setlocal("modifiable")
+	for i, item in ipairs(loclist) do
+		api.nvim_buf_set_lines(0, i - 1, i, true, { item.text })
+	end
+	vim.cmd.setlocal("nomodified")
+	vim.cmd.setlocal("nomodifiable")
 end
 
 return M
