@@ -4,9 +4,7 @@
 
 Tools for working with markdown files in Neovim.
 
-<div align="center">
-  <video src="https://github.com/tadmccorkle/markdown.nvim/assets/41654369/2fc9c2c4-8c6a-4c98-bb57-87ff49c0d20f" type="video/mp4"></video>
-</div>
+![markdown-nvim-demo](https://github.com/tadmccorkle/markdown.nvim/assets/41654369/b3b7c85f-2a37-4b79-ba5e-e75b39d45098 "markdown.nvim demo")
 
 - [Features](#features)
   - [Planned features](#planned-features)
