@@ -207,10 +207,12 @@ end
 ---@param path string
 ---@param opts FollowOpts
 local function open_path(path, opts)
-	if vim.startswith(path, ".") then
-		path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)) .. string.sub(path, 2)
-	elseif vim.startswith(path, "/") then
+	if vim.startswith(path, "/") then
 		path = vim.fn.getcwd() .. path
+	elseif vim.startswith(path, "./") or vim.startswith(path, ".\\") then
+		path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)) .. string.sub(path, 2)
+	elseif vim.startswith(path, "../") or vim.startswith(path, "..\\") then
+		path = vim.fs.dirname(vim.fs.dirname(vim.api.nvim_buf_get_name(0))) .. string.sub(path, 3)
 	end
 
 	-- try to navigate to headings in the linked file
