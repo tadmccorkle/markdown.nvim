@@ -1,16 +1,19 @@
 # markdown.nvim <!-- toc omit heading -->
 
+Configurable tools for working with markdown files in Neovim.
+
 ![tests](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests.yml/badge.svg?branch=master)
 
-Tools for working with markdown files in Neovim.
-
 ![markdown-nvim-demo](https://github.com/tadmccorkle/markdown.nvim/assets/41654369/b3b7c85f-2a37-4b79-ba5e-e75b39d45098 "markdown.nvim demo")
+
+## Contents <!-- toc omit heading -->
 
 - [Features](#features)
   - [Planned features](#planned-features)
 - [Installation](#installation)
 - [Getting help](#getting-help)
 - [Configuration](#configuration)
+  - [`<Plug>` mappings](#plug-mappings)
 - [Usage](#usage)
   - [Inline surround](#inline-surround)
   - [Table of contents](#table-of-contents)
@@ -113,8 +116,8 @@ A table of configuration options can optionally be passed to the `setup()` funct
 
 ```lua
 {
-  -- disable all keymaps by setting mappings field to 'false'
-  -- selectively disable keymaps by setting corresponding field to 'false'
+  -- Disable all keymaps by setting mappings field to 'false'.
+  -- Selectively disable keymaps by setting corresponding field to 'false'.
   mappings = {
     inline_surround_toggle = "gs", -- (string|boolean) toggle inline style
     inline_surround_toggle_line = "gss", -- (string|boolean) line-wise toggle inline style
@@ -128,9 +131,9 @@ A table of configuration options can optionally be passed to the `setup()` funct
     go_prev_heading = "[[", -- (string|boolean) set cursor to previous section heading
   },
   inline_surround = {
-    -- for the emphasis, strong, strikethrough, and code fields:
-    -- * key: used to specify an inline style in toggle, delete, and change operations
-    -- * txt: text inserted when toggling or changing to the corresponding inline style
+    -- For the emphasis, strong, strikethrough, and code fields:
+    -- * 'key': used to specify an inline style in toggle, delete, and change operations
+    -- * 'txt': text inserted when toggling or changing to the corresponding inline style
     emphasis = {
       key = "i",
       txt = "*",
@@ -154,18 +157,22 @@ A table of configuration options can optionally be passed to the `setup()` funct
     },
   },
   toc = {
-    -- comment text to flag headings/sections for omission in table of contents
+    -- Comment text to flag headings/sections for omission in table of contents.
     omit_heading = "toc omit heading",
     omit_section = "toc omit section",
-    -- cycling list markers to use in table of contents
-    -- use '.' and ')' for ordered lists
+    -- Cycling list markers to use in table of contents.
+    -- Use '.' and ')' for ordered lists.
     markers = { "-" },
   },
-  -- hook functions allow for overriding or extending default behavior
-  -- fallback function with default behavior is provided as argument
+  -- Hook functions allow for overriding or extending default behavior.
+  -- Called with a table of options and a fallback function with default behavior.
+  -- Signature: fun(opts: table, fallback: fun())
   hooks = {
-    -- called when following links with `dest` as the link destination
-    follow_link = nil, -- fun(dest: string, fallback: fun())
+    -- Called when following links. Provided the following options:
+    -- * 'dest' (string): the link destination
+    -- * 'use_default_app' (boolean|nil): whether to open the destination with default application
+    --   (refer to documentation on <Plug> mappings for explanation of when this option is used)
+    follow_link = nil,
   },
   on_attach = nil, -- (fun(bufnr: integer)) callback when plugin attaches to a buffer
 }
@@ -197,6 +204,31 @@ on_attach = function(bufnr)
   vim.keymap.set("x", "<C-i>", toggle("i"), { buffer = bufnr })
 end,
 ```
+
+### `<Plug>` mappings
+
+**markdown.nvim** sets up `<Plug>` mappings regardless of configuration. Most are used by the configuration mappings described above:
+
+| `<Plug>` Mapping                           | Configuration Mapping         |
+| ------------------------------------------ | ----------------------------- |
+| `<Plug>(markdown_toggle_emphasis)`         | `inline_surround_toggle`      |
+| `<Plug>(markdown_toggle_emphasis_line)`    | `inline_surround_toggle_line` |
+| `<Plug>(markdown_toggle_emphasis_visual)`  | `inline_surround_toggle`      |
+| `<Plug>(markdown_delete_emphasis)`         | `inline_surround_delete`      |
+| `<Plug>(markdown_change_emphasis)`         | `inline_surround_change`      |
+| `<Plug>(markdown_add_link)`                | `link_add`                    |
+| `<Plug>(markdown_add_link_visual)`         | `link_add`                    |
+| `<Plug>(markdown_follow_link)`             | `link_follow`                 |
+| `<Plug>(markdown_go_current_heading)`      | `go_curr_heading`             |
+| `<Plug>(markdown_go_parent_heading)`       | `go_parent_heading`           |
+| `<Plug>(markdown_go_next_heading)`         | `go_next_heading`             |
+| `<Plug>(markdown_go_prev_heading)`         | `go_prev_heading`             |
+
+The following `<Plug>` mappings are not used by **markdown.nvim**'s configuration:
+
+| `<Plug>` Mapping                           | Description                                                                                                                                                                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<Plug>(markdown_follow_link_default_app)` | Like `<Plug>(markdown_follow_link)` but opens links to non-markdown files in the default application for the link destination. The hook `follow_link` is called before following the link with the option 'use_default_app' set to 'true'. |
 
 ## Usage
 
@@ -362,10 +394,10 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
 Markdown buffers can be navigated with the following keymaps:
 
-- **]c**: go to the current section heading
-- **]p**: go to the parent section heading
-- **]]**: go to the next section heading
-- **[[**: go to the previous section heading
+- `]c`: go to the current section heading
+- `]p`: go to the parent section heading
+- `]]`: go to the next section heading
+- `[[`: go to the previous section heading
 
 ## *nvim-treesitter* module
 

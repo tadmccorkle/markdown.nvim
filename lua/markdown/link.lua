@@ -183,22 +183,30 @@ local function follow_heading_link(dest, root)
 	notify.info("heading not found")
 end
 
----@param url string
-local function open_url(url)
-	local sys = vim.loop.os_uname().sysname
+---@return string
+local function get_sys()
+	return vim.loop.os_uname().sysname
+end
+
+---@param dest string
+---@param sys string
+---@return boolean
+local function try_open(dest, sys)
 	if sys == "Windows_NT" then
-		vim.fn.system({ "explorer.exe", url })
+		vim.fn.system({ "explorer.exe", dest })
 	elseif sys == "Linux" then
-		vim.fn.system("xdg-open", url)
+		vim.fn.system("xdg-open", dest)
 	elseif sys == "Darwin" then
-		vim.fn.system("open", url)
+		vim.fn.system("open", dest)
 	else
-		notify.error("OS '%s' URL navigation is not supported.", sys)
+		return false
 	end
+	return true
 end
 
 ---@param path string
-local function open_path(path)
+---@param opts FollowOpts
+local function open_path(path, opts)
 	if vim.startswith(path, ".") then
 		path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)) .. string.sub(path, 2)
 	elseif vim.startswith(path, "/") then
@@ -214,13 +222,31 @@ local function open_path(path)
 	end
 
 	local normalized = vim.fs.normalize(path)
-	if vim.fn.filereadable(normalized) ~= 0 or vim.fn.isdirectory(normalized) ~= 0 then
-		vim.cmd.edit(path)
+	local is_file = vim.fn.filereadable(normalized) ~= 0
+	local is_dir = vim.fn.isdirectory(normalized) ~= 0
+	if is_file or is_dir then
+		local should_edit = true
 
-		if inner_dest ~= nil then
-			local p = ts.get_parser(0, "markdown")
-			if p ~= nil then
-				follow_heading_link(inner_dest, p:parse()[1]:root())
+		local is_md = string.sub(path, -3) == ".md"
+		if opts.use_default_app and not is_md and not is_dir then
+			local sys = get_sys()
+			local sys_path
+			if sys == "Windows_NT" then
+				sys_path = string.gsub(normalized, "/", "\\")
+			else
+				sys_path = normalized
+			end
+			should_edit = not try_open(sys_path, sys)
+		end
+
+		if should_edit then
+			vim.cmd.edit(path)
+
+			if inner_dest ~= nil then
+				local p = ts.get_parser(0, "markdown")
+				if p ~= nil then
+					follow_heading_link(inner_dest, p:parse()[1]:root())
+				end
 			end
 		end
 	else
@@ -228,8 +254,14 @@ local function open_path(path)
 	end
 end
 
+---@class FollowOpts
+---@field use_default_app? boolean Open non-markdown path with default application (default: 'false')
+
 --- Follows or opens the destination of the link under the cursor.
-function M.follow()
+---@param opts FollowOpts?
+function M.follow(opts)
+	opts = opts or {}
+
 	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
 	cursor[1] = cursor[1] - 1
 
@@ -249,15 +281,19 @@ function M.follow()
 		if vim.startswith(dest, "#") then
 			follow_heading_link(dest, t:root())
 		elseif M.is_url(dest) then
-			open_url(dest)
+			local sys = get_sys()
+			if not try_open(dest, sys) then
+				notify.error("OS '%s' URL navigation is not supported.", sys)
+			end
 		else
-			open_path(dest)
+			open_path(dest, opts)
 		end
 	end
 
 	local override = config:get().hooks.follow_link
 	if override ~= nil then
-		override(dest, follow_link)
+		local o_opts = vim.tbl_extend("error", opts, { dest = dest })
+		override(o_opts, follow_link)
 	else
 		follow_link()
 	end

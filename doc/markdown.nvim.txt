@@ -333,9 +333,8 @@ call:
         })
 <
                                                       *markdown.plug_mappings*
-The following plug |<Plug>| mappings are used by |markdown.inline|,
-|markdown.link|, and |markdown.navigation|. They are always set up and can be
-used without explicit configuration:
+|markdown.nvim| sets up |<Plug>| mappings regardless of configuration. Most
+are used by the |markdown.config.mappings|:
 >vim
         <Plug>(markdown_toggle_emphasis)
         <Plug>(markdown_toggle_emphasis_line)
@@ -350,6 +349,16 @@ used without explicit configuration:
         <Plug>(markdown_go_next_heading)
         <Plug>(markdown_go_prev_heading)
 <
+The following |<Plug>| mappings are not used by |markdown.nvim|'s
+configuration:
+
+`<Plug>(markdown_follow_link_default_app)`
+    Like `<Plug>(markdown_follow_link)` but opens links to non-markdown files
+    in the default application for the link destination. The
+    |markdown.config.hooks| function `follow_link` is called before following
+    the link with the option 'use_default_app' set to 'true'.
+
+
 markdown.setup({opts})                                      *markdown.setup()*
     Both the standalone plugin and |nvim-treesitter| module configurations
     accept the same table argument:
@@ -521,12 +530,18 @@ markdown.setup({opts})                                      *markdown.setup()*
                                                        *markdown.config.hooks*
     hooks: ~
         Functions that allow for overriding or extending default behavior.
-        Fallback function with default behavior is provided as argument.
+        Called with a table of options and a fallback function with default
+        behavior.
+
+        Field signature: fun(opts: table, fallback: fun())
 
         Fields:
-            * follow_link   called when following links with `dest` as the
-                            link destination
-                            Signature: fun(dest: string, fallback: fun())
+            * follow_link   called when following links with the following
+                            options:
+                            * dest: the link destination
+                            * use_default_app: whether to open the link with
+                              the default application for the link destination
+                              (see |markdown.plug_mappings|)
                             Default: nil
 
                                                    *markdown.config.on_attach*

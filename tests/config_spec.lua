@@ -204,9 +204,9 @@ describe("config", function()
 		local last_dest
 		require("markdown").setup({
 			hooks = {
-				follow_link = function(dest, fallback)
-					last_dest = dest
-					if dest ~= "#1" then
+				follow_link = function(opts, fallback)
+					last_dest = opts.dest
+					if opts.dest ~= "#1" then
 						fallback()
 					end
 				end,

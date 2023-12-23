@@ -78,6 +78,14 @@ local function set_keymaps()
 		})
 	vim.keymap.set(
 		"n",
+		"<Plug>(markdown_follow_link_default_app)",
+		"<Cmd>lua require'markdown.link'.follow({ use_default_app = true })<CR>",
+		{
+			silent = true,
+			desc = "Follow link under the cursor using default app for non-markdown files",
+		})
+	vim.keymap.set(
+		"n",
 		"<Plug>(markdown_go_current_heading)",
 		"<Cmd>lua require'markdown.nav'.curr_heading()<CR>",
 		{

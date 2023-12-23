@@ -28,8 +28,12 @@
 ---@field omit_section string
 ---@field markers string[]
 
+---@class FollowHookOpts
+---@field dest string
+---@field use_default_app boolean|nil
+
 ---@class HookOpts
----@field follow_link fun(dest: string, fallback: fun())|nil
+---@field follow_link fun(opts: FollowHookOpts, fallback: fun())|nil
 
 ---@class MarkdownConfig
 ---@field mappings MappingOpts|boolean
