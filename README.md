@@ -60,7 +60,7 @@ Install **markdown.nvim** with your preferred plugin manager.
   ```lua
   {
     "tadmccorkle/markdown.nvim",
-    event = "VeryLazy",
+    ft = "markdown", -- or 'event = "VeryLazy"'
     opts = {
       -- configuration here or empty for defaults
     },
