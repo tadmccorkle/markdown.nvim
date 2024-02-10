@@ -35,6 +35,7 @@ Configurable tools for working with markdown files in Neovim.
   - Insert new items
   - Auto-number ordered lists
   - Toggle task list items (GFM)
+  - Toggle between list types
 - Links
   - Add links over vim motions / visual selection
   - Follow links under the cursor
@@ -368,6 +369,16 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 - #### Toggle tasks
 
   The `:MDTaskToggle` command toggles the task(s) on the current cursor line (normal mode) or under the current visual selection (visual mode).
+
+- #### Toggle list types
+
+  The `:MDToggleListType [list_type]` command allows you to switch between ordered, unordered, and task list types at the current cursor position or within a selected range or for a list under cursor. The command accepts a single argument specifying the desired list type.
+
+  Examples:
+
+  - `:MDToggleListType ordered`: Toggle the current or selected list(s) to an ordered list.
+  - `:MDToggleListType unordered`: Toggle the current or selected list(s) to an unordered list.
+  - `:MDToggleListType task`: Toggle the current or selected list(s) to a task list.
 
 ### Links
 

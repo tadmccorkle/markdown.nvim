@@ -35,6 +35,12 @@ local function is_list(node)
 	return node:type() == LIST_TYPE
 end
 
+---@param node TSNode
+---@return boolean
+local function is_paragraph(node)
+	return node:type() == PARAGRAPH_TYPE
+end
+
 ---@param list_item TSNode
 ---@param change integer
 local function adjust_child_indent(list_item, change)
@@ -240,6 +246,190 @@ function M.toggle_task(start_row, end_row)
 			local row, start_col, _, end_col = task_markers[i]:range()
 			util.replace_text(row, start_col, end_col - start_col + 1, "[ ] ")
 		end
+	end
+end
+
+--- @class ListType : string
+local ListType = {
+	ORDERED = "ordered",
+	UNORDERED = "unordered",
+	TASK = "task",
+}
+
+M.ListType = ListType
+
+---@param list_item_node TSNode
+---@return boolean
+local function is_ordered_list_item(list_item_node)
+	local marker_node = list_item_node:named_child(0)
+	if not marker_node then
+		error("Marker node is nil")
+	end
+
+	local marker_text = ts.get_node_text(marker_node, 0, nil)
+	if marker_text:match("^%d") then
+		return true
+	end
+
+	return false
+end
+
+---@param list_node TSNode
+---@return ListType
+local function get_list_type(list_node)
+	local list_item_node = list_node:named_child(0)
+
+	if not list_item_node then
+		error("List not has children")
+	end
+
+	if list_item_node:type() ~= "list_item" then
+		error("List child is not list item")
+	end
+
+	if is_ordered_list_item(list_item_node) then
+		return ListType.ORDERED
+	elseif is_task_list_item(list_item_node) then
+		return ListType.TASK
+	end
+
+	return ListType.UNORDERED
+end
+
+---@param list_type ListType
+---@param counter number
+---@return string
+local function get_list_marker(list_type, counter)
+	if list_type == ListType.ORDERED then
+		return tostring(counter) .. ". "
+	elseif list_type == ListType.UNORDERED then
+		return "- "
+	elseif list_type == ListType.TASK then
+		return "- [ ] "
+	end
+
+	vim.notify("List type is not supported", vim.log.levels.ERROR)
+	return ""
+end
+
+---@param list_type ListType
+---@param start_line number
+---@param end_line number
+local function create_list_in_selection(list_type, start_line, end_line)
+	local counter = 1
+	for line_num = start_line, end_line do
+		local line_content = vim.fn.getline(line_num)
+		local new_line_content = get_list_marker(list_type, counter) .. line_content
+
+		vim.fn.setline(line_num, new_line_content)
+		counter = counter + 1
+	end
+end
+
+---@param list_item_node TSNode
+---@return number, number, number, number
+local function get_full_list_node_marker_position(list_item_node)
+	local marker_node = list_item_node:named_child(0)
+	if not marker_node then
+		error("Marker node is nil")
+	end
+
+	local start_row, start_col, end_row, end_col = marker_node:range()
+
+	---@type TSNode|nil
+	local task_marker = marker_node:next_named_sibling()
+	if
+		task_marker ~= nil
+		and task_marker:type() ~= TASK_MARKER_CHECKED_TYPE
+		and task_marker:type() ~= TASK_MARKER_UNCHECKED_TYPE
+	then
+		task_marker = nil
+	end
+
+	if task_marker ~= nil then
+		_, _, end_row, end_col = task_marker:range()
+		-- to include space after task
+		end_col = end_col + 1
+	end
+
+	return start_row, start_col, end_row, end_col
+end
+
+-- Toggle between list type passed: ordered, unordered, task
+---@param new_type ListType
+function M.toggle_list_type(new_type)
+	local is_normal_mode = vim.api.nvim_get_mode().mode == "n"
+	-- we exit visual mode to get '< and '>
+	vim.cmd.norm("<esc>")
+
+	local start_line = vim.fn.getpos("'<")[2]
+	local end_line = vim.fn.getpos("'>")[2]
+	-- means at the time of starting the insi
+
+	ts.get_parser(0, "markdown"):parse()
+	local list_node = md_ts.find_node(is_list)
+
+	-- if it is not list, then we treat it as paragraph
+	if list_node == nil then
+		local paragraph = md_ts.find_node(is_paragraph)
+		if not paragraph then
+			vim.notify("The node under the cursor is neither a list nor paragraph")
+			return
+		end
+		-- in normal mode we get the paragraph range as position
+		if is_normal_mode then
+			start_line, _, end_line, _ = paragraph:range()
+			-- it always includes blank line before paragraph
+			start_line = start_line + 1
+		end
+
+		create_list_in_selection(new_type, start_line, end_line)
+		return
+	end
+
+	local current_list_type = get_list_type(list_node)
+	for child in list_node:iter_children() do
+		if child:type() ~= "list_item" then
+			error("List child is not list item")
+		end
+
+		local start_row, start_col, end_row, end_col = get_full_list_node_marker_position(child)
+
+		if not is_normal_mode then
+			-- it seams that start_line and end_line is always one line ahead
+			if start_row < start_line - 1 then
+				goto continue
+			end
+
+			if end_row > end_line - 1 then
+				return
+			end
+		end
+
+		-- clears list marker, user "toggles" list type
+		if new_type == current_list_type then
+			api.nvim_buf_set_text(
+				api.nvim_get_current_buf(),
+				start_row,
+				start_col,
+				end_row,
+				end_col,
+				{ "" }
+			)
+		-- otherwise replaces list marker
+		else
+			local num = tonumber(start_row - list_node:range()) + 1
+			api.nvim_buf_set_text(
+				api.nvim_get_current_buf(),
+				start_row,
+				start_col,
+				end_row,
+				end_col,
+				{ get_list_marker(new_type, num) }
+			)
+		end
+
+		::continue::
 	end
 end
 
