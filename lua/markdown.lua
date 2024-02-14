@@ -211,11 +211,8 @@ local function setup_usr_cmds(bufnr)
 			force = true,
 			range = true,
 		})
-	create_cached_buf_usr_cmd(bufnr, "MDToggleListType", function(opts)
-		local args = vim.split(opts.args, " ", { trimempty = true })
-		local list_type = args[1] or "unordered"
-		list.toggle_list_type_at_cursor(list_type)
-	end, {
+	create_cached_buf_usr_cmd(bufnr, "MDToggleListType", list.toggle_list_type, {
+		range = true,
 		force = true,
 		nargs = 1,
 		-- autocompletion

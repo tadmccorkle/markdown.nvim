@@ -356,15 +356,12 @@ local function get_full_list_node_marker_position(list_item_node)
 end
 
 -- Toggle between list type passed: ordered, unordered, task
----@param new_type ListType
-function M.toggle_list_type(new_type)
-	local is_normal_mode = vim.api.nvim_get_mode().mode == "n"
-	-- we exit visual mode to get '< and '>
-	vim.cmd.norm("<esc>")
+---@param opts table
+function M.toggle_list_type(opts)
+  local is_normal_mode = opts.range == 0
+	local start_line, end_line = require("markdown.util").get_user_command_range(opts)
 
-	local start_line = vim.fn.getpos("'<")[2]
-	local end_line = vim.fn.getpos("'>")[2]
-	-- means at the time of starting the insi
+	local new_type = opts.fargs[1]
 
 	ts.get_parser(0, "markdown"):parse()
 	local list_node = md_ts.find_node(is_list)
