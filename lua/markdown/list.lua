@@ -394,11 +394,11 @@ function M.toggle_list_type(opts)
 
 		if not is_normal_mode then
 			-- it seams that start_line and end_line is always one line ahead
-			if start_row < start_line - 1 then
+			if start_row < start_line then
 				goto continue
 			end
 
-			if end_row > end_line - 1 then
+			if end_row > end_line then
 				return
 			end
 		end
