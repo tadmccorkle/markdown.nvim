@@ -78,11 +78,11 @@ marker and multiple blocks will only apply the style to inline content:
             another paragraph                  **another pargraph
             over two lines                     over two lines**
 <
-In normal mode this is done with *gs{motion}{style}*, where *{style}* is
+In normal mode this is done with `gs{motion}{style}`, where `{style}` is
 the key corresponding to the style to toggle (by default "i", "b", "s", or
 "c"). Like other vim motions, a |[count]| can be specified before and after
-the *gs*. Emphasis can also be toggled over the current line using
-*gss{style}*. A |[count]| can be specified to toggle over multiple lines.
+the `gs`. Emphasis can also be toggled over the current line using
+`gss{style}`. A |[count]| can be specified to toggle over multiple lines.
 
         Before                  Command             After ~
 >
@@ -94,7 +94,7 @@ the *gs*. Emphasis can also be toggled over the current line using
 `^` denotes cursor position
 
 Styles can be toggled in visual mode based on a visual selection using
-*gs{style}*.
+`gs{style}`.
 
         Before                  Command             After ~
 >
@@ -118,13 +118,13 @@ Styles can also be toggled in visual block mode.
 `^` and `$` denote block selection start and end on each line, respectively
 
 See |markdown.config.on_attach| for an example of how to configure
-standard/typical inline style keybindings in visual mode like *<C-b>* for
-strong/bold and *<C-i>* for for emphasis/italic.
+standard/typical inline style keybindings in visual mode like `<C-b>` for
+strong/bold and `<C-i>` for for emphasis/italic.
 
 DELETE                                                *markdown.inline.delete*
 
 Inline styles around the cursor can be deleted in normal mode using
-*ds{style}*, where *{style}* is the key corresponding to the style to
+`ds{style}`, where `{style}` is the key corresponding to the style to
 delete (by default "i", "b", "s", or "c"). Only the style directly surrounding
 the cursor will be deleted.
 
@@ -139,9 +139,9 @@ the cursor will be deleted.
 CHANGE                                                *markdown.inline.change*
 
 Inline styles around the cursor can be changed in normal mode using
-*cs{from}{to}*, where *{from}* and *{to}* are the keys corresponding to the
-current style (*{from}*) and the new style (*{to}*) (by default "i", "b", "s",
-or "c"). Only the matching *{from}* style directly surrounding the cursor will
+`cs{from}{to}`, where `{from}` and `{to}` are the keys corresponding to the
+current style (`{from}`) and the new style (`{to}`) (by default "i", "b", "s",
+or "c"). Only the matching `{from}` style directly surrounding the cursor will
 be changed.
 
         Before                  Command             After ~
@@ -277,12 +277,12 @@ ADD                                                       *markdown.links.add*
 
 Links can be added over vim motions in normal and visual mode. Links are only
 added when the motion is within one inline block (i.e., not over list markers,
-blank lines, etc.). In normal mode this is done with *gl{motion}* and over a
-visual selection with *gl*.
+blank lines, etc.). In normal mode this is done with `gl{motion}` and over a
+visual selection with `gl`.
 
 FOLLOW                                                 *markdown.links.follow*
 
-Follow links under the cursor in normal mode with *gx*. The following link
+Follow links under the cursor in normal mode with `gx`. The following link
 destinations are supported for in-editor navigation:
 
 * `#destination`: Headings in the current buffer
@@ -566,7 +566,7 @@ markdown.setup({opts})                                      *markdown.setup()*
             })
 <
         `on_attach` can be used to support standard/typical inline style
-        keybindings in visual mode like *<C-b>* for strong/bold and *<C-i>*
+        keybindings in visual mode like `<C-b>` for strong/bold and `<C-i>`
         for for emphasis/italic:
 >lua
             on_attach = function(bufnr)
