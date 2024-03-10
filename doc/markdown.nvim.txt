@@ -169,7 +169,7 @@ container like lists or block quotes) headings of markdown buffers.
         Optional arguments can be separated by `/` or whitespace. When
         separated by `/`, markers will include any leading or trailing
         whitespace. Multiple markers can be specified (for example,
-        *:MDInsertTOC - +* or *:MDInsertTOC/-/+*).
+        `:MDInsertTOC - +` or `:MDInsertTOC/-/+`).
 
         Ordered lists are specified with `"."` and `")"` marker arguments.
 
@@ -305,10 +305,10 @@ NAVIGATION                                               *markdown.navigation*
 
 |markdown.nvim| provides the following keymaps to navigate markdown buffers:
 
-* Go to the current section heading     *]c*
-* Go to the parent section heading      *]p*
-* Go to the next section heading        *]]*
-* Go to the previous section heading    *[[*
+* Go to the current section heading     `]c`
+* Go to the parent section heading      `]p`
+* Go to the next section heading        `]]`
+* Go to the previous section heading    `[[`
 
 Keymaps are set up after |markdown.nvim| is either configured with
 a call to to |markdown.setup()| or registered as an |nvim-treesitter| module
@@ -507,7 +507,7 @@ markdown.setup({opts})                                      *markdown.setup()*
                             Default: true
 
                                             *markdown.config.toc.omit_heading*
-                                            *markdown.config.toc.omit_section
+                                            *markdown.config.toc.omit_section*
     toc.omit_heading: ~
     toc.omit_section: ~
         Defines comment text to flag headings and sections for omission in
@@ -518,7 +518,7 @@ markdown.setup({opts})                                      *markdown.setup()*
             * omit_section: "toc omit section"
         See: |markdown.toc.omit|
 
-                                                  *markdown.config.toc.markers
+                                                 *markdown.config.toc.markers*
     toc.markers: ~
         Defines alternating markers to use for each heading level when
         inserting a table of contents. Ordered list can be specified with `"."`
