@@ -195,9 +195,9 @@ local function try_open(dest, sys)
 	if sys == "Windows_NT" then
 		vim.fn.system({ "explorer.exe", dest })
 	elseif sys == "Linux" then
-		vim.fn.system("xdg-open", dest)
+		vim.fn.system({ "xdg-open", dest })
 	elseif sys == "Darwin" then
-		vim.fn.system("open", dest)
+		vim.fn.system({ "open", dest })
 	else
 		return false
 	end
