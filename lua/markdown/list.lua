@@ -133,8 +133,41 @@ local function insert_list_item(loc)
 
 	ts.get_parser(0, "markdown"):parse()
 	local list_item = md_ts.find_node(is_list_item, { pos = { curr_row, curr_eol } })
+
+	-- Supports unlisted item.
 	if list_item == nil then
-		return
+		if loc == REL_POS.above then
+			vim.cmd("startinsert!")
+			local new_row = curr_row
+			api.nvim_buf_set_lines(0, new_row, new_row, true, { "" })
+			new_row = new_row + 1
+			api.nvim_win_set_cursor(0, { new_row, vim.fn.charcol({ new_row, "$" }) })
+			return
+		else
+			if vim.fn.mode() == "n" then
+				vim.cmd("normal! o")
+				vim.cmd("startinsert!")
+				return
+			end
+		end
+	end
+
+	-- Supports insert mode.
+	local key = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+	if vim.fn.mode() == "i" and loc == REL_POS.below then
+		if list_item == nil then
+			vim.api.nvim_feedkeys(key, "n", true)
+			return
+		elseif list_item ~= nil then
+			if vim.fn.col("$") == 1 then
+				vim.cmd("normal! o")
+				vim.cmd("startinsert!")
+				return
+			elseif vim.fn.col(".") < vim.fn.col("$") then
+				vim.api.nvim_feedkeys(key, "n", true)
+				return
+			end
+		end
 	end
 
 	local marker = list_item:named_child(0)

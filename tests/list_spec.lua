@@ -104,6 +104,8 @@ describe("list", function()
 			"  l4 continued",
 			"  + aa",
 			"- l7",
+			"",
+			"unlisted item",
 		})
 		insert_li_above({ 1, 0 }, "l2")
 		insert_li_below({ 2, 0 }, "l3")
@@ -115,6 +117,8 @@ describe("list", function()
 		insert_li_below({ 13, 5 }, "cc")
 		insert_li_above({ 15, 0 }, "l8")
 		insert_li_below({ 16, 0 }, "l9")
+		insert_li_above({ 19, 0 }, "abc")
+		insert_li_below({ 20, 0 }, "xyz")
 		assert_buf_eq(bufnr, {
 			"- l2",
 			"- l1",
@@ -133,6 +137,10 @@ describe("list", function()
 			"- l8",
 			"- l7",
 			"- l9",
+			"",
+			"abc",
+			"unlisted item",
+			"xyz",
 		})
 	end)
 
@@ -294,5 +302,35 @@ describe("list", function()
 				"- [x] task",
 			})
 		end)
+	end)
+
+	it("insert mode support", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"- l1",
+			"",
+			"unlisted item",
+		})
+		local cr = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+		local br = vim.api.nvim_replace_termcodes("<C-h>", true, false, true)
+		insert_li_below({ 1, 3 }, "l2")
+		api.nvim_win_set_cursor(0, { 2, 3 })
+		vim.cmd("normal i" .. cr)
+		api.nvim_win_set_cursor(0, { 3, 1 })
+		vim.cmd("normal a" .. br .. cr)
+		api.nvim_win_set_cursor(0, { 6, 1 })
+		vim.cmd("normal i" .. cr)
+		api.nvim_win_set_cursor(0, { 7, 12 })
+		vim.cmd("normal a" .. cr .. "xyz")
+		assert_buf_eq(bufnr, {
+			"- l1",
+			"- l",
+			"",
+			"",
+			"",
+			"u",
+			"nlisted item",
+			"xyz",
+		})
 	end)
 end)
