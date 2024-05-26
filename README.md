@@ -2,7 +2,8 @@
 
 Configurable tools for working with markdown files in Neovim.
 
-![tests](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests.yml/badge.svg?branch=master)
+[![ci](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/ci.yml)
+[![tests (nightly)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests-nightly.yml/badge.svg)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests-nightly.yml)
 
 ![markdown-nvim-demo](https://github.com/tadmccorkle/markdown.nvim/assets/41654369/b3b7c85f-2a37-4b79-ba5e-e75b39d45098 "markdown.nvim demo")
 
@@ -10,6 +11,7 @@ Configurable tools for working with markdown files in Neovim.
 
 - [Features](#features)
   - [Planned features](#planned-features)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Getting help](#getting-help)
 - [Configuration](#configuration)
@@ -49,9 +51,12 @@ Configurable tools for working with markdown files in Neovim.
   - Formatting
   - Insert rows and columns
 
-## Installation
+## Requirements
 
-**markdown.nvim** requires the [markdown and markdown_inline](https://github.com/MDeiml/tree-sitter-markdown) tree-sitter parsers. The easiest way to install these is with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
+- Neovim >=0.9.0
+- [markdown and markdown_inline](https://github.com/MDeiml/tree-sitter-markdown) tree-sitter parsers. The easiest way to install these is with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
+
+## Installation
 
 Install **markdown.nvim** with your preferred plugin manager.
 

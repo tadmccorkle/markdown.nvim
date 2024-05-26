@@ -1,0 +1,22 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  commit_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: webiny/action-conventional-commits@v1.3.0
+
+  tests:
+    strategy:
+      matrix:
+        version: [v0.9.5, stable]
+    uses: ./.github/workflows/tests.yml
+    with:
+      version: ${{ matrix.version }}

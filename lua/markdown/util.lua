@@ -142,6 +142,13 @@ function M.ranges_overlap(r1, r2)
 	return true
 end
 
+--- Gets the zero-based row/column position of the cursor in the current window.
+--- @return integer row, integer col
+function M.get_cursor()
+	local cursor = api.nvim_win_get_cursor(0)
+	return cursor[1] - 1, cursor[2]
+end
+
 --- Gets the zero-based start and end lines from user command range arguments, defaulting to the
 --- cursor line in the current buffer if the user command has no range specified.
 ---@param opts table User command arguments table
@@ -150,7 +157,7 @@ end
 ---@see nvim_create_user_command
 function M.get_user_command_range(opts)
 	if opts.range == 0 then
-		local row = api.nvim_win_get_cursor(0)[1] - 1 -- 1-based row, 0-based col
+		local row = M.get_cursor()
 		return row, row
 	end
 

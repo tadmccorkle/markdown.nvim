@@ -166,9 +166,10 @@ end
 ---@param root TSNode
 local function follow_heading_link(dest, root)
 	dest = string.sub(dest, 2)
-	for _, match, _ in heading_query:iter_matches(root, 0, 0, -1) do
-		local content = match[1] or match[2]
-		local heading = match[3]
+	for _, match, _ in heading_query:iter_matches(root, 0, 0, -1, { all = true }) do
+		local content = md_ts.single_node_from_match(match, 1)
+			or md_ts.single_node_from_match(match, 2)
+		local heading = md_ts.single_node_from_match(match, 3)
 		local in_container = md_ts.find_parent(heading, is_container)
 		if not in_container then
 			local text = ts.get_node_text(content, 0, nil)
@@ -264,11 +265,9 @@ end
 function M.follow(opts)
 	opts = opts or {}
 
-	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
-	cursor[1] = cursor[1] - 1
-
-	local t = ts.get_parser(0, "markdown"):parse()[1]
-	local link = md_ts.find_node(is_link, { ignore_injections = false })
+	local row, col = util.get_cursor()
+	local t = ts.get_parser(0, "markdown"):parse({ row, row + 1 })[1]
+	local link = md_ts.find_node(is_link, { pos = { row, col }, ignore_injections = false })
 	if link == nil then
 		return
 	end

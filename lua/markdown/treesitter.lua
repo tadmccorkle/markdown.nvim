@@ -59,7 +59,7 @@ end
 ---@return boolean
 function M.has_parent_type(node)
 	local parent = node:parent()
-	return parent and node:type() == parent:type()
+	return parent ~= nil and node:type() == parent:type()
 end
 
 --- Determines if `node` spans the inner range of its immediate parent.
@@ -103,7 +103,7 @@ end
 ---@return string
 local function remove_nodes(text, node_type, root)
 	for i = root:named_child_count() - 1, 0, -1 do
-		local child = root:named_child(i)
+		local child = root:named_child(i) --[[@as TSNode]]
 		if child:type() == node_type then
 			local _, s, _, e = child:range()
 			text = string.sub(text, 1, s) .. string.sub(text, e + 1)
@@ -123,5 +123,37 @@ function M.remove_nodes(text, lang, node_type)
 	local t = ts.get_string_parser(text, lang):parse()[1]:root()
 	return remove_nodes(text, node_type, t)
 end
+
+local single_node_from_match
+
+if vim.fn.has("nvim-0.10.0") == 1 then
+	---@param match table<integer, TSNode[]>
+	---@param captureIndex integer
+	single_node_from_match = function(match, captureIndex)
+		local nodes = match[captureIndex]
+		if nodes ~= nil then
+			return nodes[1]
+		else
+			return nil
+		end
+	end
+else
+	---@param match table<integer, TSNode>
+	---@param captureIndex integer
+	single_node_from_match = function(match, captureIndex)
+		return match[captureIndex]
+	end
+end
+
+--- Gets a single node from a tree-sitter match obtained from
+--- `vim.treesitter.Query:iter_matches`.
+---
+--- Behaves as if the node is obtained by indexing into a match table with `captureIndex`. Returns
+--- `nil` if no node is matched to that capture group.
+---
+--- Provides backwards compatibility with nvim <0.10.0. Assumes the soon-to-be default behavior of
+--- `iter_matches` with the option `all = true` is used in nvim >=0.10.0.
+---@type fun(match: table<integer, TSNode|TSNode[]>, captureIndex: integer): TSNode
+M.single_node_from_match = single_node_from_match
 
 return M

@@ -59,7 +59,10 @@ end
 ---@param inline TSNode
 ---@return omit_level
 local function get_omit_flag(inline, omit_section_flag, omit_heading_flag)
-	local inline_trees = ts.get_parser(0, "markdown"):children().markdown_inline:parse()
+	local parser = ts.get_parser(0, "markdown")
+	parser:parse({ inline:start(), inline:end_() + 1 })
+
+	local inline_trees = parser:children().markdown_inline:parse()
 	local t = md_ts.find_tree_in_node(inline_trees, inline)
 	if t ~= nil then
 		for _, html_tag, _ in html_tag_query:iter_captures(t:root(), 0, 0, -1) do
@@ -82,8 +85,8 @@ local function get_document_sections()
 
 	local omit_section_flags = {}
 	local omit_heading_flags = {}
-	for _, match, _ in html_block_query:iter_matches(t:root(), 0, 0, -1) do
-		local html = match[1]
+	for _, match, _ in html_block_query:iter_matches(t:root(), 0, 0, -1, { all = true }) do
+		local html = md_ts.single_node_from_match(match, 1)
 		local in_container = md_ts.find_parent(html, is_container)
 		if not in_container then
 			local omit_flag = to_omit_flag(html, omit_section_flag, omit_heading_flag)
@@ -96,15 +99,18 @@ local function get_document_sections()
 	end
 
 	local toc = Section:new()
-	for _, match, _ in toc_heading_query:iter_matches(t:root(), 0, 0, -1) do
-		local heading = match[5]
+	for _, match, _ in toc_heading_query:iter_matches(t:root(), 0, 0, -1, { all = true }) do
+		local heading = md_ts.single_node_from_match(match, 5)
 		local in_container = md_ts.find_parent(heading, is_container)
 		if not in_container then
-			local marker = match[1] or match[4]
-			local content = match[2] or match[3]
+			local marker = md_ts.single_node_from_match(match, 1)
+				or md_ts.single_node_from_match(match, 4)
+			local content = md_ts.single_node_from_match(match, 2)
+				or md_ts.single_node_from_match(match, 3)
 			local name = ts.get_node_text(content, 0, nil)
 			local level = tonumber(marker:type():match("(%d+)")) --[[@as integer]]
 			local line = heading:start() + 1
+
 			if level > toc.level then
 				toc = toc:add_subsection(name, level, line)
 			else

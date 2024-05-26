@@ -1,0 +1,16 @@
+name: tests (nightly)
+
+on:
+  schedule:
+    - cron: '13 6 * * *'
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+    with:
+      version: nightly

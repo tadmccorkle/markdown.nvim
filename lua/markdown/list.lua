@@ -94,15 +94,16 @@ function M.reset_list_numbering(start_row, end_row)
 	end
 
 	local t = ts.get_parser(0, "markdown"):parse()[1]
-	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, start_row, end_row) do
-		reset_list_numbering(match[1])
+	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, start_row, end_row, { all = true }) do
+		local list = md_ts.single_node_from_match(match, 1)
+		reset_list_numbering(list)
 	end
 end
 
 ---@param list_item TSNode
 local function get_last_list_item_inline(list_item)
 	for i = list_item:named_child_count() - 1, 0, -1 do
-		local child = list_item:named_child(i)
+		local child = list_item:named_child(i) --[[@as TSNode]]
 		if child:type() == PARAGRAPH_TYPE then
 			for j = child:named_child_count() - 1, 0, -1 do
 				if child:named_child(j):type() == INLINE_TYPE then
@@ -115,8 +116,7 @@ end
 
 ---@return integer row, integer col
 local function get_curr_eol_pos()
-	local cursor = api.nvim_win_get_cursor(0) -- 1-based row, 0-based col
-	local curr_row = cursor[1] - 1
+	local curr_row = util.get_cursor()
 	local curr_eol = vim.fn.charcol("$") - 1
 	return curr_row, curr_eol
 end
@@ -138,6 +138,10 @@ local function insert_list_item(loc)
 	end
 
 	local marker = list_item:named_child(0)
+	if marker == nil then
+		return
+	end
+
 	local marker_type = marker:type()
 	local marker_row, marker_col = marker:start()
 

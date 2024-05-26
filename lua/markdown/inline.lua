@@ -11,7 +11,7 @@ local M = {}
 local inline_query = ts.query.parse("markdown", "(inline) @inline")
 
 ---@param etype string
----@return Query
+---@return vim.treesitter.Query
 local function get_emphasis_query(etype)
 	return ts.query.parse("markdown_inline", "(" .. etype .. ") @e")
 end
@@ -139,7 +139,11 @@ local function get_emphasis_delim_len(emphasis)
 			start_row, start_col + 1,
 			end_row, end_col - 1
 		)
-		if child ~= emphasis and child:type() == STRIKETHROUGH_TYPE then
+		if
+			child ~= nil
+			and child ~= emphasis
+			and child:type() == STRIKETHROUGH_TYPE
+		then
 			return 2
 		end
 	end
@@ -182,7 +186,7 @@ function M.toggle_emphasis(motion, key)
 	end
 
 	local parser = ts.get_parser(0, "markdown")
-	local t = parser:parse()[1]
+	local t = parser:parse(r --[[@as Range4]])[1]
 	local md_inline = parser:children().markdown_inline
 	if md_inline == nil then
 		return
@@ -293,9 +297,10 @@ function M.delete_surrounding_emphasis()
 		return
 	end
 
-	ts.get_parser(0, "markdown"):parse()
+	local row, col = util.get_cursor()
+	ts.get_parser(0, "markdown"):parse({ row, row + 1 })
 	local emphasis = emphasis_by_key[key]
-	local curr_node = ts.get_node({ ignore_injections = false })
+	local curr_node = ts.get_node({ pos = { row, col }, ignore_injections = false })
 	while curr_node ~= nil and curr_node:type() ~= emphasis.type do
 		curr_node = curr_node:parent()
 	end
@@ -323,9 +328,10 @@ function M.change_surrounding_emphasis()
 		return
 	end
 
-	ts.get_parser(0, "markdown"):parse()
+	local row, col = util.get_cursor()
+	ts.get_parser(0, "markdown"):parse({ row, row + 1 })
 	local from_emphasis = emphasis_by_key[from_key]
-	local curr_node = ts.get_node({ ignore_injections = false })
+	local curr_node = ts.get_node({ pos = { row, col }, ignore_injections = false })
 	while curr_node ~= nil and curr_node:type() ~= from_emphasis.type do
 		curr_node = curr_node:parent()
 	end
