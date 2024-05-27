@@ -29,6 +29,11 @@ describe("link", function()
 		assert_buf_eq(bufnr, { "[test]()" })
 		vim.cmd("normal adestination")
 		assert_buf_eq(bufnr, { "[test](destination)" })
+
+		set_buf(bufnr, { "asdf 👌🥲🤌 我 Ü fdsa" })
+		api.nvim_win_set_cursor(0, { 1, 1 })
+		vim.cmd("normal wglfa")
+		assert_buf_eq(bufnr, { "asdf [👌🥲🤌 我 Ü fdsa]()" })
 	end)
 
 	it("can add over visual selection", function()
@@ -39,6 +44,11 @@ describe("link", function()
 		assert_buf_eq(bufnr, { "t[es]()t" })
 		vim.cmd("normal adestination")
 		assert_buf_eq(bufnr, { "t[es](destination)t" })
+
+		set_buf(bufnr, { "asdf 👌🥲🤌 我 Ü fdsa" })
+		api.nvim_win_set_cursor(0, { 1, 0 })
+		vim.cmd("normal llveeeelllgl")
+		assert_buf_eq(bufnr, { "as[df 👌🥲🤌 我 Ü fd]()sa" })
 	end)
 
 	it("can follow headings", function()

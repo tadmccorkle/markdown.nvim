@@ -32,7 +32,7 @@ end
 --- Gets text from a single line in the current buffer.
 ---@param row integer zero-based row
 ---@param col integer zero-based column
----@param len integer number of characters to get
+---@param len integer number of bytes to get
 function M.get_text(row, col, len)
 	return api.nvim_buf_get_text(0, row, col, row, col + len, {})[1]
 end
@@ -48,7 +48,7 @@ end
 --- Deletes text on a single line from the current buffer.
 ---@param row integer zero-based row for deletion
 ---@param col integer zero-based column for deletion
----@param len integer number of characters to delete
+---@param len integer number of bytes to delete
 function M.delete_text(row, col, len)
 	api.nvim_buf_set_text(0, row, col, row, col + len, { "" })
 end
@@ -56,7 +56,7 @@ end
 --- Replaces text on a single line in the current buffer.
 ---@param row integer zero-based row for replacement
 ---@param col integer zero-based column for replacement
----@param len integer number of characters to replace
+---@param len integer number of bytes to replace
 ---@param txt string replacement text
 function M.replace_text(row, col, len, txt)
 	api.nvim_buf_set_text(0, row, col, row, col + len, { txt })
@@ -177,12 +177,30 @@ end
 ---@return R4
 function M.get_visual_range()
 	local s, e = api.nvim_buf_get_mark(0, "<"), api.nvim_buf_get_mark(0, ">")
+	local last_col = vim.fn.col({ e[1], "$" }) - 1
+
 	if vim.o.selection == "exclusive" then
 		e[2] = e[2] - 1
 	end
-	e[2] = math.min(e[2] + 1, vim.fn.charcol({ e[1], "$" }) - 1)
+
 	s[1] = s[1] - 1
 	e[1] = e[1] - 1
+
+	-- assumes UTF-8, which nvim uses internally (see ':h mbyte-encoding')
+	local end_text = api.nvim_buf_get_lines(0, e[1], e[1] + 1, false)[1]
+	local end_char = string.byte(end_text, e[2] + 1)
+	if end_char ~= nil then
+		if end_char >= 0xF0 then
+			e[2] = e[2] + 4
+		elseif end_char >= 0xE0 then
+			e[2] = e[2] + 3
+		elseif end_char >= 0xC0 then
+			e[2] = e[2] + 2
+		else
+			e[2] = e[2] + 1
+		end
+	end
+	e[2] = math.min(e[2], last_col)
 
 	return { s[1], s[2], e[1], e[2] }
 end
@@ -194,7 +212,7 @@ function M.get_motion_range(motion)
 	local s, e = api.nvim_buf_get_mark(0, "["), api.nvim_buf_get_mark(0, "]")
 	if motion == "line" then
 		s[2] = 0
-		e[2] = vim.fn.charcol({ e[1], "$" }) - 1
+		e[2] = vim.fn.col({ e[1], "$" }) - 1
 	else
 		e[2] = e[2] + 1
 	end

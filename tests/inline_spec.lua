@@ -47,14 +47,14 @@ describe("inline", function()
 				vim.cmd("normal gs8ei")
 				api.nvim_win_set_cursor(0, { 6, 0 })
 				vim.cmd("normal gsipc")
-				set_buf(bufnr, {
-					"~~*block*~~ 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3", "",
-					"`block 2 line 1*", "block 2 line 2", "block 2 line 3`",
+				assert_buf_eq(bufnr, {
+					"*~~block~~* 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3*", "",
+					"`*block 2 line 1*", "block 2 line 2", "block 2 line 3`",
 				})
 				vim.cmd("normal gsipc")
-				set_buf(bufnr, {
-					"*block* 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3", "",
-					"block 2 line 1*", "block 2 line 2", "block 2 line 3",
+				assert_buf_eq(bufnr, {
+					"*~~block~~* 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3*", "",
+					"*block 2 line 1*", "block 2 line 2", "block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 3 })
 				vim.cmd("normal gsiws")
@@ -62,10 +62,16 @@ describe("inline", function()
 				vim.cmd("normal gsiwb")
 				vim.cmd("normal f[")
 				vim.cmd("normal gsi[s")
-				set_buf(bufnr, {
-					"*block* 1 line 1", "block 1 [line] 2", "*block 1 line 3", "",
-					"block 2 line 1*", "block 2 line 2", "block 2 line 3",
+				assert_buf_eq(bufnr, {
+					"*block* 1 line 1", "block 1 [line] 2", "*block 1 line 3*", "",
+					"*block 2 line 1*", "block 2 line 2", "block 2 line 3",
 				})
+
+				set_buf(bufnr, { "asdf 👌🥲🤌 我 Ü fdsa" })
+				api.nvim_win_set_cursor(0, { 1, 0 })
+				vim.cmd("normal wgs3ei")
+				vim.cmd("normal gsfab")
+				assert_buf_eq(bufnr, { "asdf ***👌🥲🤌 我 Ü* fdsa**" })
 			end)
 
 			it("toggles around line motions", function()
@@ -104,6 +110,14 @@ describe("inline", function()
 				api.nvim_win_set_cursor(0, { 1, 0 })
 				vim.cmd("normal 2gssi")
 				assert_buf_eq(bufnr, { "*line of text 1", "line of text 2*", "line of text 3" })
+
+				set_buf(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
+				api.nvim_win_set_cursor(0, { 1, 0 })
+				vim.cmd("normal gssi")
+				vim.cmd("normal 2gssb")
+				assert_buf_eq(bufnr, { "***asdf 👌🥲🤌 我*", "Ü fdsa**" })
+				vim.cmd("normal 2gssb")
+				assert_buf_eq(bufnr, { "*asdf 👌🥲🤌 我*", "Ü fdsa" })
 			end)
 
 			it("can cancel toggle motion", function()
@@ -177,6 +191,18 @@ describe("inline", function()
 				assert_buf_eq(bufnr, {
 					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
 				})
+
+				set_buf(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
+				api.nvim_win_set_cursor(0, { 1, 0 })
+				vim.cmd("normal vwl")
+				vim.cmd("normal gsi")
+				assert_buf_eq(bufnr, { "*asdf 👌🥲*🤌 我", "Ü fdsa" })
+				vim.cmd("normal gv")
+				vim.cmd("normal gsi")
+				assert_buf_eq(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
+				vim.cmd("normal 0wvje")
+				vim.cmd("normal gsi")
+				assert_buf_eq(bufnr, { "asdf *👌🥲🤌 我", "Ü fdsa*" })
 			end)
 
 			it("toggles around visual line selection", function()
@@ -228,6 +254,17 @@ describe("inline", function()
 				assert_buf_eq(bufnr, {
 					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
 				})
+
+				set_buf(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
+				api.nvim_win_set_cursor(0, { 1, 0 })
+				vim.cmd("normal V")
+				vim.cmd("normal gsi")
+				vim.cmd("normal Vj")
+				vim.cmd("normal gsb")
+				assert_buf_eq(bufnr, { "***asdf 👌🥲🤌 我*", "Ü fdsa**" })
+				vim.cmd("normal kVj")
+				vim.cmd("normal gsb")
+				assert_buf_eq(bufnr, { "*asdf 👌🥲🤌 我*", "Ü fdsa" })
 			end)
 
 			it("toggles around visual block", function()
@@ -281,6 +318,16 @@ describe("inline", function()
 				assert_buf_eq(bufnr, {
 					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
 				})
+
+				set_buf(bufnr, { "asdf 👌🥲🤌 fdsa", "asdf 👌🥲🤌 fdsa" })
+				api.nvim_win_set_cursor(0, { 1, 0 })
+				vim.cmd("normal w")
+				vim.cmd("normal " .. ctrl_v .. "je")
+				vim.cmd("normal gsi")
+				assert_buf_eq(bufnr, { "asdf *👌🥲🤌* fdsa", "asdf *👌🥲🤌* fdsa" })
+				vim.cmd("normal gv")
+				vim.cmd("normal gsi")
+				assert_buf_eq(bufnr, { "asdf 👌🥲🤌 fdsa", "asdf 👌🥲🤌 fdsa" })
 			end)
 
 			it("leaves visual mode on success", function()

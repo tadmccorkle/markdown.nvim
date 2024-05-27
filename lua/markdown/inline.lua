@@ -229,7 +229,7 @@ function M.toggle_emphasis(motion, key)
 		local start_row, end_row = math.min(r[1], r[3]), math.max(r[1], r[3])
 		local start_col, end_col = math.min(r[2], r[4]), math.max(r[2], r[4])
 		for row = start_row, end_row, 1 do
-			local eol_col = vim.fn.charcol({ row + 1, "$" }) - 1
+			local eol_col = vim.fn.col({ row + 1, "$" }) - 1
 			local row_start_col = math.min(start_col, eol_col)
 			local row_end_col = math.min(end_col, eol_col)
 			local inline_node = md_ts.find_node(is_inline, { pos = { row, math.max(row_end_col - 1, 0) } })
