@@ -117,7 +117,7 @@ end
 ---@return integer row, integer col
 local function get_curr_eol_pos()
 	local curr_row = util.get_cursor()
-	local curr_eol = vim.fn.charcol("$") - 1
+	local curr_eol = vim.fn.col("$") - 1
 	return curr_row, curr_eol
 end
 
@@ -182,7 +182,7 @@ local function insert_list_item(loc)
 	end
 
 	new_row = new_row + 1
-	api.nvim_win_set_cursor(0, { new_row, vim.fn.charcol({ new_row, "$" }) })
+	api.nvim_win_set_cursor(0, { new_row, vim.fn.col({ new_row, "$" }) })
 	vim.cmd("startinsert!")
 end
 
@@ -222,7 +222,7 @@ function M.toggle_task(start_row, end_row)
 
 	local last_node
 	for row = start_row, end_row, 1 do
-		local eol = vim.fn.charcol({ row + 1, "$" }) - 1
+		local eol = vim.fn.col({ row + 1, "$" }) - 1
 		local node = md_ts.find_node(is_task_list_item, { pos = { row, eol } })
 		if node ~= nil and node ~= last_node then
 			table.insert(task_markers, node:named_child(1))
