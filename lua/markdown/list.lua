@@ -128,18 +128,19 @@ local REL_POS = {
 }
 
 ---@param loc rel_pos
+---@return boolean
 local function insert_list_item(loc)
 	local curr_row, curr_eol = get_curr_eol_pos()
 
 	ts.get_parser(0, "markdown"):parse()
 	local list_item = md_ts.find_node(is_list_item, { pos = { curr_row, curr_eol } })
 	if list_item == nil then
-		return
+		return false
 	end
 
 	local marker = list_item:named_child(0)
 	if marker == nil then
-		return
+		return false
 	end
 
 	local marker_type = marker:type()
@@ -184,16 +185,19 @@ local function insert_list_item(loc)
 	new_row = new_row + 1
 	api.nvim_win_set_cursor(0, { new_row, vim.fn.col({ new_row, "$" }) })
 	vim.cmd("startinsert!")
+	return true
 end
 
 --- Inserts a list item above the cursor in the current buffer.
+---@return boolean # true if an item is inserted above, otherwise false
 function M.insert_list_item_above()
-	insert_list_item(REL_POS.above)
+	return insert_list_item(REL_POS.above)
 end
 
 --- Inserts a list item below the cursor in the current buffer.
+---@return boolean # true if an item is inserted below, otherwise false
 function M.insert_list_item_below()
-	insert_list_item(REL_POS.below)
+	return insert_list_item(REL_POS.below)
 end
 
 ---@param node TSNode
