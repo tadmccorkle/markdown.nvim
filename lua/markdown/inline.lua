@@ -88,7 +88,7 @@ local function get_emphasis_group_ranges(emphasis)
 
 	local inner_node, inner_delim_len
 	local child = emphasis
-	while child ~= inner_node do
+	while child ~= nil and child ~= inner_node do
 		local delim_len = md_ts.child_count(child, is_emphasis_delim) / 2
 		if delim_len == 0 then
 			break
@@ -103,6 +103,10 @@ local function get_emphasis_group_ranges(emphasis)
 			start_row, start_col + delim_len,
 			end_row, end_col - delim_len
 		)
+	end
+
+	if inner_node == nil then
+		inner_node = emphasis
 	end
 
 	local outer_start_row, outer_start_col, outer_end_row, outer_end_col = outer_node:range()
