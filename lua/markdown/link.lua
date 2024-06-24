@@ -191,18 +191,23 @@ end
 
 ---@param dest string
 ---@param sys string
----@return boolean
-local function try_open(dest, sys)
+---@return string? error
+local function open(dest, sys)
+	-- TODO(tad): update to use `vim.system` when nvim 0.9.x support is dropped
+	local result
 	if sys == "Windows_NT" then
-		vim.fn.system({ "explorer.exe", dest })
+		result = vim.fn.system({ "explorer.exe", dest })
 	elseif sys == "Linux" then
-		vim.fn.system({ "xdg-open", dest })
+		result = vim.fn.system({ "xdg-open", dest })
 	elseif sys == "Darwin" then
-		vim.fn.system({ "open", dest })
+		result = vim.fn.system({ "open", dest })
 	else
-		return false
+		return ("OS '%s' is not supported."):format(sys)
 	end
-	return true
+
+	if vim.v.shell_error > 0 then
+		return result
+	end
 end
 
 ---@param path string
@@ -228,21 +233,22 @@ local function open_path(path, opts)
 	local is_file = vim.fn.filereadable(normalized) ~= 0
 	local is_dir = vim.fn.isdirectory(normalized) ~= 0
 	if is_file or is_dir then
-		local should_edit = true
-
 		local is_md = string.sub(path, -3) == ".md"
 		if opts.use_default_app and not is_md and not is_dir then
 			local sys = get_sys()
+
 			local sys_path
 			if sys == "Windows_NT" then
 				sys_path = string.gsub(normalized, "/", "\\")
 			else
 				sys_path = normalized
 			end
-			should_edit = not try_open(sys_path, sys)
-		end
 
-		if should_edit then
+			local err = open(sys_path, sys)
+			if err ~= nil then
+				notify.error("Open in default app failed. " .. err)
+			end
+		else
 			vim.cmd.edit(path)
 
 			if inner_dest ~= nil then
@@ -283,8 +289,9 @@ function M.follow(opts)
 			follow_heading_link(dest, t:root())
 		elseif M.is_url(dest) then
 			local sys = get_sys()
-			if not try_open(dest, sys) then
-				notify.error("OS '%s' URL navigation is not supported.", sys)
+			local err = open(dest, sys)
+			if err ~= nil then
+				notify.error("URL navigation failed. " .. err)
 			end
 		else
 			open_path(dest, opts)
