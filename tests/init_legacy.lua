@@ -1,6 +1,6 @@
 local function root(path)
 	local f = debug.getinfo(1, "S").source:sub(2)
-	return vim.fn.fnamemodify(f, ":p:h:h") .. "/.tests/" .. (path or "")
+	return vim.fn.fnamemodify(f, ":p:h:h") .. "/.tests/legacy/" .. (path or "")
 end
 
 local function exists(path)
@@ -32,15 +32,13 @@ local function load(plugin, branch)
 	vim.cmd("packadd " .. name)
 end
 
-local site = root("site")
-
 vim.cmd([[set runtimepath=$VIMRUNTIME]])
 vim.opt.runtimepath:append(root())
-vim.opt.packpath = { site }
+vim.opt.packpath = { root("site") }
 
 load("nvim-lua/plenary.nvim")
-load("nvim-treesitter/nvim-treesitter", "main")
+load("nvim-treesitter/nvim-treesitter", "master")
 
-local nvim_ts = require("nvim-treesitter")
-nvim_ts.setup({ install_dir = site })
-nvim_ts.install({ "markdown", "markdown_inline" }, { summary = true }):wait(300000)
+if vim.api.nvim_get_commands({}).TSUpdateSync ~= nil then
+	vim.cmd("TSUpdateSync markdown markdown_inline")
+end

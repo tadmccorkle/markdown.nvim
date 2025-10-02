@@ -409,6 +409,9 @@ Markdown buffers can be navigated with the following keymaps:
 <details>
 <summary><strong>markdown.nvim</strong> can also be configured as an <a href="https://github.com/nvim-treesitter/nvim-treesitter/">nvim-treesitter</a> module.</summary>
 
+>[!CAUTION]
+> This feature is only supported when using **nvim-treesitter**'s [`master` branch](https://github.com/nvim-treesitter/nvim-treesitter/blob/master/README.md), which has been locked and remains available for backward compatibility.
+
 ### Module installation <!-- toc omit heading -->
 
 The following code snippets show how to install **markdown.nvim** as an **nvim-treesitter** module. Refer to [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/) for the appropriate way to install and manage parsers.
