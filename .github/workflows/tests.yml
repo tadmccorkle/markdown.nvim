@@ -10,16 +10,31 @@ on:
 jobs:
   tests:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: ${{ inputs.version }}
-      - name: Run tests
+
+      - name: Install tree-sitter-cli
+        if: ${{ contains(fromJSON('["stable", "nightly"]'), inputs.version) }}
+        uses: tree-sitter/setup-action@v2
+        with:
+          install-lib: false
+
+      - name: Run tests (main)
+        if: ${{ contains(fromJSON('["stable", "nightly"]'), inputs.version) }}
         run: |
           nvim --headless -u ./tests/init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init.lua'}"
+
+      # nvim-treesitter 'master' branch supports nvim v0.10.x-v0.12.x
+      - name: Run tests (legacy)
+        run: |
+          nvim --headless -u ./tests/init_legacy.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init_legacy.lua'}"
