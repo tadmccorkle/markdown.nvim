@@ -60,9 +60,13 @@ end
 ---@return omit_level
 local function get_omit_flag(inline, omit_section_flag, omit_heading_flag)
 	local parser = ts.get_parser(0, "markdown")
+	---@cast parser -?
+
 	parser:parse({ inline:start(), inline:end_() + 1 })
 
 	local inline_trees = parser:children().markdown_inline:parse()
+	---@cast inline_trees -?
+
 	local t = md_ts.find_tree_in_node(inline_trees, inline)
 	if t ~= nil then
 		for _, html_tag, _ in html_tag_query:iter_captures(t:root(), 0, 0, -1) do
