@@ -167,8 +167,8 @@ end
 --- Gets a "tab" for the current buffer based on buffer options.
 ---@return string
 function M.get_tab_str()
-	if api.nvim_buf_get_option(0, "expandtab") then
-		return string.rep(" ", api.nvim_buf_get_option(0, "tabstop"))
+	if api.nvim_get_option_value("expandtab", { buf = 0 }) then
+		return string.rep(" ", api.nvim_get_option_value("tabstop", { buf = 0 }))
 	end
 	return "\t"
 end

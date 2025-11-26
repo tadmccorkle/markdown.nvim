@@ -11,7 +11,7 @@ local OpFunc = setmetatable({}, {
 ---@param callback string 'operatorfunc' callback function
 ---@return "g@"
 function OpFunc.call(mod, callback)
-	api.nvim_set_option("operatorfunc", ("v:lua.require'%s'.%s"):format(mod, callback))
+	api.nvim_set_option_value("operatorfunc", ("v:lua.require'%s'.%s"):format(mod, callback), {})
 	return "g@"
 end
 

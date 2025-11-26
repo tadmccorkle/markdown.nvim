@@ -2,7 +2,7 @@ local api = vim.api
 
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
-	api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+	api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
 	api.nvim_win_set_buf(0, bufnr)
 	return bufnr
 end
