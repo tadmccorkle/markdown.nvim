@@ -12,7 +12,7 @@ describe("config (paste handler)", function()
 
 		local bufnr = api.nvim_create_buf(true, true)
 		api.nvim_win_set_buf(0, bufnr)
-		api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+		api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
 		api.nvim_buf_set_lines(bufnr, 0, -1, false, { "test" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
 		vim.cmd("normal viw")
