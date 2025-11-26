@@ -88,6 +88,7 @@ local function get_emphasis_group_ranges(emphasis)
 
 	local inner_node, inner_delim_len
 	local child = emphasis
+	---@cast child +?
 	while child ~= nil and child ~= inner_node do
 		local delim_len = md_ts.child_count(child, is_emphasis_delim) / 2
 		if delim_len == 0 then
@@ -190,12 +191,14 @@ function M.toggle_emphasis(motion, key)
 	end
 
 	local parser = ts.get_parser(0, "markdown")
+	---@cast parser -?
 	local t = parser:parse(r --[[@as Range4]])[1]
 	local md_inline = parser:children().markdown_inline
 	if md_inline == nil then
 		return
 	end
 	local inline_trees = md_inline:parse()
+	---@cast inline_trees -?
 	local emphasis_query = emphasis_queries[emphasis.type]
 
 	---@type TSNode[]
@@ -242,6 +245,7 @@ function M.toggle_emphasis(motion, key)
 
 				local overlap = util.get_overlapping_range(
 					{ row, row_start_col, row, row_end_col },
+					---@diagnostic disable-next-line: missing-fields
 					{ inline_node:range() }
 				)
 				local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
@@ -257,6 +261,7 @@ function M.toggle_emphasis(motion, key)
 		for _, inline_node, _ in inline_query:iter_captures(t:root(), 0, r[1], r[3] + 1) do
 			inline_count = inline_count + 1
 
+			---@diagnostic disable-next-line: missing-fields
 			local overlap = util.get_overlapping_range(r, { inline_node:range() })
 			local inline_t = md_ts.find_tree_in_node(inline_trees, inline_node)
 			if inline_t == nil then
