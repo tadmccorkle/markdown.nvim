@@ -42,7 +42,10 @@ function M.insert_toc(opts)
 end
 
 local function show_toc(opts, omit_flagged)
-	local o = { omit_flagged = omit_flagged }
+	local o = {
+		omit_flagged = omit_flagged,
+		indent_subsections = true,
+	}
 	if #opts.fargs > 0 then
 		o.max_level = tonumber(opts.fargs[1])
 	end
@@ -52,7 +55,7 @@ local function show_toc(opts, omit_flagged)
 	vim.cmd({
 		cmd = "lopen",
 		count = #opts.fargs > 1 and tonumber(opts.fargs[2]) or nil,
-		mods = opts.smods
+		mods = opts.smods,
 	})
 
 	vim.api.nvim_set_option_value("modifiable", true, { scope = "local" })

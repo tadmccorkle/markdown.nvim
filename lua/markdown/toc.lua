@@ -210,7 +210,7 @@ function M.insert_toc(opts)
 end
 
 ---@param toc Section
----@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean, indent_subsections: boolean? }
+---@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean, indent_subsections: boolean }
 ---@param loclist? table[]
 ---@param indent? string
 local function build_toc_loclist(toc, opts, loclist, indent)
@@ -248,7 +248,7 @@ end
 ---@class LoclistOpts
 ---@field max_level? integer Max heading level to include (default: '6')
 ---@field omit_flagged? boolean Whether to omit flagged sections and headings (default: 'false')
----@field indent_subsections? boolean Whether to indent subsection headings (default: 'true')
+---@field indent_subsections? boolean Whether to indent subsection headings (default: 'false')
 
 --- Sets the current window's location list to the table of contents.
 ---@param opts? LoclistOpts
@@ -265,7 +265,7 @@ function M.set_loclist_toc(opts)
 		bufnr = bufnr,
 		max_level = opts.max_level or 6,
 		omit_flagged = opts.omit_flagged or false,
-		indent_subsections = opts.indent_subsections == nil or opts.indent_subsections,
+		indent_subsections = opts.indent_subsections or false,
 	})
 
 	vim.fn.setloclist(0, {}, "r", {
