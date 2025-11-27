@@ -339,7 +339,7 @@ A table of contents (TOC) is created from the top-level ATX and setext headings 
 
 The `:MDInsertToc [max_level] [markers]` command adds a TOC by inserting (normal mode) or replacing selected lines (visual mode). Optional arguments can be provided to set the max heading level to include and the list markers to alternate through for each heading level.
 
-The `:MDToc [max_level]` and `:MDTocAll [max_level]` commands show a TOC for the current buffer in the current window's location list. `:MDToc` omits flagged headings and `MDTocAll` includes all headings. An optional argument can be provided to set the max heading level to include.
+The `:MDToc [max_level] [size]` and `:MDTocAll [max_level] [size]` commands show a TOC for the current buffer in the current window's location list. `:MDToc` omits flagged headings and `:MDTocAll` includes all headings. The optional `[max_level]` argument specifies the max heading level to include, and the optional `[size]` argument specifies the desired size of the location list. These commands also forward command modifiers to `:lopen`.
 
 #### Omit sections and headings <!-- toc omit heading -->
 

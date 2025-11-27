@@ -46,7 +46,21 @@ local function show_toc(opts, omit_flagged)
 	if #opts.fargs > 0 then
 		o.max_level = tonumber(opts.fargs[1])
 	end
+
 	require("markdown.toc").set_loclist_toc(o)
+
+	vim.cmd({
+		cmd = "lopen",
+		count = #opts.fargs > 1 and tonumber(opts.fargs[2]) or nil,
+		mods = opts.smods
+	})
+
+	vim.api.nvim_set_option_value("modifiable", true, { scope = "local" })
+	for i, item in ipairs(vim.fn.getloclist(0)) do
+		vim.api.nvim_buf_set_lines(0, i - 1, i, true, { item.text })
+	end
+	vim.api.nvim_set_option_value("modified", false, { scope = "local" })
+	vim.api.nvim_set_option_value("modifiable", false, { scope = "local" })
 end
 
 function M.show_toc(opts)

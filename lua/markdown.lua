@@ -53,7 +53,7 @@ local function setup_usr_cmds(bufnr)
 		cmd.show_toc,
 		{
 			force = true,
-			nargs = "?",
+			nargs = "*",
 		})
 	create_cached_buf_usr_cmd(
 		bufnr,
@@ -61,7 +61,7 @@ local function setup_usr_cmds(bufnr)
 		cmd.show_toc_all,
 		{
 			force = true,
-			nargs = "?",
+			nargs = "*",
 		})
 
 	local list = require("markdown.list")

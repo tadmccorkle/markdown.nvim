@@ -210,14 +210,19 @@ function M.insert_toc(opts)
 end
 
 ---@param toc Section
----@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean }
+---@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean, indent_subsections: boolean? }
 ---@param loclist? table[]
 ---@param indent? string
 local function build_toc_loclist(toc, opts, loclist, indent)
 	loclist = loclist or {}
 	indent = indent or ""
 
-	local sub_indent = indent .. "  "
+	local sub_indent
+	if opts.indent_subsections then
+		sub_indent = indent .. "  "
+	else
+		sub_indent = indent
+	end
 
 	for _, sub in pairs(toc.children) do
 		local omit_section = opts.omit_flagged and sub.omit == Section.OMIT_LEVEL.section
@@ -243,29 +248,31 @@ end
 ---@class LoclistOpts
 ---@field max_level? integer Max heading level to include (default: '6')
 ---@field omit_flagged? boolean Whether to omit flagged sections and headings (default: 'false')
+---@field indent_subsections? boolean Whether to indent subsection headings (default: 'true')
 
 --- Sets the current window's location list to the table of contents.
 ---@param opts? LoclistOpts
+---
+--- This function only sets the location list. It must subsequently be searched or opened directly
+--- (e.g., `:lopen`). The location list set by this function has a quickfix context property
+--- `{ markdown_nvim_toc = true }`.
 function M.set_loclist_toc(opts)
 	opts = opts or {}
 
 	local toc = get_document_sections()
-
 	local bufnr = api.nvim_win_get_buf(0)
 	local loclist = build_toc_loclist(toc, {
 		bufnr = bufnr,
 		max_level = opts.max_level or 6,
 		omit_flagged = opts.omit_flagged or false,
+		indent_subsections = opts.indent_subsections == nil or opts.indent_subsections,
 	})
-	vim.fn.setloclist(0, loclist)
 
-	vim.cmd.lopen()
-	vim.cmd.setlocal("modifiable")
-	for i, item in ipairs(loclist) do
-		api.nvim_buf_set_lines(0, i - 1, i, true, { item.text })
-	end
-	vim.cmd.setlocal("nomodified")
-	vim.cmd.setlocal("nomodifiable")
+	vim.fn.setloclist(0, {}, "r", {
+		title = "Table of Contents",
+		items = loclist,
+		context = { markdown_nvim_toc = true },
+	})
 end
 
 return M

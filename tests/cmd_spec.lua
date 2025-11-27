@@ -79,6 +79,10 @@ assert:register(
 	"assertion.called_with_property.positive",
 	"assertion.called_with_property.negative")
 
+local function assert_buf_eq(bufnr, lines)
+	assert.are.same(lines, api.nvim_buf_get_lines(bufnr, 0, -1, false))
+end
+
 describe("user command arg processing", function()
 	local cmd = require("markdown.cmd")
 
@@ -141,6 +145,14 @@ describe("user command arg processing", function()
 	end)
 
 	describe("show toc", function()
+		before_each(function()
+			vim.fn.setloclist(0, { { bufnr = api.nvim_win_get_buf(0), lnum = 1, text = "test text" } })
+		end)
+
+		after_each(function()
+			vim.cmd("lclose")
+		end)
+
 		it("omits flagged headings and sections", function()
 			local md_toc = require("markdown.toc")
 			local toc = mock(md_toc, true)
@@ -156,9 +168,63 @@ describe("user command arg processing", function()
 			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 44 })
 			mock.revert(md_toc)
 		end)
+
+		it("can set loclist width", function()
+			local md_toc = require("markdown.toc")
+			local toc = mock(md_toc, true)
+			cmd.show_toc({ args = "", fargs = { "13", "17" }, smods = { vertical = true }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 13 })
+			assert.are.same(17, vim.fn.winwidth(0))
+			vim.cmd("lclose")
+			cmd.show_toc({ args = "", fargs = { "*", "23" }, smods = { vertical = true }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = nil })
+			assert.are.same(23, vim.fn.winwidth(0))
+			mock.revert(md_toc)
+		end)
+
+		it("can set loclist height", function()
+			local md_toc = require("markdown.toc")
+			local toc = mock(md_toc, true)
+			cmd.show_toc({ args = "", fargs = { "13", "9" }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 13 })
+			assert.are.same(9, vim.fn.winheight(0))
+			vim.cmd("lclose")
+			cmd.show_toc({ args = "", fargs = { "*", "13" }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = nil })
+			assert.are.same(13, vim.fn.winheight(0))
+			mock.revert(md_toc)
+		end)
+
+		it("sets loclist with only item text", function()
+			local md_toc = require("markdown.toc")
+			mock(md_toc, true)
+			local bufnr = api.nvim_win_get_buf(0)
+			vim.fn.setloclist(0, {
+				{ bufnr = bufnr, lnum = 1, text = "test text 1" },
+				{ bufnr = bufnr, lnum = 1, text = "  test text 2" },
+				{ bufnr = bufnr, lnum = 1, text = "test text 3 " },
+				{ bufnr = bufnr, lnum = 1, text = " test text 4  " },
+			})
+			cmd.show_toc({ args = "", fargs = { "13", "9" }, range = 0, line1 = 1, line2 = 1 })
+			assert_buf_eq(0, {
+				"test text 1",
+				"  test text 2",
+				"test text 3 ",
+				" test text 4  ",
+			})
+			mock.revert(md_toc)
+		end)
 	end)
 
 	describe("show toc all", function()
+		before_each(function()
+			vim.fn.setloclist(0, { { bufnr = api.nvim_win_get_buf(0), lnum = 1, text = "test text" } })
+		end)
+
+		after_each(function()
+			vim.cmd("lclose")
+		end)
+
 		it("can show flagged headings and sections", function()
 			local md_toc = require("markdown.toc")
 			local toc = mock(md_toc, true)
@@ -172,6 +238,52 @@ describe("user command arg processing", function()
 			local toc = mock(md_toc, true)
 			cmd.show_toc_all({ args = "", fargs = { "33" }, range = 0, line1 = 1, line2 = 1 })
 			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 33 })
+			mock.revert(md_toc)
+		end)
+
+		it("can set loclist width", function()
+			local md_toc = require("markdown.toc")
+			local toc = mock(md_toc, true)
+			cmd.show_toc_all({ args = "", fargs = { "13", "17" }, smods = { vertical = true }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 13 })
+			assert.are.same(17, vim.fn.winwidth(0))
+			vim.cmd("lclose")
+			cmd.show_toc_all({ args = "", fargs = { "*", "23" }, smods = { vertical = true }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = nil })
+			assert.are.same(23, vim.fn.winwidth(0))
+			mock.revert(md_toc)
+		end)
+
+		it("can set loclist height", function()
+			local md_toc = require("markdown.toc")
+			local toc = mock(md_toc, true)
+			cmd.show_toc_all({ args = "", fargs = { "13", "9" }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = 13 })
+			assert.are.same(9, vim.fn.winheight(0))
+			vim.cmd("lclose")
+			cmd.show_toc_all({ args = "", fargs = { "*", "13" }, range = 0, line1 = 1, line2 = 1 })
+			assert.stub(toc.set_loclist_toc).called_with_property_values({ max_level = nil })
+			assert.are.same(13, vim.fn.winheight(0))
+			mock.revert(md_toc)
+		end)
+
+		it("sets loclist with only item text", function()
+			local md_toc = require("markdown.toc")
+			mock(md_toc, true)
+			local bufnr = api.nvim_win_get_buf(0)
+			vim.fn.setloclist(0, {
+				{ bufnr = bufnr, lnum = 1, text = "test text 1" },
+				{ bufnr = bufnr, lnum = 1, text = "  test text 2" },
+				{ bufnr = bufnr, lnum = 1, text = "test text 3 " },
+				{ bufnr = bufnr, lnum = 1, text = " test text 4  " },
+			})
+			cmd.show_toc_all({ args = "", fargs = { "13", "9" }, range = 0, line1 = 1, line2 = 1 })
+			assert_buf_eq(0, {
+				"test text 1",
+				"  test text 2",
+				"test text 3 ",
+				" test text 4  ",
+			})
 			mock.revert(md_toc)
 		end)
 	end)
