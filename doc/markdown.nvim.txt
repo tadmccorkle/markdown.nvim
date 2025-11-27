@@ -183,26 +183,28 @@ container like lists or block quotes) headings of markdown buffers.
                             See: |markdown.config.toc.markers|
 
                                                                       *:MDToc*
-:MDToc [max_level]
+:MDToc [max_level] [size]
 
         Shows a TOC for the current buffer in the current window's location
         list. Any flagged headings (see |markdown.toc.omit|) will also be
         omitted in the location list.
 
+        Forwards command modifiers to |:lopen|. For example, the location list
+        can be made a full-height vertically split window with a width of 40
+        by executing `:vertical topleft MDToc * 40`.
+
         Arguments:
-            * max_level     max heading level to include
+            * max_level     max heading level to include (non-number arguments
+                            are ignored, falling back to the default)
                             Default: "6"
+
+            * size          desired size (width or height) of the loclist
+                            Default: none, see |:lopen|
 
                                                                    *:MDTocAll*
-:MDTocAll [max_level]
+:MDTocAll [max_level] [size]
 
-        Shows a TOC for the current buffer in the current window's location
-        list. All headings, including those flagged as omitted (see
-        |markdown.toc.omit|), are included.
-
-        Arguments:
-            * max_level     max heading level to include
-                            Default: "6"
+        Like |:MDToc|, but includes headings flagged as omitted.
 
 OMIT HEADINGS                                              *markdown.toc.omit*
 

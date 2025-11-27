@@ -401,7 +401,7 @@ describe("toc", function()
 		})
 	end)
 
-	it("can show headings in loclist", function()
+	it("can set headings in loclist", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
 			"# h1",
@@ -411,13 +411,15 @@ describe("toc", function()
 			"### h5 <!-- toc omit heading -->",
 		})
 		toc.set_loclist_toc({ omit_flagged = true })
+		vim.cmd("lopen")
 		assert_buf_eq(0, {
-			"h1",
-			"  h4"
+			"|1| h1",
+			"|4| h4"
 		})
+		vim.cmd("lclose")
 	end)
 
-	it("can show headings with max level in loclist", function()
+	it("can set headings with max level in loclist", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
 			"# h1",
@@ -425,13 +427,15 @@ describe("toc", function()
 			"### h3",
 		})
 		toc.set_loclist_toc({ max_level = 2 })
+		vim.cmd("lopen")
 		assert_buf_eq(0, {
-			"h1",
-			"  h2",
+			"|1| h1",
+			"|2| h2",
 		})
+		vim.cmd("lclose")
 	end)
 
-	it("can show all headings in loclist", function()
+	it("can set all headings in loclist", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
 			"# h1",
@@ -441,12 +445,14 @@ describe("toc", function()
 			"### h5 <!-- toc omit heading -->",
 		})
 		toc.set_loclist_toc({ omit_flagged = false })
+		vim.cmd("lopen")
 		assert_buf_eq(0, {
-			"h1",
-			"  h2",
-			"    h3",
-			"  h4",
-			"    h5",
+			"|1| h1",
+			"|2| h2",
+			"|3| h3",
+			"|4| h4",
+			"|5| h5",
 		})
+		vim.cmd("lclose")
 	end)
 end)
