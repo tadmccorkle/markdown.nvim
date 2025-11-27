@@ -53,7 +53,7 @@ Configurable tools for working with markdown files in Neovim.
 
 ## Requirements
 
-- Neovim >=0.9.0
+- Neovim >=0.10.0
 - [markdown and markdown_inline](https://github.com/MDeiml/tree-sitter-markdown) tree-sitter parsers. The easiest way to install these is with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/).
 
 ## Installation

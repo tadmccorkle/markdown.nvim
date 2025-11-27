@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [v0.9.5, v0.10.4, stable]
+        version: [v0.10.4, stable]
     uses: ./.github/workflows/tests.yml
     with:
       version: ${{ matrix.version }}
