@@ -95,6 +95,16 @@ local function setup_usr_cmds(bufnr)
 			force = true,
 			range = true,
 		})
+	create_cached_buf_usr_cmd(bufnr, "MDToggleListType", list.toggle_list_type, {
+		range = true,
+		force = true,
+		nargs = 1,
+		-- autocompletion
+		complete = function()
+			return { "ordered", "unordered", "task" }
+		end,
+	})
+
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
