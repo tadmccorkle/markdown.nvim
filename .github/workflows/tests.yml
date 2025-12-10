@@ -28,6 +28,7 @@ jobs:
         uses: tree-sitter/setup-action@v2
         with:
           install-lib: false
+          tree-sitter-ref: v0.25.10
 
       - name: Run tests (main)
         if: ${{ contains(fromJSON('["stable", "nightly"]'), inputs.version) }}
