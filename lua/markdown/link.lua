@@ -176,6 +176,7 @@ local function follow_heading_link(dest, root)
 			_, text = M.get_heading_link(text)
 			if text == dest then
 				local row = heading:start()
+				vim.cmd.normal { "m'", bang = true }
 				api.nvim_win_set_cursor(0, { row + 1, 0 })
 				return
 			end
