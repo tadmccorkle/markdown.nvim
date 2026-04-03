@@ -194,20 +194,29 @@ end
 ---@param sys string
 ---@return string? error
 local function open(dest, sys)
-	-- TODO(tad): update to use `vim.system` when nvim 0.9.x support is dropped
-	local result
+	local cmd
+	
 	if sys == "Windows_NT" then
-		result = vim.fn.system({ "explorer.exe", dest })
+		cmd = { "explorer.exe", dest }
 	elseif sys == "Linux" then
-		result = vim.fn.system({ "xdg-open", dest })
+		cmd = { "xdg-open", dest }
 	elseif sys == "Darwin" then
-		result = vim.fn.system({ "open", dest })
+		cmd = { "open", dest }
 	else
 		return ("OS '%s' is not supported."):format(sys)
 	end
 
-	if vim.v.shell_error > 0 then
-		return result
+	if vim.system then
+		vim.system(cmd, { detach = true, on_exit = function (out)
+			if out.code > 0 then
+				notify.error("URL navigation failed. " .. out.stdout)
+			end
+		end })
+	else
+		local result = vim.fn.system(cmd)
+		if vim.v.shell_error > 0 then
+			return result
+		end
 	end
 end
 
