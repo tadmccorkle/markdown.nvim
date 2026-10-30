@@ -39,6 +39,8 @@ local function is_comment(html)
 	else
 		text = ts.get_node_text(html, 0, nil)
 	end
+	-- html blocks can include a trailing newline
+	text = text:gsub("%s+$", "")
 	return #text > 3 and text:sub(1, 4) == "<!--" and text:sub(-3, -1) == "-->"
 end
 

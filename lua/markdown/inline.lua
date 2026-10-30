@@ -294,7 +294,12 @@ function M.toggle_emphasis(motion, key)
 	-- leave visual mode if successful
 	if is_visual then
 		local esc = api.nvim_replace_termcodes("<Esc>", true, false, true)
-		api.nvim_feedkeys(esc, "n", false)
+		api.nvim_feedkeys(esc, "nx", false)
+		if #needs_emphasis > 0 then
+			-- Nvim 0.12 moves the visual start mark when text is inserted at its position.
+			-- Restore it so the selection still starts where the user made it.
+			api.nvim_buf_set_mark(0, "<", r[1] + 1, r[2], {})
+		end
 	end
 end
 

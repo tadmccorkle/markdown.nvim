@@ -1,6 +1,11 @@
+local legacy = vim.g.markdown_test_legacy == true or vim.fn.has("nvim-0.12") == 0
+
 local function root(path)
 	local f = debug.getinfo(1, "S").source:sub(2)
-	return vim.fn.fnamemodify(f, ":p:h:h") .. "/.tests/" .. (path or "")
+	return vim.fn.fnamemodify(f, ":p:h:h")
+		.. "/.tests/"
+		.. (legacy and "legacy/" or "")
+		.. (path or "")
 end
 
 local function exists(path)
@@ -39,8 +44,15 @@ vim.opt.runtimepath:append(root())
 vim.opt.packpath = { site }
 
 load("nvim-lua/plenary.nvim")
-load("nvim-treesitter/nvim-treesitter", "main")
+-- nvim v0.10.x-v0.11.x only supported by nvim-treesitter 'master' branch
+load("nvim-treesitter/nvim-treesitter", legacy and "master" or "main")
 
-local nvim_ts = require("nvim-treesitter")
-nvim_ts.setup({ install_dir = site })
-nvim_ts.install({ "markdown", "markdown_inline" }, { summary = true }):wait(300000)
+if legacy then
+	if vim.api.nvim_get_commands({}).TSUpdateSync ~= nil then
+		vim.cmd("TSUpdateSync markdown markdown_inline")
+	end
+else
+	local nvim_ts = require("nvim-treesitter")
+	nvim_ts.setup({ install_dir = site })
+	nvim_ts.install({ "markdown", "markdown_inline" }, { summary = true }):wait(300000)
+end

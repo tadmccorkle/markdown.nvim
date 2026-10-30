@@ -6,6 +6,9 @@ on:
       version:
         required: true
         type: string
+      treesitter:
+        required: true
+        type: string
 
 jobs:
   tests:
@@ -24,18 +27,11 @@ jobs:
           version: ${{ inputs.version }}
 
       - name: Install tree-sitter-cli
-        if: ${{ contains(fromJSON('["stable", "nightly"]'), inputs.version) }}
         uses: tree-sitter/setup-action@v2
         with:
           install-lib: false
-          tree-sitter-ref: v0.25.10
+          tree-sitter-ref: ${{ inputs.treesitter }}
 
-      - name: Run tests (main)
-        if: ${{ contains(fromJSON('["stable", "nightly"]'), inputs.version) }}
+      - name: Run tests
         run: |
           nvim --headless -u ./tests/init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init.lua'}"
-
-      # nvim-treesitter 'master' branch supports nvim v0.10.x-v0.12.x
-      - name: Run tests (legacy)
-        run: |
-          nvim --headless -u ./tests/init_legacy.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/init_legacy.lua'}"

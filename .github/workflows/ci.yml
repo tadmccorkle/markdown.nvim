@@ -17,7 +17,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [v0.10.4, stable]
+        include:
+          - version: v0.10.4
+            treesitter: v0.25.10
+          - version: v0.11.7
+            treesitter: v0.25.10
+          - version: stable
+            treesitter: v0.26.13
     uses: ./.github/workflows/tests.yml
     with:
       version: ${{ matrix.version }}
+      treesitter: ${{ matrix.treesitter }}

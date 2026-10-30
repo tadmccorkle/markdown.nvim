@@ -2,15 +2,20 @@ name: tests (nightly)
 
 on:
   schedule:
-    - cron: '13 6 * * *'
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+    - cron: "13 6 * * *"
   workflow_dispatch:
 
 jobs:
   tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: stable
+            treesitter: v0.26.13
+          - version: nightly
+            treesitter: v0.26.13
     uses: ./.github/workflows/tests.yml
     with:
-      version: nightly
+      version: ${{ matrix.version }}
+      treesitter: ${{ matrix.treesitter }}
