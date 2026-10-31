@@ -8,14 +8,17 @@ local util = require("markdown.util")
 
 local M = {}
 
-local heading_query = ts.query.parse("markdown", [[
+local heading_query = ts.query.parse(
+	"markdown",
+	[[
 	[
 		(atx_heading
 			_ heading_content: (inline) @atx_content)
 		(setext_heading
 			heading_content: (_ (inline) @setext_content) _)
 	] @heading
-]])
+]]
+)
 
 ---@param text string
 ---@return boolean
@@ -176,7 +179,7 @@ local function follow_heading_link(dest, root)
 			_, text = M.get_heading_link(text)
 			if text == dest then
 				local row = heading:start()
-				vim.cmd.normal { "m'", bang = true }
+				vim.cmd.normal({ "m'", bang = true })
 				api.nvim_win_set_cursor(0, { row + 1, 0 })
 				return
 			end
@@ -185,38 +188,34 @@ local function follow_heading_link(dest, root)
 	notify.info("heading not found")
 end
 
----@return string
-local function get_sys()
-	return vim.loop.os_uname().sysname
-end
-
 ---@param dest string
----@param sys string
 ---@return string? error
-local function open(dest, sys)
-	local cmd
-	
-	if sys == "Windows_NT" then
-		cmd = { "explorer.exe", dest }
-	elseif sys == "Linux" then
-		cmd = { "xdg-open", dest }
-	elseif sys == "Darwin" then
-		cmd = { "open", dest }
-	else
-		return ("OS '%s' is not supported."):format(sys)
+local function open(dest)
+	local ok, cmd, err = pcall(vim.ui.open, dest)
+	if not ok then
+		return tostring(cmd)
 	end
 
-	if vim.system then
-		vim.system(cmd, { detach = true, on_exit = function (out)
-			if out.code > 0 then
-				notify.error("URL navigation failed. " .. out.stdout)
-			end
-		end })
-	else
-		local result = vim.fn.system(cmd)
-		if vim.v.shell_error > 0 then
-			return result
-		end
+	local rv = cmd and cmd:wait(1000) or nil
+	if cmd and rv and rv.code ~= 0 then
+		err = ("command %s (%d): %s"):format(
+			(rv.code == 124 and "timeout" or "failed"),
+			rv.code,
+			vim.inspect(cmd.cmd)
+		)
+	end
+	return err
+end
+
+---@param url string
+local function open_url(url)
+	if not url:match("^%a+://") then
+		url = "https://" .. url
+	end
+
+	local err = open(url)
+	if err ~= nil then
+		notify.error("URL navigation failed. " .. err)
 	end
 end
 
@@ -245,16 +244,7 @@ local function open_path(path, opts)
 	if is_file or is_dir then
 		local is_md = string.sub(path, -3) == ".md"
 		if opts.use_default_app and not is_md and not is_dir then
-			local sys = get_sys()
-
-			local sys_path
-			if sys == "Windows_NT" then
-				sys_path = string.gsub(normalized, "/", "\\")
-			else
-				sys_path = normalized
-			end
-
-			local err = open(sys_path, sys)
+			local err = open(normalized)
 			if err ~= nil then
 				notify.error("Open in default app failed. " .. err)
 			end
@@ -298,11 +288,7 @@ function M.follow(opts)
 		if vim.startswith(dest, "#") then
 			follow_heading_link(dest, t:root())
 		elseif M.is_url(dest) then
-			local sys = get_sys()
-			local err = open(dest, sys)
-			if err ~= nil then
-				notify.error("URL navigation failed. " .. err)
-			end
+			open_url(dest)
 		else
 			open_path(dest, opts)
 		end
