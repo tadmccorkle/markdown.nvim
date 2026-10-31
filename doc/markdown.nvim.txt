@@ -20,6 +20,7 @@ CONTENTS                                              *markdown.nvim.contents*
             Insert Items ....................... |markdown.lists.insert_item|
             Reset Numbering ................ |markdown.lists.reset_numbering|
             Toggle Tasks ....................... |markdown.lists.toggle_task|
+            Toggle List Type .............. |markdown.lists.toggle_list_type|
         Links .............................................. |markdown.links|
             Add ........................................ |markdown.links.add|
             Follow .................................. |markdown.links.follow|
@@ -266,6 +267,23 @@ TOGGLE TASKS                                      *markdown.lists.toggle_task*
                                                                *:MDTaskToggle*
 :MDTaskToggle           Toggles the task(s) on the current cursor line (normal
                         mode) or under selected lines (visual mode).
+
+TOGGLE LIST TYPE                             *markdown.lists.toggle_list_type*
+
+                                                           *:MDToggleListType*
+:MDToggleListType [list_type]  Dynamically switch between different list
+types (ordered, unordered, task) at the cursor's location or within a
+selected range. This command accepts a single argument specifying the 
+desired list type.
+
+Available list types include "ordered", "unordered", and "task".
+
+Examples:
+
+    :MDToggleListType ordered    Toggle the current or selected list(s) to an
+    ordered format.
+    :MDToggleListType task       Toggle the current or selected list(s) to a
+    task list.
 
 --------------------------------------------------------------------------------
 LINKS                                                         *markdown.links*
