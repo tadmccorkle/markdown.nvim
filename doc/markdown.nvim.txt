@@ -317,6 +317,10 @@ a call to to |markdown.setup()| or registered as an |nvim-treesitter| module
 (see |markdown.configuration|). |<Plug>| mappings are created regardless of
 configuration (see |markdown.plug_mappings|).
 
+Runtime |ftplugin| keymaps for older Neovim versions (e.g., 0.10.0) can
+overwrite |markdown.nvim| `]]` and `[[` keymaps. These can be disabled with
+`vim.g.no_markdown_maps = 1`.
+
 ================================================================================
 CONFIGURATION                                         *markdown.configuration*
 

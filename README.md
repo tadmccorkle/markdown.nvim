@@ -404,6 +404,8 @@ Markdown buffers can be navigated with the following keymaps:
 - `]]`: go to the next section heading
 - `[[`: go to the previous section heading
 
+Runtime `ftplugin` keymaps for older Neovim versions (e.g., 0.10.0) can overwrite **markdown.nvim** `]]` and `[[` keymaps. These can be disabled with `vim.g.no_markdown_maps = 1`.
+
 ## *nvim-treesitter* module
 
 **markdown.nvim** can also be configured as an [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter/) module.
