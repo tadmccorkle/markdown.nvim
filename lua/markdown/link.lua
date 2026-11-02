@@ -232,7 +232,7 @@ local function open_path(path, opts)
 
 	-- try to navigate to headings in the linked file
 	local inner_dest
-	local s = string.find(path, "%.md#[%w_-]+$")
+	local s = string.find(path, "%.md#[^/]+$")
 	if s ~= nil then
 		inner_dest = string.sub(path, s + 3)
 		path = string.sub(path, 1, s + 2)

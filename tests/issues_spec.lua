@@ -99,4 +99,45 @@ describe("issues", function()
 
 		vim.g.no_markdown_maps = no_markdown_maps_bak
 	end)
+
+	it("can create and follow toc with chinese headings (#20)", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# 前言",
+			"## 准备",
+			"### 目录结构",
+			"## neovim配置介绍",
+		})
+
+		require("markdown.toc").insert_toc({ markers = { "-" }, start_row = 0 })
+		assert_buf_eq(bufnr, {
+			"- [前言](#前言)",
+			"  - [准备](#准备)",
+			"    - [目录结构](#目录结构)",
+			"  - [neovim配置介绍](#neovim配置介绍)",
+			"# 前言",
+			"## 准备",
+			"### 目录结构",
+			"## neovim配置介绍",
+		})
+
+		-- following each link should navigate to its own heading, not the first
+		-- heading with an empty destination
+		local link = require("markdown.link")
+		api.nvim_win_set_cursor(0, { 1, 3 })
+		link.follow()
+		assert.are.same({ 5, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 2, 5 })
+		link.follow()
+		assert.are.same({ 6, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 3, 7 })
+		link.follow()
+		assert.are.same({ 7, 0 }, api.nvim_win_get_cursor(0))
+
+		api.nvim_win_set_cursor(0, { 4, 5 })
+		link.follow()
+		assert.are.same({ 8, 0 }, api.nvim_win_get_cursor(0))
+	end)
 end)

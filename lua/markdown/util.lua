@@ -12,12 +12,30 @@ function M.sanitize(s)
 	return sanitized
 end
 
+---@param c string
+---@return boolean
+local function is_slug_char(c)
+	if c:byte() < 128 then
+		return c:match("[%w_-]") ~= nil
+	end
+	-- `charclass()` returns 2 for word characters, 3 for emoji, 1 for
+	-- punctuation, and the code point itself for other characters (e.g., CJK).
+	local class = vim.fn.charclass(c)
+	return class == 2 or class >= 4
+end
+
 ---@param s string
 ---@return string
 function M.slugify(s)
-	return s:gsub("%s", "-")
-		:gsub("[^%w_-]", "")
-		:lower()
+	-- Keep Unicode word characters (e.g., CJK) so non-Latin headings do not
+	-- produce empty or truncated link destinations.
+	local slug = {}
+	for _, c in ipairs(vim.fn.split(s:gsub("%s", "-"), "\\zs")) do
+		if is_slug_char(c) then
+			table.insert(slug, c)
+		end
+	end
+	return vim.fn.tolower(table.concat(slug))
 end
 
 ---@return boolean, string|nil
