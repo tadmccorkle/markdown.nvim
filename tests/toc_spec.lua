@@ -22,6 +22,80 @@ end
 describe("toc", function()
 	require("markdown").setup()
 
+	it("deduplicates slugs and follows every generated destination", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# Heading",
+			"# Heading",
+			"Heading 1",
+			"=========",
+			"# Heading 1",
+			"# Heading-1",
+			"# Heading",
+			"# 中文 日本語",
+			"中文 日本語",
+			"-----------",
+			"# **HEADING**",
+		})
+		local entries = {
+			"- [Heading](#heading)",
+			"- [Heading](#heading-1)",
+			"- [Heading 1](#heading-1-1)",
+			"- [Heading 1](#heading-1-2)",
+			"- [Heading-1](#heading-1-3)",
+			"- [Heading](#heading-2)",
+			"- [中文 日本語](#中文-日本語)",
+			"  - [中文 日本語](#中文-日本語-1)",
+			"- [**HEADING**](#heading-3)",
+		}
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
+		assert.are.same(entries, api.nvim_buf_get_lines(bufnr, 0, #entries, false))
+		local heading_lines = { 1, 2, 3, 5, 6, 7, 8, 9, 11 }
+		for i, line in ipairs(heading_lines) do
+			api.nvim_win_set_cursor(0, { i, 4 })
+			require("markdown.link").follow()
+			assert.are.same({ #entries + line, 0 }, api.nvim_win_get_cursor(0))
+		end
+	end)
+
+	it("numbers omitted headings but excludes container headings", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"> # Same",
+			"",
+			"- # Same",
+			"",
+			"# Same <!-- toc omit heading -->",
+			"# Same <!-- toc omit section -->",
+			"## Same",
+			"# Same",
+			"### Same",
+			"# Same",
+		})
+		toc.insert_toc({ markers = { "-" }, start_row = 0, max_level = 1 })
+		assert.are.same({
+			"- [Same](#same-3)",
+			"- [Same](#same-5)",
+		}, api.nvim_buf_get_lines(bufnr, 0, 2, false))
+		for i, line in ipairs({ 10, 12 }) do
+			api.nvim_win_set_cursor(0, { i, 4 })
+			require("markdown.link").follow()
+			assert.are.same({ line, 0 }, api.nvim_win_get_cursor(0))
+		end
+	end)
+
+	it("avoids suffixes already used by natural headings", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, { "# Heading-1", "# Heading", "# Heading", "# Heading-1" })
+		toc.insert_toc({ markers = { "-" }, start_row = 0 })
+		assert.are.same({
+			"- [Heading-1](#heading-1)",
+			"- [Heading](#heading)",
+			"- [Heading](#heading-2)",
+			"- [Heading-1](#heading-1-1)",
+		}, api.nvim_buf_get_lines(bufnr, 0, 4, false))
+	end)
+
 	it("inserts at row position", function()
 		local bufnr = new_md_buf()
 		set_buf(bufnr, {
@@ -88,6 +162,88 @@ describe("toc", function()
 			"#### h1.3.1.1",
 			"## h1.4",
 		})
+	end)
+
+	it("numbers destinations after removing the replacement range", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, {
+			"# Same",
+			"",
+			"# Same",
+			"# Same 1",
+			"# Same",
+		})
+		toc.insert_toc({ markers = { "-" }, start_row = 0, end_row = 1 })
+		assert_buf_eq(bufnr, {
+			"- [Same](#same)",
+			"- [Same 1](#same-1)",
+			"- [Same](#same-2)",
+			"# Same",
+			"# Same 1",
+			"# Same",
+		})
+		for i = 1, 3 do
+			api.nvim_win_set_cursor(0, { i, 4 })
+			require("markdown.link").follow()
+			assert.are.same({ i + 3, 0 }, api.nvim_win_get_cursor(0))
+		end
+	end)
+
+	it("reparses headings partially removed by replacement", function()
+		local bufnr = new_md_buf()
+		set_buf(bufnr, { "Same", "====", "", "# Same", "# Same" })
+		toc.insert_toc({ markers = { "-" }, start_row = 1, end_row = 2 })
+		assert_buf_eq(bufnr, {
+			"Same",
+			"- [Same](#same)",
+			"- [Same](#same-1)",
+			"# Same",
+			"# Same",
+		})
+		for i = 2, 3 do
+			api.nvim_win_set_cursor(0, { i, 4 })
+			require("markdown.link").follow()
+			assert.are.same({ i + 2, 0 }, api.nvim_win_get_cursor(0))
+		end
+	end)
+
+	it("undoes and redoes replacement as one change", function()
+		local bufnr = new_md_buf()
+		local original = { "# Same", "", "# Same" }
+		set_buf(bufnr, original)
+		-- End the setup edit's undo block, as returning to normal mode would.
+		vim.cmd("let &g:undolevels = &g:undolevels")
+		local sequence = vim.fn.undotree().seq_cur
+		toc.insert_toc({ markers = { "-" }, start_row = 0, end_row = 1 })
+		local expected = { "- [Same](#same)", "# Same" }
+		assert_buf_eq(bufnr, expected)
+		assert.are.same(sequence + 1, vim.fn.undotree().seq_cur)
+		vim.cmd("undo")
+		assert_buf_eq(bufnr, original)
+		vim.cmd("redo")
+		assert_buf_eq(bufnr, expected)
+	end)
+
+	it("restores the selected text if replacement TOC generation fails", function()
+		local bufnr = new_md_buf()
+		local original = { "# Same", "", "# Same" }
+		set_buf(bufnr, original)
+		vim.cmd("let &g:undolevels = &g:undolevels")
+		local heading = require("markdown.heading")
+		local get_headings = heading.get_document_headings
+		local intermediate
+		heading.get_document_headings = function()
+			intermediate = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+			error("TOC generation failed", 0)
+		end
+		local ok, err = pcall(toc.insert_toc, { markers = { "-" }, start_row = 0, end_row = 1 })
+		heading.get_document_headings = get_headings
+		assert.is_false(ok)
+		assert.are.same("TOC generation failed", err)
+		assert.are.same({ "", "# Same" }, intermediate)
+		assert_buf_eq(bufnr, original)
+		vim.cmd("undo")
+		assert_buf_eq(bufnr, original)
 	end)
 
 	it("handles missing levels", function()
@@ -185,7 +341,7 @@ describe("toc", function()
 			"another omitted setext <!-- toc omit heading -->",
 			"---",
 			"setext",
-			"==="
+			"===",
 		})
 		toc.insert_toc({ markers = { "-" }, start_row = 1 })
 		assert_buf_eq(bufnr, {
@@ -206,7 +362,7 @@ describe("toc", function()
 			"another omitted setext <!-- toc omit heading -->",
 			"---",
 			"setext",
-			"==="
+			"===",
 		})
 	end)
 
@@ -227,7 +383,7 @@ describe("toc", function()
 			"setext in section",
 			"---",
 			"setext",
-			"==="
+			"===",
 		})
 		toc.insert_toc({ markers = { "-" }, start_row = 1 })
 		assert_buf_eq(bufnr, {
@@ -248,7 +404,7 @@ describe("toc", function()
 			"setext in section",
 			"---",
 			"setext",
-			"==="
+			"===",
 		})
 	end)
 
@@ -414,7 +570,7 @@ describe("toc", function()
 		vim.cmd("lopen")
 		assert_buf_eq(0, {
 			"|1| h1",
-			"|4| h4"
+			"|4| h4",
 		})
 		vim.cmd("lclose")
 	end)

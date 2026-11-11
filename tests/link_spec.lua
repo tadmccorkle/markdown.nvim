@@ -57,7 +57,7 @@ describe("link", function()
 			"[test](#test)",
 			"# Test~`!@#$%^&*(){[|\\<,>.?/]}-2",
 			"## Test",
-			"[test2](#test-2)"
+			"[test2](#test-2)",
 		})
 		api.nvim_win_set_cursor(0, { 1, 1 })
 		link.follow()
@@ -65,6 +65,30 @@ describe("link", function()
 		vim.cmd("normal j")
 		link.follow()
 		assert.are.same({ 2, 0 }, api.nvim_win_get_cursor(0))
+	end)
+
+	it("can follow duplicate headings in another file", function()
+		local dir = vim.fn.tempname()
+		vim.fn.mkdir(dir, "p")
+		dir = vim.uv.fs_realpath(dir)
+		local target = dir .. "/target.md"
+		vim.fn.writefile({ "# Same", "# Same", "# Same 1" }, target)
+		local bufnr = new_md_buf()
+		api.nvim_buf_set_name(bufnr, dir .. "/source.md")
+		set_buf(bufnr, { "[second](./target.md#same-1-1)" })
+		api.nvim_win_set_cursor(0, { 1, 4 })
+		local ok, err = pcall(link.follow)
+		local actual_path = api.nvim_buf_get_name(0)
+		local actual_cursor = api.nvim_win_get_cursor(0)
+		local target_buf = api.nvim_get_current_buf()
+		api.nvim_win_set_buf(0, bufnr)
+		if target_buf ~= bufnr then
+			api.nvim_buf_delete(target_buf, { force = true })
+		end
+		vim.fn.delete(dir, "rf")
+		assert.is_true(ok, err)
+		assert.are.same(vim.fs.normalize(target), vim.fs.normalize(actual_path))
+		assert.are.same({ 3, 0 }, actual_cursor)
 	end)
 
 	it("can paste URLs as links", function()

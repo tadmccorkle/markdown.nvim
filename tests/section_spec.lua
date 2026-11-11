@@ -1,0 +1,18 @@
+local Section = require("markdown.section")
+
+describe("section", function()
+	it("initializes root heading fields", function()
+		local root = Section.new()
+		assert.are.same("", root.text)
+		assert.are.same("", root.destination)
+	end)
+
+	it("initializes subsection heading fields at construction", function()
+		local root = Section.new()
+		local child = root:add_subsection("**Heading**", 1, 3, "**Heading**", "heading-1")
+		assert.are.same("**Heading**", child.text)
+		assert.are.same("heading-1", child.destination)
+		assert.are.same(child, root.children[1])
+		assert.are.same(root, child.parent)
+	end)
+end)

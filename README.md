@@ -337,6 +337,8 @@ Detailed usage instructions can be found in the help doc (`:h markdown.usage`).
 
 A table of contents (TOC) is created from the top-level ATX and setext headings of markdown buffers.
 
+Heading destinations are made unique in document order with `-1`, `-2`, etc. suffixes, skipping destinations already in use. For example, `Heading`, `Heading`, `Heading 1` produce `#heading`, `#heading-1`, `#heading-1-1`. All headings outside lists and block quotes count, even those omitted from the TOC or excluded by its max level. Link navigation uses the same destinations, including links to headings in other files. These anchors are GitHub-like, not guaranteed to match GitHub or other renderers.
+
 The `:MDInsertToc [max_level] [markers]` command adds a TOC by inserting (normal mode) or replacing selected lines (visual mode). Optional arguments can be provided to set the max heading level to include and the list markers to alternate through for each heading level.
 
 The `:MDToc [max_level] [size]` and `:MDTocAll [max_level] [size]` commands show a TOC for the current buffer in the current window's location list. `:MDToc` omits flagged headings and `:MDTocAll` includes all headings. The optional `[max_level]` argument specifies the max heading level to include, and the optional `[size]` argument specifies the desired size of the location list. These commands also forward command modifiers to `:lopen`.

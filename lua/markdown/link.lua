@@ -3,22 +3,11 @@ local ts = vim.treesitter
 
 local config = require("markdown.config")
 local md_ts = require("markdown.treesitter")
+local heading = require("markdown.heading")
 local notify = require("markdown.notify")
 local util = require("markdown.util")
 
 local M = {}
-
-local heading_query = ts.query.parse(
-	"markdown",
-	[[
-	[
-		(atx_heading
-			_ heading_content: (inline) @atx_content)
-		(setext_heading
-			heading_content: (_ (inline) @setext_content) _)
-	] @heading
-]]
-)
 
 ---@param text string
 ---@return boolean
@@ -31,13 +20,6 @@ function M.is_url(text)
 		end
 	end
 	return (e + 1) - s == #text
-end
-
----@param node TSNode
----@return boolean
-local function is_container(node)
-	local type = node:type()
-	return type == "list" or type == "block_quote"
 end
 
 ---@param node TSNode
@@ -157,32 +139,22 @@ function M.add(motion)
 end
 
 --- Gets the sanitized text and slugified destination of a heading link.
+---@deprecated Use require("markdown.heading").get_link instead.
 ---@param text string Heading text
 ---@return string text, string destination
 function M.get_heading_link(text)
-	local content = util.sanitize(text)
-	local dest = md_ts.remove_nodes(content, "markdown_inline", "emphasis_delimiter")
-	return content, util.slugify(dest)
+	return heading.get_link(text)
 end
 
 ---@param dest string
 ---@param root TSNode
 local function follow_heading_link(dest, root)
 	dest = string.sub(dest, 2)
-	for _, match, _ in heading_query:iter_matches(root, 0, 0, -1, { all = true }) do
-		local content = md_ts.single_node_from_match(match, 1)
-			or md_ts.single_node_from_match(match, 2)
-		local heading = md_ts.single_node_from_match(match, 3)
-		local in_container = md_ts.find_parent(heading, is_container)
-		if not in_container then
-			local text = ts.get_node_text(content, 0, nil)
-			_, text = M.get_heading_link(text)
-			if text == dest then
-				local row = heading:start()
-				vim.cmd.normal({ "m'", bang = true })
-				api.nvim_win_set_cursor(0, { row + 1, 0 })
-				return
-			end
+	for _, h in ipairs(heading.get_document_headings(root)) do
+		if h.destination == dest then
+			vim.cmd.normal({ "m'", bang = true })
+			api.nvim_win_set_cursor(0, { h.line, 0 })
+			return
 		end
 	end
 	notify.info("heading not found")

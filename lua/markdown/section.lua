@@ -2,6 +2,8 @@
 
 ---@class Section
 ---@field name string
+---@field text string
+---@field destination string
 ---@field parent Section
 ---@field level integer
 ---@field line integer
@@ -17,14 +19,16 @@ Section.OMIT_LEVEL = {
 	section = 2,
 }
 
-local function _new(name, parent, level, line)
+local function _new(name, parent, level, line, text, destination)
 	return setmetatable({
 		name = name or "root",
+		text = text or "",
+		destination = destination or "",
 		parent = parent,
 		level = level or (parent and parent.level + 1) or 0,
 		line = line or -1,
 		omit = Section.OMIT_LEVEL.none,
-		children = {}
+		children = {},
 	}, Section)
 end
 
@@ -32,12 +36,14 @@ end
 ---@param name string
 ---@param level integer
 ---@param line integer
+---@param text string
+---@param destination string
 ---
 --- Subsection `level` must be greater than the current level.
-function Section:add_subsection(name, level, line)
+function Section:add_subsection(name, level, line, text, destination)
 	assert(level > self.level)
 
-	local subsection = _new(name, self, level, line)
+	local subsection = _new(name, self, level, line, text, destination)
 	table.insert(self.children, subsection)
 	return subsection
 end

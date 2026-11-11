@@ -158,6 +158,14 @@ TABLE OF CONTENTS                                               *markdown.toc*
 A table of contents (TOC) is created from the top-level (i.e., not within a
 container like lists or block quotes) headings of markdown buffers.
 
+Heading destinations are made unique in document order with -1, -2, etc.
+suffixes, skipping destinations already in use. For example, Heading, Heading,
+Heading 1 produce #heading, #heading-1, #heading-1-1. All non-container
+headings count, even those omitted from the TOC or excluded by its max level.
+Link navigation uses the same destinations, including headings in other files.
+These anchors are GitHub-like, not guaranteed to match GitHub or other
+renderers.
+
                                                                 *:MDInsertToc*
 :MDInsertToc[/max_level][/markers...]
 :MDInsertToc [max_level] [markers...]
