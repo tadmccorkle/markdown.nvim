@@ -300,8 +300,16 @@ destinations are supported for in-editor navigation:
 * `/destination`: Files and directories relative to the working directory
 * Other absolute path destinations are opened if they exist
 
+File links can include line jumps like `#L56`, `#L56-L60` (GitHub range), or
+`#L56-60` (GitLab range), e.g., `[source](./test.lua#L56)`. Only uppercase `L`
+and decimal digits are supported; bare `#56` is not. Line numbers are clamped
+to the file's bounds: zero jumps to the first line, and numbers past EOF jump
+to the last.
+
 Link destination URLs that begin with `https://`, `http://`, and `www.` are
-also supported and are opened in the browser.
+also supported and are opened in the browser with their fragments unchanged.
+When opening a non-Markdown file in its default application, a recognized line
+fragment is removed from the path, but no external cursor positioning is done.
 
 PASTE URLS                                              *markdown.links.paste*
 

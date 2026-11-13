@@ -391,7 +391,9 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
   - `/destination`: files and directories relative to the working directory
   - Other absolute path destinations are opened if they exist
 
-  URL destinations are opened in the browser.
+  File links can include line jumps like `#L56`, `#L56-L60` (GitHub range), or `#L56-60` (GitLab range), e.g., `[source](./test.lua#L56)`. Only uppercase `L` and decimal digits are supported; bare `#56` is not.
+
+  Link destination URLs that begin with `https://`, `http://`, and `www.` are also supported and are opened in the browser with their fragments unchanged. When opening a non-Markdown file in its default application, a recognized line fragment is removed from the path, but no external cursor positioning is done.
 
 - #### Paste URLs
 

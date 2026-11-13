@@ -148,16 +148,24 @@ end
 
 ---@param dest string
 ---@param root TSNode
-local function follow_heading_link(dest, root)
+---@param silent? boolean
+---@return boolean found
+local function follow_heading_link(dest, root, silent)
 	dest = string.sub(dest, 2)
+
 	for _, h in ipairs(heading.get_document_headings(root)) do
 		if h.destination == dest then
 			vim.cmd.normal({ "m'", bang = true })
 			api.nvim_win_set_cursor(0, { h.line, 0 })
-			return
+			return true
 		end
 	end
-	notify.info("heading not found")
+
+	if not silent then
+		notify.info("heading not found")
+	end
+
+	return false
 end
 
 ---@param dest string
@@ -202,17 +210,28 @@ local function open_path(path, opts)
 		path = vim.fs.dirname(vim.fs.dirname(vim.api.nvim_buf_get_name(0))) .. string.sub(path, 3)
 	end
 
-	-- try to navigate to headings in the linked file
-	local inner_dest
-	local s = string.find(path, "%.md#[^/]+$")
-	if s ~= nil then
-		inner_dest = string.sub(path, s + 3)
-		path = string.sub(path, 1, s + 2)
-	end
-
 	local normalized = vim.fs.normalize(path)
 	local is_file = vim.fn.filereadable(normalized) ~= 0
 	local is_dir = vim.fn.isdirectory(normalized) ~= 0
+	local inner_dest, line
+
+	-- An existing literal path (including a directory) takes precedence over fragments.
+	if not is_file and not is_dir then
+		local base, fragment = path:match("^(.*)#([^#/]+)$")
+		if fragment ~= nil then
+			local number = fragment:match("^L([0-9]+)$")
+				or fragment:match("^L([0-9]+)%-L[0-9]+$")
+				or fragment:match("^L([0-9]+)%-[0-9]+$")
+			line = number and tonumber(number) or nil
+			if line ~= nil or base:sub(-3) == ".md" then
+				inner_dest = "#" .. fragment
+				path = base
+				normalized = vim.fs.normalize(path)
+				is_file = vim.fn.filereadable(normalized) ~= 0
+			end
+		end
+	end
+
 	if is_file or is_dir then
 		local is_md = string.sub(path, -3) == ".md"
 		if opts.use_default_app and not is_md and not is_dir then
@@ -221,12 +240,24 @@ local function open_path(path, opts)
 				notify.error("Open in default app failed. " .. err)
 			end
 		else
-			vim.cmd.edit(path)
+			vim.cmd.edit(vim.fn.fnameescape(path))
 
 			if inner_dest ~= nil then
-				local p = ts.get_parser(0, "markdown")
-				if p ~= nil then
-					follow_heading_link(inner_dest, p:parse()[1]:root())
+				local found = false
+
+				if is_md then
+					local ok, p = pcall(ts.get_parser, 0, "markdown")
+					if ok and p ~= nil then
+						local parsed, trees = pcall(p.parse, p)
+						if parsed and trees and trees[1] then
+							found = follow_heading_link(inner_dest, trees[1]:root(), line ~= nil)
+						end
+					end
+				end
+
+				if not found and line ~= nil then
+					line = math.max(1, math.min(line, api.nvim_buf_line_count(0)))
+					api.nvim_win_set_cursor(0, { line, 0 })
 				end
 			end
 		end
