@@ -262,7 +262,8 @@ local function open_path(path, opts)
 			end
 		end
 	else
-		notify.info("path not found")
+		vim.cmd.edit(path)
+		notify.info("file " .. path .. " created")
 	end
 end
 
