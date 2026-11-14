@@ -22,6 +22,14 @@ function M.is_url(text)
 	return (e + 1) - s == #text
 end
 
+---@param text string
+---@return boolean
+function M.is_uri(text)
+	local is_drive = text:match("^[A-Za-z]:[/\\]") ~= nil
+		or (vim.fn.has("win32") == 1 and text:match("^[A-Za-z]:") ~= nil)
+	return not is_drive and text:match("^[A-Za-z][A-Za-z0-9+.-]*:") ~= nil
+end
+
 ---@param node TSNode
 ---@return boolean
 local function is_inline(node)
@@ -53,7 +61,7 @@ local function paste_handler(overridden)
 		end
 
 		local url = lines[1]
-		if not M.is_url(url) then
+		if url:find("%s") or not (M.is_uri(url) or M.is_url(url)) then
 			overridden(lines, phase)
 			return
 		end
@@ -77,9 +85,10 @@ end
 
 local is_registered = false
 
---- Registers a paste handler to convert URLs into markdown links.
+--- Registers a paste handler to convert URIs and www. URLs into markdown links.
 ---
---- URLs are only converted to markdown links when:
+--- Destinations are only converted to markdown links when:
+--- * Pasted text is a single line without whitespace
 --- * Pasting over visual selection (not a block selection)
 --- * Visual selection is contained by one inline block (i.e., conversion will
 ---   not happen if visual selection includes blank lines, list markers, etc.)
@@ -189,10 +198,6 @@ end
 
 ---@param url string
 local function open_url(url)
-	if not url:match("^%a+://") then
-		url = "https://" .. url
-	end
-
 	local err = open(url)
 	if err ~= nil then
 		notify.error("URL navigation failed. " .. err)
@@ -272,26 +277,40 @@ end
 --- Follows or opens the destination of the link under the cursor.
 ---@param opts FollowOpts?
 function M.follow(opts)
+	local ok, link, dest, t = pcall(function()
+		local row, col = util.get_cursor()
+		local tree = ts.get_parser(0, "markdown"):parse({ row, row + 1 })[1]
+		if tree == nil then
+			return
+		end
+
+		local node = md_ts.find_node(is_link, { pos = { row, col }, ignore_injections = false })
+		if node == nil then
+			return
+		end
+
+		local dest_node = md_ts.find_child(node, is_link_dest)
+		return node, dest_node and ts.get_node_text(dest_node, 0, nil), tree
+	end)
+
+	if not ok or link == nil or t == nil then
+		require("markdown.link_mapping").fallback()
+		return
+	end
+
+	if dest == nil or dest == "" then
+		return
+	end
+
 	opts = opts or {}
-
-	local row, col = util.get_cursor()
-	local t = ts.get_parser(0, "markdown"):parse({ row, row + 1 })[1]
-	local link = md_ts.find_node(is_link, { pos = { row, col }, ignore_injections = false })
-	if link == nil then
-		return
-	end
-
-	local dest_node = md_ts.find_child(link, is_link_dest)
-	if dest_node == nil then
-		return
-	end
-	local dest = ts.get_node_text(dest_node, 0, nil)
 
 	local function follow_link()
 		if vim.startswith(dest, "#") then
 			follow_heading_link(dest, t:root())
-		elseif M.is_url(dest) then
+		elseif M.is_uri(dest) then
 			open_url(dest)
+		elseif M.is_url(dest) then
+			open_url("https://" .. dest)
 		else
 			open_path(dest, opts)
 		end

@@ -1,6 +1,6 @@
 # markdown.nvim <!-- toc omit heading -->
 
-Configurable tools for working with markdown files in Neovim.
+Tools for working with markdown files in Neovim.
 
 [![ci](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/ci.yml)
 [![tests (nightly)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests-nightly.yml/badge.svg)](https://github.com/tadmccorkle/markdown.nvim/actions/workflows/tests-nightly.yml)
@@ -158,7 +158,7 @@ A table of configuration options can optionally be passed to the `setup()` funct
   },
   link = {
     paste = {
-      enable = true, -- whether to convert URLs to links on paste
+      enable = true, -- whether to convert URIs to links on paste
     },
   },
   toc = {
@@ -384,7 +384,7 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
 - #### Follow
 
-  Follow links under the cursor in normal mode with **gx**. Supported in-editor navigation:
+  Follow inline Markdown links (`[text](destination)`) under the cursor in normal mode with **gx**. Supported in-editor navigation:
 
   - `#destination`: headings in the current buffer
   - `./destination`: files and directories relative to the current buffer
@@ -393,11 +393,13 @@ Most list editing commands are intended to be invoked by custom keymaps (see not
 
   File links can include line jumps like `#L56`, `#L56-L60` (GitHub range), or `#L56-60` (GitLab range), e.g., `[source](./test.lua#L56)`. Only uppercase `L` and decimal digits are supported; bare `#56` is not.
 
-  Link destination URLs that begin with `https://`, `http://`, and `www.` are also supported and are opened in the browser with their fragments unchanged. When opening a non-Markdown file in its default application, a recognized line fragment is removed from the path, but no external cursor positioning is done.
+  Explicit link destination URIs such as `https://example.org`, `mailto:example@example.org`, and `file:///path/document.pdf` are passed unchanged to `vim.ui.open` and opened with the system default handler.
 
-- #### Paste URLs
+  Outside a supported Markdown link, **gx** delegates to the mapping that was active before the plugin attached (likely the builtin Neovim mapping). This preserves native URL/path handling and, where supported by the installed Neovim version, extmark, Tree-sitter, and LSP hyperlinks.
 
-  URLs can be pasted over a visual selection (not a visual block selection) from the system clipboard as markdown links. The visual selection must be contained by one inline block (i.e., conversion to a link will not occur if the visual selection includes blank lines, list markers, etc.).
+- #### Paste URIs
+
+  URIs such as `https://example.org`, `mailto:example@example.org`, and `file:///path/document.pdf`, as well as `www.` URLs, can be pasted over a visual selection (not a visual block selection) from the system clipboard as markdown links.
 
 ### Navigation
 

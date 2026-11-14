@@ -3,41 +3,39 @@ local api = vim.api
 local M = {}
 
 ---@type table<integer, { cmds: table, maps: table }>
-local cache
+local cache = {}
 
 local function create_cached_buf_usr_cmd(bufnr, name, cmd, opts)
 	api.nvim_buf_create_user_command(bufnr, name, cmd, opts)
-	if cache ~= nil then
-		table.insert(cache[bufnr].cmds, name)
-	end
+	table.insert(cache[bufnr].cmds, name)
 end
 
 local function del_cached_buf_usr_cmds(bufnr)
-	for i = 1, #cache[bufnr].cmds, 1 do
-		api.nvim_buf_del_user_command(bufnr, cache[bufnr].cmds[i])
+	for _, name in ipairs(cache[bufnr].cmds) do
+		pcall(api.nvim_buf_del_user_command, bufnr, name)
 	end
 end
 
 local function set_cached_keymap(mode, lhs, rhs, opts)
-	if not lhs then return end
-
-	vim.keymap.set(mode, lhs, rhs, opts)
-	if cache ~= nil then
-		table.insert(cache[opts.buffer].maps, { mode, rhs })
+	if lhs then
+		vim.keymap.set(mode, lhs, rhs, opts)
+		table.insert(cache[opts.buffer].maps, { mode, lhs })
 	end
 end
 
 local function del_cached_keymaps(bufnr)
-	local opts = bufnr ~= nil and { buffer = bufnr } or nil
-	for i = 1, #cache[bufnr].maps, 1 do
-		local map = cache[bufnr].maps[i]
-		vim.keymap.del(map[1], map[2], opts)
+	for _, map in ipairs(cache[bufnr].maps) do
+		pcall(vim.keymap.del, map[1], map[2], { buffer = bufnr })
 	end
 end
 
 local function setup_usr_cmds(bufnr)
 	local cmd = require("markdown.cmd")
+	local list = require("markdown.list")
 
+	-- stylua: ignore start
+
+	-- toc
 	create_cached_buf_usr_cmd(
 		bufnr,
 		"MDInsertToc",
@@ -64,7 +62,7 @@ local function setup_usr_cmds(bufnr)
 			nargs = "*",
 		})
 
-	local list = require("markdown.list")
+	-- list
 	create_cached_buf_usr_cmd(
 		bufnr,
 		"MDListItemBelow",
@@ -95,67 +93,75 @@ local function setup_usr_cmds(bufnr)
 			force = true,
 			range = true,
 		})
+
+	-- stylua: ignore end
 end
 
 local function setup_usr_keymaps(cfg, bufnr)
-	if cfg.mappings then
-		set_cached_keymap(
-			"n",
-			cfg.mappings.inline_surround_toggle,
-			"<Plug>(markdown_toggle_emphasis)",
-			{
-				buffer = bufnr,
-				desc = "Toggle emphasis around a motion",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.inline_surround_toggle_line,
-			"<Plug>(markdown_toggle_emphasis_line)",
-			{
-				buffer = bufnr,
-				desc = "Toggle emphasis around a line",
-			})
-		set_cached_keymap(
-			"x",
-			cfg.mappings.inline_surround_toggle,
-			"<Plug>(markdown_toggle_emphasis_visual)",
-			{
-				buffer = bufnr,
-				desc = "Toggle emphasis around a visual selection",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.inline_surround_delete,
-			"<Plug>(markdown_delete_emphasis)",
-			{
-				buffer = bufnr,
-				desc = "Delete emphasis around the cursor",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.inline_surround_change,
-			"<Plug>(markdown_change_emphasis)",
-			{
-				buffer = bufnr,
-				desc = "Change emphasis around the cursor",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.link_add,
-			"<Plug>(markdown_add_link)",
-			{
-				buffer = bufnr,
-				desc = "Add link around a motion",
-			})
-		set_cached_keymap(
-			"x",
-			cfg.mappings.link_add,
-			"<Plug>(markdown_add_link_visual)",
-			{
-				buffer = bufnr,
-				desc = "Add link around a visual selection",
-			})
-		set_cached_keymap(
+	if not cfg.mappings then
+		return
+	end
+
+	-- stylua: ignore start
+	set_cached_keymap(
+		"n",
+		cfg.mappings.inline_surround_toggle,
+		"<Plug>(markdown_toggle_emphasis)",
+		{
+			buffer = bufnr,
+			desc = "Toggle emphasis around a motion",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.inline_surround_toggle_line,
+		"<Plug>(markdown_toggle_emphasis_line)",
+		{
+			buffer = bufnr,
+			desc = "Toggle emphasis around a line",
+		})
+	set_cached_keymap(
+		"x",
+		cfg.mappings.inline_surround_toggle,
+		"<Plug>(markdown_toggle_emphasis_visual)",
+		{
+			buffer = bufnr,
+			desc = "Toggle emphasis around a visual selection",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.inline_surround_delete,
+		"<Plug>(markdown_delete_emphasis)",
+		{
+			buffer = bufnr,
+			desc = "Delete emphasis around the cursor",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.inline_surround_change,
+		"<Plug>(markdown_change_emphasis)",
+		{
+			buffer = bufnr,
+			desc = "Change emphasis around the cursor",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.link_add,
+		"<Plug>(markdown_add_link)",
+		{
+			buffer = bufnr,
+			desc = "Add link around a motion",
+		})
+	set_cached_keymap(
+		"x",
+		cfg.mappings.link_add,
+		"<Plug>(markdown_add_link_visual)",
+		{
+			buffer = bufnr,
+			desc = "Add link around a visual selection",
+		})
+	if cfg.mappings.link_follow then
+		require("markdown.link_mapping").capture(bufnr, cfg.mappings.link_follow)
+		vim.keymap.set(
 			"n",
 			cfg.mappings.link_follow,
 			"<Plug>(markdown_follow_link)",
@@ -163,42 +169,44 @@ local function setup_usr_keymaps(cfg, bufnr)
 				buffer = bufnr,
 				desc = "Follow link under the cursor",
 			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.go_curr_heading,
-			"<Plug>(markdown_go_current_heading)",
-			{
-				buffer = bufnr,
-				desc = "Set cursor to current section heading",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.go_parent_heading,
-			"<Plug>(markdown_go_parent_heading)",
-			{
-				buffer = bufnr,
-				desc = "Set cursor to parent section heading",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.go_next_heading,
-			"<Plug>(markdown_go_next_heading)",
-			{
-				buffer = bufnr,
-				desc = "Set cursor to next section heading",
-			})
-		set_cached_keymap(
-			"n",
-			cfg.mappings.go_prev_heading,
-			"<Plug>(markdown_go_prev_heading)",
-			{
-				buffer = bufnr,
-				desc = "Set cursor to previous section heading",
-			})
 	end
+	set_cached_keymap(
+		"n",
+		cfg.mappings.go_curr_heading,
+		"<Plug>(markdown_go_current_heading)",
+		{
+			buffer = bufnr,
+			desc = "Set cursor to current section heading",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.go_parent_heading,
+		"<Plug>(markdown_go_parent_heading)",
+		{
+			buffer = bufnr,
+			desc = "Set cursor to parent section heading",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.go_next_heading,
+		"<Plug>(markdown_go_next_heading)",
+		{
+			buffer = bufnr,
+			desc = "Set cursor to next section heading",
+		})
+	set_cached_keymap(
+		"n",
+		cfg.mappings.go_prev_heading,
+		"<Plug>(markdown_go_prev_heading)",
+		{
+			buffer = bufnr,
+			desc = "Set cursor to previous section heading",
+		})
+	-- stylua: ignore end
 end
 
 local function check_deps()
+	-- stylua: ignore start
 	local has_markdown = #(api.nvim_get_runtime_file("parser/markdown.so", true)) > 0
 	local has_markdown_inline = #(api.nvim_get_runtime_file("parser/markdown_inline.so", true)) > 0
 	if not (has_markdown and has_markdown_inline) then
@@ -209,10 +217,80 @@ local function check_deps()
 		return false
 	end
 	return true
+	-- stylua: ignore end
 end
 
+---@param bufnr integer
+local function is_markdown(bufnr)
+	local ft = api.nvim_get_option_value("filetype", { buf = bufnr })
+	return vim.tbl_contains(vim.treesitter.language.get_filetypes("markdown"), ft)
+end
+
+local group = api.nvim_create_augroup("markdown.nvim", {})
+local autocmd_buf_key = vim.fn.has("nvim-0.13") == 1 and "buf" or "buffer"
+
+---@param bufnr integer
+local function forget_buffer(bufnr)
+	cache[bufnr] = nil
+	require("markdown.link_mapping").forget(bufnr)
+end
+
+---@param bufnr integer
+function M._on_detach(bufnr)
+	if cache[bufnr] == nil then
+		return
+	end
+
+	if api.nvim_buf_is_valid(bufnr) then
+		del_cached_buf_usr_cmds(bufnr)
+		del_cached_keymaps(bufnr)
+		cache[bufnr] = nil
+
+		vim.b[bufnr].markdown_nvim_attached = nil
+
+		require("markdown.link_mapping").restore(bufnr)
+	else
+		forget_buffer(bufnr)
+	end
+end
+
+---@param bufnr integer
 local function on_attach(bufnr)
-	api.nvim_buf_set_var(bufnr, "markdown_nvim_attached", 1)
+	if cache[bufnr] ~= nil then
+		if vim.b[bufnr].markdown_nvim_attached == 1 then
+			return
+		end
+
+		-- Neovim cleared this recoverable buffer's registrations (:bdelete).
+		forget_buffer(bufnr)
+	end
+
+	cache[bufnr] = { cmds = {}, maps = {} }
+
+	local buf_vars = vim.b[bufnr]
+
+	buf_vars.markdown_nvim_attached = 1
+
+	local undo = "lua require('markdown')._on_detach(vim.api.nvim_get_current_buf())"
+	local previous = buf_vars.undo_ftplugin or ""
+	if not previous:find(undo, 1, true) then
+		buf_vars.undo_ftplugin = previous == "" and undo or previous .. "|" .. undo
+	end
+
+	-- BufWipeout can accompany renames. Only forget Lua state after the buffer
+	-- operation finishes and its handle is actually invalid.
+	api.nvim_clear_autocmds({ group = group, event = "BufWipeout", [autocmd_buf_key] = bufnr })
+	api.nvim_create_autocmd("BufWipeout", {
+		group = group,
+		[autocmd_buf_key] = bufnr,
+		callback = function(opts)
+			vim.schedule(function()
+				if not api.nvim_buf_is_valid(opts.buf) then
+					forget_buffer(opts.buf)
+				end
+			end)
+		end,
+	})
 
 	local cfg = require("markdown.config"):get()
 
@@ -220,16 +298,13 @@ local function on_attach(bufnr)
 	setup_usr_keymaps(cfg, bufnr)
 
 	if cfg.link.paste.enable then
-		local link = require("markdown.link")
-		link.register_paste_handler()
+		require("markdown.link").register_paste_handler()
 	end
 
 	if cfg.on_attach ~= nil then
 		cfg.on_attach(bufnr)
 	end
 end
-
-local group = api.nvim_create_augroup("markdown.nvim", {})
 
 --- Setup with user options.
 ---@param cfg? MarkdownConfig
@@ -240,22 +315,19 @@ function M.setup(cfg)
 
 	require("markdown.config"):setup(cfg)
 
-	api.nvim_clear_autocmds({ group = group })
+	api.nvim_clear_autocmds({ group = group, event = "FileType" })
 	api.nvim_create_autocmd("FileType", {
 		group = group,
 		pattern = vim.treesitter.language.get_filetypes("markdown"),
 		callback = function(opts)
-			---@diagnostic disable-next-line: undefined-field
-			if vim.b.markdown_nvim_attached ~= 1 then
-				on_attach(opts.buf)
-			end
+			on_attach(opts.buf)
 		end,
 	})
 
-	-- exec autocmd for existing buffers in case we were lazy-loaded
-	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_loaded(bufnr) then
-			vim.api.nvim_exec_autocmds("FileType", { group = group, buffer = bufnr })
+	-- Include existing Markdown buffers in case we were lazy-loaded.
+	for _, bufnr in ipairs(api.nvim_list_bufs()) do
+		if api.nvim_buf_is_loaded(bufnr) and is_markdown(bufnr) then
+			on_attach(bufnr)
 		end
 	end
 end
@@ -275,18 +347,9 @@ function M.define_nvim_ts_module()
 					require("markdown.config"):setup(mod_cfg --[[@as MarkdownConfig]])
 				end
 
-				if cache == nil then
-					cache = {}
-				end
-				cache[bufnr] = { cmds = {}, maps = {} }
-
 				on_attach(bufnr)
 			end,
-			detach = function(bufnr)
-				del_cached_buf_usr_cmds(bufnr)
-				del_cached_keymaps(bufnr)
-				cache[bufnr] = nil
-			end,
+			detach = M._on_detach,
 			is_supported = function(lang)
 				return lang == "markdown"
 			end,

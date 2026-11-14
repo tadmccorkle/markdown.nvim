@@ -91,25 +91,61 @@ describe("link", function()
 		assert.are.same({ 3, 0 }, actual_cursor)
 	end)
 
-	it("can paste URLs as links", function()
+	local function paste(text, selection, lines)
 		local bufnr = new_md_buf()
+		set_buf(bufnr, lines or { "test" })
+		api.nvim_win_set_cursor(0, { 1, 0 })
+		vim.cmd("normal! " .. (selection or "viw"))
+		api.nvim_paste(text, true, -1)
+		return bufnr
+	end
 
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal viw")
-		api.nvim_paste("https://example.com", true, -1)
-		assert_buf_eq(bufnr, { "[test](https://example.com)" })
+	for _, dest in ipairs({
+		"https://example.com",
+		"http://example.com",
+		"www.example.com",
+		"mailto:example@example.org",
+		"mailto:example@example.org?subject=Hello%20there",
+		"file:///tmp/document%20name.pdf#L3",
+		"tel:+123456789",
+		"git+ssh://example.org/repo",
+		"my-app.v2:resource",
+		"HTTPS://example.org/a?q=one%20two#fragment",
+	}) do
+		it("can paste a link destination: " .. dest, function()
+			assert_buf_eq(paste(dest), { "[test](" .. dest .. ")" })
+		end)
+	end
 
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal viw")
-		api.nvim_paste("http://example.com", true, -1)
-		assert_buf_eq(bufnr, { "[test](http://example.com)" })
+	for _, text in ipairs({
+		"C:/notes/file.md",
+		"C:\\notes\\file.md",
+		"./notes/file.md",
+		"plain text",
+		"note: some prose",
+		"file:///tmp/document name.pdf",
+		"https://example.org/a b",
+	}) do
+		it("pastes non-URI text literally: " .. text, function()
+			assert_buf_eq(paste(text), { text })
+		end)
+	end
 
-		set_buf(bufnr, { "test" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal viw")
-		api.nvim_paste("www.example.com", true, -1)
-		assert_buf_eq(bufnr, { "[test](www.example.com)" })
+	it("can paste a URI over a linewise selection", function()
+		assert_buf_eq(paste("mailto:a@example.org", "V"), { "[test](mailto:a@example.org)" })
 	end)
+
+	it("does not convert multiline URI paste", function()
+		local lines = { "mailto:a@example.org", "mailto:b@example.org" }
+		assert_buf_eq(paste(table.concat(lines, "\n")), lines)
+	end)
+
+	for _, case in ipairs({
+		{ "a visual block selection", "\22lll" },
+		{ "multiple inline blocks", "vG$", { "first", "", "last" } },
+	}) do
+		it("does not convert URI paste over " .. case[1], function()
+			assert_buf_eq(paste("mailto:a@example.org", case[2], case[3]), { "mailto:a@example.org" })
+		end)
+	end
 end)
