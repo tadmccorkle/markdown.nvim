@@ -9,7 +9,7 @@ local function gx(keys)
 end
 
 describe("link following and native fallback", function()
-	local bufnr, opened, messages, errors, followed, overrides, global_gx
+	local bufnr, opened, messages, errors, followed, overrides, global_gx, tempdir
 
 	vim.cmd("runtime plugin/markdown.lua")
 
@@ -43,6 +43,7 @@ describe("link following and native fallback", function()
 		markdown.setup()
 		global_gx = vim.fn.maparg("gx", "n", false, true)
 		opened, messages, errors, followed, overrides = {}, {}, {}, 0, {}
+		tempdir = nil
 		override(vim.ui, "open", function(dest)
 			table.insert(opened, dest)
 		end)
@@ -61,6 +62,9 @@ describe("link following and native fallback", function()
 		end
 		if bufnr and api.nvim_buf_is_valid(bufnr) then
 			api.nvim_buf_delete(bufnr, { force = true })
+		end
+		if tempdir then
+			vim.fn.delete(tempdir, "rf")
 		end
 		if next(global_gx) ~= nil then
 			vim.fn.mapset("n", false, global_gx)
@@ -101,12 +105,26 @@ describe("link following and native fallback", function()
 	end)
 
 	it("delegates bare directories to native gx", function()
-		local dir = vim.fn.tempname()
-		vim.fn.mkdir(dir, "p")
-		attach({ dir })
+		tempdir = vim.fn.tempname()
+		vim.fn.mkdir(tempdir, "p")
+		attach({ tempdir })
+
+		-- Measure native gx at the same cursor position: Windows path extraction
+		-- can omit the drive prefix, and separator handling varies by platform.
+		local mapping = vim.fn.maparg("gx", "n", false, true)
+		vim.keymap.del("n", "gx", { buffer = bufnr })
+		local cursor = api.nvim_win_get_cursor(0)
 		gx()
-		vim.fn.delete(dir, "rf")
-		assert.are.same({ vim.fs.normalize(dir) }, opened)
+		local native_opened = opened
+		opened = {}
+		vim.fn.mapset("n", false, mapping)
+		api.nvim_win_set_cursor(0, cursor)
+
+		-- Do not let two no-ops pass as equivalent delegation.
+		assert.are.same(1, #native_opened)
+		assert.is_true(#native_opened[1] > 0)
+		gx()
+		assert.are.same(native_opened, opened)
 	end)
 
 	it("preserves a buffer-local Lua callback across repeated setup", function()
