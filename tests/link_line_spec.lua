@@ -11,17 +11,20 @@ local function set_buf(bufnr, lines)
 	api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 end
 
+local MAX_LINE_NUM = 2147483647
+
 describe("file line links", function()
 	vim.cmd("runtime plugin/markdown.lua")
 	local config = require("markdown.config")
 	local link = require("markdown.link")
 	local notify = require("markdown.notify")
 	local dir, source, buffers, messages
-	local get_parser, ui_open, info, ftplugins
+	local get_parser, ui_open, info, ftplugins, fs_stat, cwd, cwd_scope
 
 	before_each(function()
 		config:reset()
 		require("markdown").setup()
+		fs_stat, cwd, cwd_scope = vim.uv.fs_stat, vim.fn.getcwd(), vim.fn.haslocaldir()
 		-- Neovim 0.12's Lua ftplugin requires a Lua parser; this suite installs only Markdown.
 		ftplugins = vim.g.did_load_ftplugin
 		vim.cmd("filetype plugin off")
@@ -43,6 +46,9 @@ describe("file line links", function()
 
 	after_each(function()
 		vim.treesitter.get_parser, vim.ui.open, notify.info = get_parser, ui_open, info
+		vim.uv.fs_stat = fs_stat
+		local cd = cwd_scope == 1 and "lcd" or (cwd_scope == 2 and "tcd" or "cd")
+		vim.cmd[cd](vim.fn.fnameescape(cwd))
 		config:reset()
 		for _, buf in ipairs(api.nvim_list_bufs()) do
 			if not buffers[buf] then
@@ -244,7 +250,166 @@ describe("file line links", function()
 			},
 		})
 		follow("./target.lua#L3-4", { use_default_app = false })
-		assert.are.same({ dest = "./target.lua#L3-4", use_default_app = false }, received)
+		assert.are.same("./target.lua#L3-4", received.dest)
+		assert.is_false(received.use_default_app)
+		assert.are.same("path", received.kind)
+		assert.are.same(source, received.bufnr)
+		assert.are.same(vim.fs.normalize(dir .. "/target.lua"), received.path)
+		assert.are.same("file", received.path_type)
+		assert.is_false(received.is_markdown)
+		assert.are.same("#L3-4", received.fragment)
+		assert.are.same({ start_line = 3, end_line = 4 }, received.line_range)
 		assert_target("target.lua", 3)
+	end)
+
+	local function context(dest, opts)
+		local received
+		require("markdown").setup({
+			hooks = {
+				follow_link = function(o)
+					received = o
+				end,
+			},
+		})
+		follow(dest, opts)
+		return received
+	end
+
+	for _, case in ipairs({
+		{ "L3", 3, 3 },
+		{ "L3-L7", 3, 7 },
+		{ "L3-7", 3, 7 },
+		{ "L0003", 3, 3 },
+		{ "L7-L3", 7, 3 },
+		{ "L0-L0", 0, 0 },
+		{ "L" .. string.rep("9", 400), MAX_LINE_NUM, MAX_LINE_NUM },
+		{ "L3-L" .. string.rep("9", 400), 3, MAX_LINE_NUM },
+	}) do
+		it("reports parsed range " .. case[1]:sub(1, 30), function()
+			local o = context("./missing.md#" .. case[1])
+			assert.are.same({ start_line = case[2], end_line = case[3] }, o.line_range)
+			assert.are.same("#" .. case[1], o.fragment)
+			assert.are.same("missing", o.path_type)
+			assert.is_true(o.is_markdown)
+			assert.are.same(vim.fs.normalize(dir .. "/missing.md"), o.path)
+		end)
+	end
+
+	for _, dest in ipairs({
+		"#L3",
+		"#missing",
+		"https://example.org/#L3",
+		"www.example.org",
+		"mailto:a@example.org",
+		"file:///missing.md#L3",
+	}) do
+		it("omits path context for " .. dest, function()
+			local o = context(dest)
+			assert.are.same(dest:sub(1, 1) == "#" and "heading" or "external", o.kind)
+			assert.are.same(source, o.bufnr)
+			for _, key in ipairs({ "path", "fragment", "line_range", "path_type", "is_markdown" }) do
+				assert.is_nil(o[key])
+			end
+		end)
+	end
+
+	it("preserves literal files and directories containing fragments", function()
+		write_file("target.md#L3")
+		vim.fn.mkdir(dir .. "/folder#L3")
+		for _, case in ipairs({ { "target.md#L3", "file" }, { "folder#L3", "directory" } }) do
+			local o = context("./" .. case[1])
+			assert.are.same(vim.fs.normalize(dir .. "/" .. case[1]), o.path)
+			assert.are.same(case[2], o.path_type)
+			assert.is_nil(o.fragment)
+			assert.is_nil(o.line_range)
+		end
+	end)
+
+	it("only reports interpreted fragments", function()
+		local o = context("./missing.txt#anchor")
+		assert.are.same(vim.fs.normalize(dir .. "/missing.txt#anchor"), o.path)
+		assert.is_nil(o.fragment)
+		assert.is_nil(o.line_range)
+		o = context("./missing.md#anchor")
+		assert.are.same("#anchor", o.fragment)
+		assert.is_nil(o.line_range)
+		o = context("./missing.lua#L3x")
+		assert.is_nil(o.fragment)
+		assert.is_nil(o.line_range)
+	end)
+
+	it("resolves all relative path forms using the invocation context", function()
+		vim.fn.mkdir(dir .. "/work", "p")
+		vim.fn.mkdir(dir .. "/pages", "p")
+		vim.cmd.lcd(vim.fn.fnameescape(dir .. "/work"))
+		api.nvim_buf_set_name(source, dir .. "/pages/source.md")
+		for _, case in ipairs({
+			{ "missing.md", "/work/missing.md" },
+			{ "/missing.md", "/work/missing.md" },
+			{ "./missing.md", "/pages/missing.md" },
+			{ "../missing.md", "/missing.md" },
+			{ "../../missing.md", "/../missing.md" },
+		}) do
+			local o = context(case[1])
+			assert.are.same(vim.fs.normalize(dir .. case[2]), o.path)
+		end
+	end)
+
+	it("does not treat filesystem inspection errors as missing", function()
+		vim.uv.fs_stat = function()
+			return nil, "EACCES: permission denied", "EACCES"
+		end
+		assert.are.same("unknown", context("./missing.md").path_type)
+	end)
+
+	it("does not confuse unreadable files with missing paths", function()
+		vim.uv.fs_stat = function()
+			return { type = "file" }
+		end
+		assert.are.same("file", context("./missing.md").path_type)
+	end)
+
+	it("reports other filesystem objects", function()
+		vim.uv.fs_stat = function()
+			return { type = "fifo" }
+		end
+		assert.are.same("other", context("./pipe").path_type)
+	end)
+
+	it("uses the same resolved target despite hook mutations and cwd changes", function()
+		write_file("target.lua")
+		vim.cmd.lcd(vim.fn.fnameescape(dir))
+		require("markdown").setup({
+			hooks = {
+				follow_link = function(o, fallback)
+					o.path = dir .. "/wrong.lua"
+					o.line_range.start_line = 1
+					vim.cmd.lcd(vim.fn.fnameescape(cwd))
+					fallback()
+				end,
+			},
+		})
+		follow("target.lua#L3-L4")
+		assert_target("target.lua", 3)
+	end)
+
+	it("supports opening a missing Markdown page without writing it", function()
+		require("markdown").setup({
+			hooks = {
+				follow_link = function(o, fallback)
+					if o.kind == "path" and o.path_type == "missing" and o.is_markdown then
+						vim.cmd.edit(vim.fn.fnameescape(o.path))
+						return
+					end
+					fallback()
+				end,
+			},
+		})
+		follow("#missing")
+		assert.are.same(source, api.nvim_get_current_buf())
+		follow("./new%page.md#L3", { use_default_app = true })
+		assert_target("new%page.md", 1)
+		assert.are.same(0, vim.fn.filereadable(dir .. "/new%page.md"))
+		assert.are.same(0, vim.fn.filereadable(dir .. "/new%page.md#L3"))
 	end)
 end)

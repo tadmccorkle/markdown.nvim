@@ -204,9 +204,14 @@ local function open_url(url)
 	end
 end
 
+---@param line_num string
+---@return integer
+local function parse_line(line_num)
+	return math.min(tonumber(line_num) or 0, 2147483647)
+end
+
 ---@param path string
----@param opts FollowOpts
-local function open_path(path, opts)
+local function resolve_path(path)
 	if vim.startswith(path, "/") then
 		path = vim.fn.getcwd() .. path
 	elseif vim.startswith(path, "./") or vim.startswith(path, ".\\") then
@@ -218,17 +223,21 @@ local function open_path(path, opts)
 	local normalized = vim.fs.normalize(path)
 	local is_file = vim.fn.filereadable(normalized) ~= 0
 	local is_dir = vim.fn.isdirectory(normalized) ~= 0
-	local inner_dest, line
+	local inner_dest, line_range
 
 	-- An existing literal path (including a directory) takes precedence over fragments.
 	if not is_file and not is_dir then
 		local base, fragment = path:match("^(.*)#([^#/]+)$")
 		if fragment ~= nil then
-			local number = fragment:match("^L([0-9]+)$")
-				or fragment:match("^L([0-9]+)%-L[0-9]+$")
-				or fragment:match("^L([0-9]+)%-[0-9]+$")
-			line = number and tonumber(number) or nil
-			if line ~= nil or base:sub(-3) == ".md" then
+			local first, last = fragment:match("^L([0-9]+)%-L?([0-9]+)$")
+			first = first or fragment:match("^L([0-9]+)$")
+			if first ~= nil then
+				line_range = {
+					start_line = parse_line(first),
+					end_line = parse_line(last or first),
+				}
+			end
+			if line_range ~= nil or base:sub(-3) == ".md" then
 				inner_dest = "#" .. fragment
 				path = base
 				normalized = vim.fs.normalize(path)
@@ -237,37 +246,68 @@ local function open_path(path, opts)
 		end
 	end
 
-	if is_file or is_dir then
-		local is_md = string.sub(path, -3) == ".md"
-		if opts.use_default_app and not is_md and not is_dir then
-			local err = open(normalized)
-			if err ~= nil then
-				notify.error("Open in default app failed. " .. err)
-			end
-		else
-			vim.cmd.edit(vim.fn.fnameescape(path))
+	-- Normalize does not make bare relative paths absolute. Capture cwd now so
+	-- the hook and fallback agree even if the hook changes it.
+	normalized = vim.fs.normalize(vim.fn.fnamemodify(normalized, ":p"))
+	local stat, _, code = vim.uv.fs_stat(normalized)
+	local path_type = "unknown"
+	if stat ~= nil then
+		path_type = stat.type == "file" and "file"
+			or (stat.type == "directory" and "directory" or "other")
+	elseif code == "ENOENT" or code == "ENOTDIR" then
+		path_type = "missing"
+	end
 
-			if inner_dest ~= nil then
-				local found = false
+	return {
+		path = normalized,
+		fragment = inner_dest,
+		line_range = line_range,
+		path_type = path_type,
+		is_markdown = path:sub(-3) == ".md",
+		-- Preserve the default follower's readability and directory policy.
+		is_file = is_file,
+		is_dir = is_dir,
+	}
+end
 
-				if is_md then
-					local ok, p = pcall(ts.get_parser, 0, "markdown")
-					if ok and p ~= nil then
-						local parsed, trees = pcall(p.parse, p)
-						if parsed and trees and trees[1] then
-							found = follow_heading_link(inner_dest, trees[1]:root(), line ~= nil)
-						end
-					end
-				end
+---@param target table
+---@param opts FollowOpts
+local function open_path(target, opts)
+	if not (target.is_file or target.is_dir) then
+		notify.info("path not found")
+		return
+	end
 
-				if not found and line ~= nil then
-					line = math.max(1, math.min(line, api.nvim_buf_line_count(0)))
-					api.nvim_win_set_cursor(0, { line, 0 })
-				end
-			end
+	local path = target.path
+	local inner_dest = target.fragment
+	local line = target.line_range and target.line_range.start_line
+
+	if opts.use_default_app and not (target.is_markdown or target.is_dir) then
+		local err = open(path)
+		if err ~= nil then
+			notify.error("Open in default app failed. " .. err)
 		end
 	else
-		notify.info("path not found")
+		vim.cmd.edit(vim.fn.fnameescape(path))
+
+		if inner_dest ~= nil then
+			local found = false
+
+			if target.is_markdown then
+				local ok, p = pcall(ts.get_parser, 0, "markdown")
+				if ok and p ~= nil then
+					local parsed, trees = pcall(p.parse, p)
+					if parsed and trees and trees[1] then
+						found = follow_heading_link(inner_dest, trees[1]:root(), line ~= nil)
+					end
+				end
+			end
+
+			if not found and line ~= nil then
+				line = math.max(1, math.min(line, api.nvim_buf_line_count(0)))
+				api.nvim_win_set_cursor(0, { line, 0 })
+			end
+		end
 	end
 end
 
@@ -302,24 +342,42 @@ function M.follow(opts)
 		return
 	end
 
-	opts = opts or {}
+	local kind, target, external_dest
+	if vim.startswith(dest, "#") then
+		kind = "heading"
+	elseif M.is_uri(dest) then
+		kind, external_dest = "external", dest
+	elseif M.is_url(dest) then
+		kind, external_dest = "external", "https://" .. dest
+	else
+		kind, target = "path", resolve_path(dest)
+	end
 
 	local function follow_link()
-		if vim.startswith(dest, "#") then
+		if kind == "heading" then
 			follow_heading_link(dest, t:root())
-		elseif M.is_uri(dest) then
-			open_url(dest)
-		elseif M.is_url(dest) then
-			open_url("https://" .. dest)
+		elseif kind == "external" then
+			open_url(external_dest)
 		else
-			open_path(dest, opts)
+			open_path(target, opts or {})
 		end
 	end
 
 	local override = config:get().hooks.follow_link
+
 	if override ~= nil then
-		local o_opts = vim.tbl_extend("error", opts, { dest = dest })
-		override(o_opts, follow_link)
+		local bufnr = api.nvim_get_current_buf()
+		local o_opts = opts and vim.deepcopy(opts) or {}
+		local o_target = target and vim.deepcopy(target) or {}
+
+		override(
+			vim.tbl_extend("error", {
+				dest = dest,
+				bufnr = bufnr,
+				kind = kind,
+			}, o_opts, o_target),
+			follow_link
+		)
 	else
 		follow_link()
 	end

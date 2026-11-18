@@ -28,9 +28,32 @@
 ---@field omit_section string
 ---@field markers string[]
 
+---@class FollowLineRange
+---@field start_line integer Parsed 1-based inclusive start (may be zero); capped at max int32
+---@field end_line integer Parsed inclusive end; same as start for a single line
+
+---@alias FollowLinkKind
+---| "heading" # Destination starts with '#'; heading lookup in the source document
+---| "external" # URI or URL, including 'www.' shorthand
+---| "path" # Local filesystem destination, using the plugin's path-resolution rules
+
+---@alias FollowPathType
+---| "file" # Stat reports a regular file; does not imply readability
+---| "directory" # Stat reports a directory
+---| "other" # Stat reports another object type, e.g. a FIFO, socket, or device
+---| "missing" # Stat failed with ENOENT or ENOTDIR; the target cannot be found at this path
+---| "unknown" # Other stat failure, e.g. permission denied; absence was not established
+
 ---@class FollowHookOpts
----@field dest string
+---@field dest string Original destination
 ---@field use_default_app boolean|nil
+---@field bufnr integer Source buffer
+---@field kind FollowLinkKind
+---@field path string|nil Absolute normalized path (path links only)
+---@field fragment string|nil Interpreted path fragment, including '#'
+---@field line_range FollowLineRange|nil Parsed line hint, not a guaranteed navigation target
+---@field path_type FollowPathType|nil Stat follows symlinks; nil for heading/external links
+---@field is_markdown boolean|nil Whether the resolved path ends in '.md'
 
 ---@class HookOpts
 ---@field follow_link fun(opts: FollowHookOpts, fallback: fun())|nil
@@ -119,5 +142,5 @@ function MarkdownConfigWrapper:reset()
 end
 
 return setmetatable({
-	cfg = default_cfg
+	cfg = default_cfg,
 }, MarkdownConfigWrapper)

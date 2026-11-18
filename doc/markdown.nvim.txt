@@ -563,14 +563,57 @@ markdown.setup({opts})                                      *markdown.setup()*
         Field signature: fun(opts: table, fallback: fun())
 
         Fields:
-            * follow_link   called when following links with the following
-                            options:
-                            * dest: the link destination
-                            * use_default_app: whether to open the link with
-                              the default application for the link destination
-                              (see |markdown.plug_mappings|)
-                            Default: nil
+            * follow_link   see |markdown.config.hooks.follow_link|
 
+                                           *markdown.config.hooks.follow_link*
+    hooks.follow_link: ~
+        Overrides following recognized Markdown links with the following
+        options:
+            * dest: original link destination
+            * use_default_app: optional boolean; whether to use the default
+              application (see |markdown.plug_mappings|)
+            * bufnr: source buffer number
+            * kind: "heading" (starts with '#'; looked up in the source
+              document), "external" (URI or URL, including www. shorthand),
+              or "path" (local filesystem destination)
+            * path: absolute normalized local path
+            * fragment: interpreted path fragment including '#', if any
+            * path_type: "file", "directory", "other", "missing", or "unknown"
+            * is_markdown: path ends in '.md' (case-sensitive)
+            * line_range: parsed range fragment `{start_line=L1,end_line=L2}`
+        Default: nil
+
+        Links delegated to the native `gx` mapping do not invoke this hook.
+        `path`, `path_type`, and `is_markdown` are only present for path
+        links.
+
+        Path resolution matches the fallback/default: `foo` and `/foo` are
+        cwd-relative; `./foo` and `../foo` are source-buffer-relative.
+
+        `path_type` describes filesystem inspection:
+            * `"file"`: regular file; does not imply readability
+            * `"directory"`: directory
+            * `"other"`: another object type, e.g. FIFO, socket, or device
+            * `"missing"`: ENOENT or ENOTDIR; target cannot be found at this
+              path
+            * `"unknown"`: another failure, e.g. permission denied; do not
+              treat this as "missing".
+
+        Example: open a buffer for a missing Markdown page:
+>lua
+            require("markdown").setup({
+                hooks = {
+                    follow_link = function(opts, fallback)
+                        if opts.kind == "path" and opts.path_type == "missing"
+                            and opts.is_markdown then
+                            vim.cmd.edit(vim.fn.fnameescape(opts.path))
+                            return
+                        end
+                        fallback()
+                    end,
+                },
+            })
+<
                                                    *markdown.config.on_attach*
     on_attach: ~
         Function called when |markdown.nvim| attaches to a buffer. Useful for

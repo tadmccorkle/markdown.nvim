@@ -169,19 +169,20 @@ A table of configuration options can optionally be passed to the `setup()` funct
     -- Use '.' and ')' for ordered lists.
     markers = { "-" },
   },
+
+  on_attach = nil, -- (fun(bufnr: integer)) callback when plugin attaches to a buffer
+
   -- Hook functions allow for overriding or extending default behavior.
   -- Called with a table of options and a fallback function with default behavior.
   -- Signature: fun(opts: table, fallback: fun())
   hooks = {
-    -- Called when following links. Provided the following options:
-    -- * 'dest' (string): the link destination
-    -- * 'use_default_app' (boolean|nil): whether to open the destination with default application
-    --   (refer to documentation on <Plug> mappings for explanation of when this option is used)
+    -- Called when following links with resolved context; see "Link follow hook" below.
     follow_link = nil,
   },
-  on_attach = nil, -- (fun(bufnr: integer)) callback when plugin attaches to a buffer
 }
 ```
+
+### Buffer attachment
 
 `on_attach` is useful for creating additional buffer-only keymaps:
 
@@ -193,13 +194,9 @@ on_attach = function(bufnr)
   map({ 'n', 'i' }, '<M-L><M-O>', '<Cmd>MDListItemAbove<CR>', opts)
   map('n', '<M-c>', '<Cmd>MDTaskToggle<CR>', opts)
   map('x', '<M-c>', ':MDTaskToggle<CR>', opts)
-end,
-```
 
-**markdown.nvim** can even be configured to support standard/typical inline style keybindings in visual mode like `<C-b>` for strong/bold and `<C-i>` for emphasis/italic:
 
-```lua
-on_attach = function(bufnr)
+  -- inline style visual mode keybindings like `<C-b>` for strong/bold and `<C-i>` for emphasis/italic:
   local function toggle(key)
     return "<Esc>gv<Cmd>lua require'markdown.inline'"
       .. ".toggle_emphasis_visual'" .. key .. "'<CR>"
@@ -208,6 +205,54 @@ on_attach = function(bufnr)
   vim.keymap.set("x", "<C-b>", toggle("b"), { buffer = bufnr })
   vim.keymap.set("x", "<C-i>", toggle("i"), { buffer = bufnr })
 end,
+```
+
+### Link follow hook
+
+`hooks.follow_link(opts, fallback)` overrides following recognized Markdown links. Links delegated to the native `gx` mapping do not invoke this hook.
+
+| Option            | Meaning                                                                           |
+|-------------------|:----------------------------------------------------------------------------------|
+| `dest`            | Original destination text.                                                        |
+| `use_default_app` | Optional boolean; see the default-app `<Plug>` mapping below.                     |
+| `bufnr`           | Source buffer number.                                                             |
+| `kind`            | `"heading"`, `"external"`, or `"path"`.                                           |
+| `path`            | Absolute normalized local path; only present for path links.                      |
+| `fragment`        | Interpreted path fragment including `#`, if any.                                  |
+| `path_type`       | `"file"`, `"directory"`, `"other"`, `"missing"`, or `"unknown"`; path links only. |
+| `is_markdown`     | Whether the resolved path ends in `.md` (case-sensitive); path links only.        |
+| `line_range`      | Parsed line hint `{ start_line = n, end_line = n }`, if applicable.               |
+
+`kind` describes the link type:
+
+- `"heading"`: starts with `#`, looked up in the source document.
+- `"external"`: URI or URL, including `www.` shorthand.
+- `"path"`: local filesystem destination.
+
+`path` resolution matches the fallback/default: `foo`/`/foo` are cwd-relative and `./foo`/`../foo` are source-buffer-relative.
+
+`path_type` describes the result of filesystem inspection:
+
+- `"file"`: a regular file; this does not imply readability.
+- `"directory"`: a directory.
+- `"other"`: another filesystem object, such as a FIFO, socket, or device.
+- `"missing"`: inspection failed with `ENOENT` or `ENOTDIR`; the target cannot be found at this path.
+- `"unknown"`: another failure, e.g., permission denied; do not treat this as "missing".
+
+For example, open a new buffer for a missing Markdown page:
+
+```lua
+require("markdown").setup({
+  hooks = {
+    follow_link = function(opts, fallback)
+      if opts.kind == "path" and opts.path_type == "missing" and opts.is_markdown then
+        vim.cmd.edit(vim.fn.fnameescape(opts.path))
+        return
+      end
+      fallback()
+    end,
+  },
+})
 ```
 
 ### `<Plug>` mappings
