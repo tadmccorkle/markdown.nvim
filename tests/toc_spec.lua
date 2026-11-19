@@ -1,4 +1,6 @@
 local api = vim.api
+local state = require("luassert.state")
+local stub = require("luassert.stub")
 
 local toc = require("markdown.toc")
 
@@ -21,6 +23,16 @@ end
 
 describe("toc", function()
 	require("markdown").setup()
+
+	local snapshot
+
+	before_each(function()
+		snapshot = state.snapshot()
+	end)
+
+	after_each(function()
+		snapshot:revert()
+	end)
 
 	it("deduplicates slugs and follows every generated destination", function()
 		local bufnr = new_md_buf()
@@ -230,14 +242,12 @@ describe("toc", function()
 		set_buf(bufnr, original)
 		vim.cmd("let &g:undolevels = &g:undolevels")
 		local heading = require("markdown.heading")
-		local get_headings = heading.get_document_headings
 		local intermediate
-		heading.get_document_headings = function()
+		stub(heading, "get_document_headings", function()
 			intermediate = api.nvim_buf_get_lines(bufnr, 0, -1, false)
 			error("TOC generation failed", 0)
-		end
+		end)
 		local ok, err = pcall(toc.insert_toc, { markers = { "-" }, start_row = 0, end_row = 1 })
-		heading.get_document_headings = get_headings
 		assert.is_false(ok)
 		assert.are.same("TOC generation failed", err)
 		assert.are.same({ "", "# Same" }, intermediate)

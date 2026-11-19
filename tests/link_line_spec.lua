@@ -1,4 +1,6 @@
 local api = vim.api
+local state = require("luassert.state")
+local stub = require("luassert.stub")
 
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
@@ -19,12 +21,13 @@ describe("file line links", function()
 	local link = require("markdown.link")
 	local notify = require("markdown.notify")
 	local dir, source, buffers, messages
-	local get_parser, ui_open, info, ftplugins, fs_stat, cwd, cwd_scope
+	local snapshot, ftplugins, cwd, cwd_scope
 
 	before_each(function()
+		snapshot = state.snapshot()
 		config:reset()
 		require("markdown").setup()
-		fs_stat, cwd, cwd_scope = vim.uv.fs_stat, vim.fn.getcwd(), vim.fn.haslocaldir()
+		cwd, cwd_scope = vim.fn.getcwd(), vim.fn.haslocaldir()
 		-- Neovim 0.12's Lua ftplugin requires a Lua parser; this suite installs only Markdown.
 		ftplugins = vim.g.did_load_ftplugin
 		vim.cmd("filetype plugin off")
@@ -37,16 +40,14 @@ describe("file line links", function()
 		dir = vim.uv.fs_realpath(dir)
 		source = new_md_buf()
 		api.nvim_buf_set_name(source, dir .. "/source.md")
-		get_parser, ui_open, info = vim.treesitter.get_parser, vim.ui.open, notify.info
 		messages = {}
-		notify.info = function(message)
+		stub(notify, "info", function(message)
 			table.insert(messages, message)
-		end
+		end)
 	end)
 
 	after_each(function()
-		vim.treesitter.get_parser, vim.ui.open, notify.info = get_parser, ui_open, info
-		vim.uv.fs_stat = fs_stat
+		snapshot:revert()
 		local cd = cwd_scope == 1 and "lcd" or (cwd_scope == 2 and "tcd" or "cd")
 		vim.cmd[cd](vim.fn.fnameescape(cwd))
 		config:reset()
@@ -184,21 +185,22 @@ describe("file line links", function()
 	for _, failure in ipairs({ "error", "nil", "parse" }) do
 		it("navigates to a line despite destination parser failure: " .. failure, function()
 			write_file("target.md")
-			vim.treesitter.get_parser = function(buf, ...)
+			local get_parser = vim.treesitter.get_parser
+			stub(vim.treesitter, "get_parser", function(buf, ...)
 				if buf == 0 and api.nvim_get_current_buf() ~= source then
 					if failure == "error" then
 						error("parser unavailable")
 					elseif failure == "nil" then
 						return nil
 					end
-					return {
-						parse = function()
-							error("parse failed")
-						end,
-					}
+					local parser = {}
+					stub(parser, "parse", function()
+						error("parse failed")
+					end)
+					return parser
 				end
 				return get_parser(buf, ...)
-			end
+			end)
 			follow("./target.md#L3")
 			assert_target("target.md", 3)
 			assert.are.same({}, messages)
@@ -208,9 +210,9 @@ describe("file line links", function()
 	it("strips line fragments for default-app opening but preserves literal paths", function()
 		write_file("target.lua")
 		local opened
-		vim.ui.open = function(path)
+		stub(vim.ui, "open", function(path)
 			opened = path
-		end
+		end)
 		follow("./target.lua#L3-L4", { use_default_app = true })
 		assert.are.same(vim.fs.normalize(dir .. "/target.lua"), opened)
 		assert.are.same(source, api.nvim_get_current_buf())
@@ -221,18 +223,18 @@ describe("file line links", function()
 
 	it("keeps Markdown navigation in the editor with default-app enabled", function()
 		write_file("target.md")
-		vim.ui.open = function()
+		stub(vim.ui, "open", function()
 			error("must not open externally")
-		end
+		end)
 		follow("./target.md#L3", { use_default_app = true })
 		assert_target("target.md", 3)
 	end)
 
 	it("leaves browser fragments untouched", function()
 		local opened
-		vim.ui.open = function(url)
+		stub(vim.ui, "open", function(url)
 			opened = url
-		end
+		end)
 		follow("https://example.com/test.lua#L3-L4")
 		assert.are.same("https://example.com/test.lua#L3-L4", opened)
 		assert.are.same(source, api.nvim_get_current_buf())
@@ -356,23 +358,23 @@ describe("file line links", function()
 	end)
 
 	it("does not treat filesystem inspection errors as missing", function()
-		vim.uv.fs_stat = function()
+		stub(vim.uv, "fs_stat", function()
 			return nil, "EACCES: permission denied", "EACCES"
-		end
+		end)
 		assert.are.same("unknown", context("./missing.md").path_type)
 	end)
 
 	it("does not confuse unreadable files with missing paths", function()
-		vim.uv.fs_stat = function()
+		stub(vim.uv, "fs_stat", function()
 			return { type = "file" }
-		end
+		end)
 		assert.are.same("file", context("./missing.md").path_type)
 	end)
 
 	it("reports other filesystem objects", function()
-		vim.uv.fs_stat = function()
+		stub(vim.uv, "fs_stat", function()
 			return { type = "fifo" }
-		end
+		end)
 		assert.are.same("other", context("./pipe").path_type)
 	end)
 

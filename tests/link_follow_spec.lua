@@ -1,4 +1,6 @@
 local api = vim.api
+local state = require("luassert.state")
+local stub = require("luassert.stub")
 local markdown = require("markdown")
 local config = require("markdown.config")
 local notify = require("markdown.notify")
@@ -9,15 +11,9 @@ local function gx(keys)
 end
 
 describe("link following and native fallback", function()
-	local bufnr, opened, messages, errors, followed, overrides, global_gx, tempdir
+	local bufnr, opened, messages, errors, followed, snapshot, global_gx, tempdir
 
 	vim.cmd("runtime plugin/markdown.lua")
-
-	-- Restore every override in teardown, including when the assertion or gx fails.
-	local function override(tbl, key, value)
-		table.insert(overrides, { tbl, key, tbl[key] })
-		tbl[key] = value
-	end
 
 	local function fallback(buf, lhs)
 		vim.keymap.set("n", lhs or "gx", function()
@@ -39,27 +35,25 @@ describe("link following and native fallback", function()
 	end
 
 	before_each(function()
+		snapshot = state.snapshot()
 		config:reset()
 		markdown.setup()
 		global_gx = vim.fn.maparg("gx", "n", false, true)
-		opened, messages, errors, followed, overrides = {}, {}, {}, 0, {}
+		opened, messages, errors, followed = {}, {}, {}, 0
 		tempdir = nil
-		override(vim.ui, "open", function(dest)
+		stub(vim.ui, "open", function(dest)
 			table.insert(opened, dest)
 		end)
-		override(notify, "info", function(message)
+		stub(notify, "info", function(message)
 			table.insert(messages, message)
 		end)
-		override(notify, "error", function(message)
+		stub(notify, "error", function(message)
 			table.insert(errors, message)
 		end)
 	end)
 
 	after_each(function()
-		for i = #overrides, 1, -1 do
-			local saved = overrides[i]
-			saved[1][saved[2]] = saved[3]
-		end
+		snapshot:revert()
 		if bufnr and api.nvim_buf_is_valid(bufnr) then
 			api.nvim_buf_delete(bufnr, { force = true })
 		end
@@ -205,7 +199,7 @@ describe("link following and native fallback", function()
 
 	it("falls back when the parser fails", function()
 		attach({ "https://example.org" }, fallback)
-		override(vim.treesitter, "get_parser", function()
+		stub(vim.treesitter, "get_parser", function()
 			error("parser unavailable")
 		end)
 		gx()
@@ -223,7 +217,7 @@ describe("link following and native fallback", function()
 
 	it("reports URI opener failures", function()
 		attach({ "[mail](mailto:example@example.org)" })
-		override(vim.ui, "open", function()
+		vim.ui.open.invokes(function()
 			return nil, "no handler"
 		end)
 		gx()
@@ -268,10 +262,8 @@ describe("link following and native fallback", function()
 			local client = {
 				id = 1,
 				offset_encoding = "utf-16",
-				supports_method = function()
-					return true
-				end,
 			}
+			stub(client, "supports_method").returns(true)
 			local range = {
 				start = { line = 0, character = 0 },
 				["end"] = { line = 0, character = 5 },
@@ -280,13 +272,13 @@ describe("link following and native fallback", function()
 				{ range = range, target = "mailto:hidden@example.org" },
 				{ range = range, target = "https://example.org" },
 			}
-			override(vim.lsp, "get_clients", function()
+			stub(vim.lsp, "get_clients", function()
 				return { client }
 			end)
-			override(vim.lsp, "get_client_by_id", function()
+			stub(vim.lsp, "get_client_by_id", function()
 				return client
 			end)
-			override(vim.lsp, "buf_request_sync", function()
+			stub(vim.lsp, "buf_request_sync", function()
 				return { [1] = { result = links } }
 			end)
 			gx()

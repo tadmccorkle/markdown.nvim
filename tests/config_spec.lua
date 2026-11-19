@@ -234,7 +234,7 @@ describe("config", function()
 				go_parent_heading = "[b",
 				go_next_heading = "[c",
 				go_prev_heading = "[d",
-			}
+			},
 		})
 
 		local bufnr = new_md_buf()
@@ -262,11 +262,11 @@ describe("config", function()
 		require("markdown").setup({
 			on_attach = function(b)
 				attached_bufnr = b
-			end
+			end,
 		})
 
 		local bufnr = new_md_buf()
 		assert.are.equal(bufnr, attached_bufnr)
-		assert.are_not.equal(-1, attached_bufnr)
+		assert.are.not_equal(-1, attached_bufnr)
 	end)
 end)

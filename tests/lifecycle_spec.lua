@@ -1,4 +1,6 @@
 local api = vim.api
+local state = require("luassert.state")
+local stub = require("luassert.stub")
 local markdown = require("markdown")
 local config = require("markdown.config")
 local mapping = require("markdown.link_mapping")
@@ -28,12 +30,13 @@ local function handlers(buf)
 end
 
 describe("plugin lifecycle", function()
-	local buffers, dir, attached, forgotten, restored, followed, forget, restore
+	local buffers, dir, attached, forgotten, restored, followed, snapshot
 
 	vim.cmd("runtime plugin/markdown.lua")
 	vim.cmd("filetype plugin on")
 
 	before_each(function()
+		snapshot = state.snapshot()
 		buffers = {}
 		for _, buf in ipairs(api.nvim_list_bufs()) do
 			buffers[buf] = true
@@ -41,15 +44,15 @@ describe("plugin lifecycle", function()
 		dir = vim.fn.tempname()
 		vim.fn.mkdir(dir, "p")
 		attached, forgotten, restored, followed = {}, {}, {}, 0
-		forget, restore = mapping.forget, mapping.restore
-		mapping.forget = function(buf)
+		local forget, restore = mapping.forget, mapping.restore
+		stub(mapping, "forget", function(buf)
 			forgotten[buf] = true
 			forget(buf)
-		end
-		mapping.restore = function(buf)
+		end)
+		stub(mapping, "restore", function(buf)
 			restored[buf] = true
 			restore(buf)
-		end
+		end)
 		config:reset()
 		markdown.setup({
 			on_attach = function(buf)
@@ -60,7 +63,7 @@ describe("plugin lifecycle", function()
 	end)
 
 	after_each(function()
-		mapping.forget, mapping.restore = forget, restore
+		snapshot:revert()
 		for _, buf in ipairs(api.nvim_list_bufs()) do
 			if not buffers[buf] then
 				api.nvim_buf_delete(buf, { force = true })
@@ -97,13 +100,13 @@ describe("plugin lifecycle", function()
 			previous = get_map("gx")
 		end)
 		assert.are.same(1, attached[buf])
-		assert.is_not_nil(api.nvim_buf_get_commands(buf, {}).MDToc)
+		assert.not_nil(api.nvim_buf_get_commands(buf, {})["MDToc"])
 		gx()
 		assert.are.same(1, followed)
 
 		vim.bo[buf].filetype = "text"
 		assert.is_nil(vim.b[buf].markdown_nvim_attached)
-		assert.is_nil(api.nvim_buf_get_commands(buf, {}).MDToc)
+		assert.is_nil(api.nvim_buf_get_commands(buf, {})["MDToc"])
 		assert.are.same(previous, get_map("gx"))
 		-- Ordinary overwritten buffer-local mappings have no restoration stack.
 		assert.are.same({}, get_map("gl"))
@@ -212,7 +215,7 @@ describe("plugin lifecycle", function()
 			vim.cmd("buffer " .. buf)
 			assert.are.same(1, vim.b[buf].markdown_nvim_attached)
 			assert.are.same("<Plug>(markdown_follow_link)", get_map("gx").rhs)
-			assert.is_not_nil(api.nvim_buf_get_commands(buf, {}).MDToc)
+			assert.not_nil(api.nvim_buf_get_commands(buf, {})["MDToc"])
 		end)
 	end
 

@@ -16,6 +16,7 @@ describe("nav", function()
 
 	it("can go to current heading", function()
 		local bufnr = new_md_buf()
+		-- stylua: ignore start
 		set_buf(bufnr, {
 			--[[1]] "top-level section",
 			--[[2]] "",
@@ -26,6 +27,7 @@ describe("nav", function()
 			--[[7]] "- # heading in container",
 			--[[8]] "",
 		})
+		-- stylua: ignore end
 
 		-- ignores headings in containers
 		api.nvim_win_set_cursor(0, { 8, 0 })
@@ -44,6 +46,7 @@ describe("nav", function()
 
 	it("can go to parent heading", function()
 		local bufnr = new_md_buf()
+		-- stylua: ignore start
 		set_buf(bufnr, {
 			--[[01]] "top-level section",
 			--[[02]] "",
@@ -56,6 +59,7 @@ describe("nav", function()
 			--[[09]] "### heading 3",
 			--[[10]] "## heading 4",
 		})
+		-- stylua: ignore end
 
 		-- ignores headings in containers
 		api.nvim_win_set_cursor(0, { 9, 0 })
@@ -80,6 +84,7 @@ describe("nav", function()
 
 	it("can go to next heading", function()
 		local bufnr = new_md_buf()
+		-- stylua: ignore start
 		set_buf(bufnr, {
 			--[[1]] "top-level section",
 			--[[2]] "",
@@ -91,6 +96,7 @@ describe("nav", function()
 			--[[8]] "",
 			--[[9]] "### heading 3",
 		})
+		-- stylua: ignore end
 
 		api.nvim_win_set_cursor(0, { 1, 0 })
 		nav.next_heading()
@@ -109,6 +115,7 @@ describe("nav", function()
 
 	it("can go to previous heading", function()
 		local bufnr = new_md_buf()
+		-- stylua: ignore start
 		set_buf(bufnr, {
 			--[[01]] "top-level section",
 			--[[02]] "",
@@ -121,6 +128,7 @@ describe("nav", function()
 			--[[09]] "### heading 3",
 			--[[10]] "",
 		})
+		-- stylua: ignore end
 
 		-- ignores headings in containers
 		api.nvim_win_set_cursor(0, { 10, 0 })

@@ -1,0 +1,10 @@
+{
+  "diagnostics.globals": [
+	"describe",
+	"it",
+	"before_each",
+	"after_each",
+	"pending"
+  ],
+  "workspace.ignoreDir": [".tests"]
+}

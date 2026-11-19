@@ -70,7 +70,7 @@ describe("link", function()
 	it("can follow duplicate headings in another file", function()
 		local dir = vim.fn.tempname()
 		vim.fn.mkdir(dir, "p")
-		dir = vim.uv.fs_realpath(dir)
+		dir = vim.uv.fs_realpath(dir) --[[@as string]]
 		local target = dir .. "/target.md"
 		vim.fn.writefile({ "# Same", "# Same", "# Same 1" }, target)
 		local bufnr = new_md_buf()
@@ -145,7 +145,10 @@ describe("link", function()
 		{ "multiple inline blocks", "vG$", { "first", "", "last" } },
 	}) do
 		it("does not convert URI paste over " .. case[1], function()
-			assert_buf_eq(paste("mailto:a@example.org", case[2], case[3]), { "mailto:a@example.org" })
+			assert_buf_eq(
+				paste("mailto:a@example.org", case[2], case[3]),
+				{ "mailto:a@example.org" }
+			)
 		end)
 	end
 end)

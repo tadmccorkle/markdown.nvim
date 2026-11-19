@@ -1,20 +1,32 @@
 local api = vim.api
+local state = require("luassert.state")
+local stub = require("luassert.stub")
 
 describe("link mapping module lifecycle", function()
+	local snapshot, treesitter, configs
+
+	before_each(function()
+		snapshot = state.snapshot()
+		treesitter = package.loaded["nvim-treesitter"]
+		configs = package.loaded["nvim-treesitter.configs"]
+	end)
+
+	after_each(function()
+		snapshot:revert()
+		package.loaded["nvim-treesitter"] = treesitter
+		package.loaded["nvim-treesitter.configs"] = configs
+	end)
+
 	it("restores previous mappings on detach and preserves fallback on reattach", function()
-		local treesitter = package.loaded["nvim-treesitter"]
-		local configs = package.loaded["nvim-treesitter.configs"]
 		local module
-		package.loaded["nvim-treesitter"] = {
-			define_modules = function(modules)
-				module = modules.markdown
-			end,
-		}
-		package.loaded["nvim-treesitter.configs"] = {
-			get_module = function()
-				return nil
-			end,
-		}
+		local ts, ts_configs = {}, {}
+		stub(ts, "define_modules", function(modules)
+			module = modules.markdown
+		end)
+		stub(ts_configs, "get_module")
+		-- Replace module tables too: the modern treesitter integration has no configs module.
+		package.loaded["nvim-treesitter"] = ts
+		package.loaded["nvim-treesitter.configs"] = ts_configs
 		local bufnr = api.nvim_create_buf(true, true)
 		api.nvim_win_set_buf(0, bufnr)
 		api.nvim_buf_set_lines(bufnr, 0, -1, false, { "plain text" })
@@ -44,8 +56,6 @@ describe("link mapping module lifecycle", function()
 			assert.are.same(2, calls)
 		end)
 
-		package.loaded["nvim-treesitter"] = treesitter
-		package.loaded["nvim-treesitter.configs"] = configs
 		api.nvim_buf_delete(bufnr, { force = true })
 		assert.is_true(ok, err)
 	end)
