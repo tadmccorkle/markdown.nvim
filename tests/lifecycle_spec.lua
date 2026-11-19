@@ -60,6 +60,7 @@ describe("plugin lifecycle", function()
 				attached[buf] = (attached[buf] or 0) + 1
 			end,
 		})
+		tick()
 	end)
 
 	after_each(function()
@@ -153,6 +154,7 @@ describe("plugin lifecycle", function()
 		local ids = { [first] = handlers(first)[1].id, [second] = handlers(second)[1].id }
 		markdown.setup()
 		markdown.setup()
+		tick()
 		assert.are.same(2, attached[first])
 		assert.are.same(1, attached[second])
 		for _, buf in ipairs({ first, second }) do
@@ -165,6 +167,81 @@ describe("plugin lifecycle", function()
 		assert.is_true(forgotten[second])
 	end)
 
+	it("attaches once when setup during FileType is followed by event replay", function()
+		api.nvim_clear_autocmds({ group = "markdown.nvim", event = "FileType" })
+		local group = api.nvim_create_augroup("markdown_test_lazy", { clear = true })
+		local loaded = false
+		api.nvim_create_autocmd("FileType", {
+			group = group,
+			pattern = "markdown",
+			callback = function(opts)
+				if loaded then
+					return
+				end
+				loaded = true
+				markdown.setup()
+				-- Like lazy.nvim, replay all FileType groups, including ftplugin undo.
+				api.nvim_exec_autocmds("FileType", { buffer = opts.buf, modeline = false })
+			end,
+		})
+		local ok, err = pcall(function()
+			local buf = new_buf()
+			assert.are.same(1, attached[buf])
+			tick()
+			assert.are.same(1, attached[buf])
+			assert.is_nil(restored[buf])
+			assert.not_nil(api.nvim_buf_get_commands(buf, {})["MDToc"])
+		end)
+		api.nvim_del_augroup_by_id(group)
+		assert.is_true(ok, err)
+	end)
+
+	it("recognizes Markdown without explicit tree-sitter filetype registration", function()
+		stub(vim.treesitter.language, "get_filetypes", function()
+			return {}
+		end)
+		api.nvim_clear_autocmds({ group = "markdown.nvim", event = "FileType" })
+		local existing = new_buf("existing.md")
+		assert.is_nil(attached[existing])
+		markdown.setup()
+		assert.is_nil(attached[existing])
+		tick()
+		assert.are.same(1, attached[existing])
+		local fresh = new_buf("fresh.md")
+		assert.are.same(1, attached[fresh])
+		local plain = api.nvim_create_buf(true, false)
+		vim.bo[plain].filetype = "text"
+		tick()
+		assert.is_nil(attached[plain])
+		assert.is_nil(vim.b[plain].markdown_nvim_attached)
+		local autocmds = api.nvim_get_autocmds({ group = "markdown.nvim", event = "FileType" })
+		assert.are.same(1, #autocmds)
+		assert.are.same("markdown", autocmds[1].pattern)
+	end)
+
+	it("catches up non-current buffers after setup without switching the current buffer", function()
+		api.nvim_clear_autocmds({ group = "markdown.nvim", event = "FileType" })
+		local first = new_buf("first.md")
+		local second = new_buf("second.md")
+		markdown.setup()
+		tick()
+		assert.are.same(1, attached[first])
+		assert.are.same(1, attached[second])
+		assert.are.same(second, api.nvim_get_current_buf())
+	end)
+
+	it("rechecks buffers before deferred attachment", function()
+		api.nvim_clear_autocmds({ group = "markdown.nvim", event = "FileType" })
+		local deleted = new_buf("deleted.md")
+		local changed = new_buf("changed.md")
+		markdown.setup()
+		api.nvim_buf_delete(deleted, { force = true })
+		vim.bo[changed].filetype = "text"
+		tick()
+		assert.is_nil(attached[deleted])
+		assert.is_nil(attached[changed])
+	end)
+
 	it("keeps one destruction handler per buffer after reattachment", function()
 		local buf = new_buf()
 		assert.are.same(1, #handlers(buf))
@@ -174,6 +251,7 @@ describe("plugin lifecycle", function()
 			assert.are.same(1, #handlers(buf))
 			markdown._on_detach(buf)
 			markdown.setup()
+			tick()
 			assert.are.same(1, #handlers(buf))
 		end
 		api.nvim_buf_delete(buf, { force = true })
@@ -234,12 +312,15 @@ describe("plugin lifecycle", function()
 		markdown._on_detach(buf)
 		vim.b.undo_ftplugin = "let b:markdown_lifecycle_test = 1"
 		markdown.setup()
+		tick()
 		local undo = vim.b.undo_ftplugin
 		assert.is_truthy(undo:find("let b:markdown_lifecycle_test = 1|", 1, true))
 		markdown.setup()
+		tick()
 		assert.are.same(undo, vim.b.undo_ftplugin)
 		markdown._on_detach(buf)
 		markdown.setup()
+		tick()
 		assert.are.same(undo, vim.b.undo_ftplugin)
 		vim.bo[buf].filetype = "text"
 		assert.are.same(1, vim.b.markdown_lifecycle_test)

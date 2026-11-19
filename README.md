@@ -15,6 +15,8 @@ Tools for working with markdown files in Neovim.
 - [Installation](#installation)
 - [Getting help](#getting-help)
 - [Configuration](#configuration)
+  - [Buffer attachment](#buffer-attachment)
+  - [Link follow hook](#link-follow-hook)
   - [`<Plug>` mappings](#plug-mappings)
 - [Usage](#usage)
   - [Inline surround](#inline-surround)
@@ -65,7 +67,7 @@ Install **markdown.nvim** with your preferred plugin manager.
   ```lua
   {
     "tadmccorkle/markdown.nvim",
-    ft = "markdown", -- or 'event = "VeryLazy"'
+    ft = "markdown", -- or 'event = "VeryLazy"' or 'lazy = false' (there isn't much plugin overhead)
     opts = {
       -- configuration here or empty for defaults
     },

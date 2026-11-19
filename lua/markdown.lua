@@ -220,10 +220,12 @@ local function check_deps()
 	-- stylua: ignore end
 end
 
----@param bufnr integer
-local function is_markdown(bufnr)
-	local ft = api.nvim_get_option_value("filetype", { buf = bufnr })
-	return vim.tbl_contains(vim.treesitter.language.get_filetypes("markdown"), ft)
+local function get_markdown_filetypes()
+	local filetypes = vim.treesitter.language.get_filetypes("markdown")
+	if not vim.tbl_contains(filetypes, "markdown") then
+		table.insert(filetypes, "markdown")
+	end
+	return filetypes
 end
 
 local group = api.nvim_create_augroup("markdown.nvim", {})
@@ -318,18 +320,32 @@ function M.setup(cfg)
 	api.nvim_clear_autocmds({ group = group, event = "FileType" })
 	api.nvim_create_autocmd("FileType", {
 		group = group,
-		pattern = vim.treesitter.language.get_filetypes("markdown"),
+		pattern = get_markdown_filetypes(),
 		callback = function(opts)
 			on_attach(opts.buf)
 		end,
 	})
 
-	-- Include existing Markdown buffers in case we were lazy-loaded.
-	for _, bufnr in ipairs(api.nvim_list_bufs()) do
-		if api.nvim_buf_is_loaded(bufnr) and is_markdown(bufnr) then
-			on_attach(bufnr)
+	-- Let FileType processing (including a lazy loader's event replay) finish
+	-- before catching up existing buffers. Otherwise ftplugin undo can detach
+	-- a buffer attached here, causing its on_attach callback to run twice.
+	vim.schedule(function()
+		local markdown_filetypes = get_markdown_filetypes()
+
+		for _, bufnr in ipairs(api.nvim_list_bufs()) do
+			if
+				api.nvim_buf_is_loaded(bufnr)
+				and vim.tbl_contains(
+					markdown_filetypes,
+					api.nvim_get_option_value("filetype", { buf = bufnr })
+				)
+			then
+				api.nvim_buf_call(bufnr, function()
+					on_attach(bufnr)
+				end)
+			end
 		end
-	end
+	end)
 end
 
 --- Initializes the plugin as treesitter module.
