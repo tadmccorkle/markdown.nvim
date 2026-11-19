@@ -388,7 +388,9 @@ configuration:
 
 markdown.setup({opts})                                      *markdown.setup()*
     Both the standalone plugin and |nvim-treesitter| module configurations
-    accept the same table argument:
+    accept the same table argument.
+
+    Defaults:
 >lua
         require("markdown").setup({
             mappings = {

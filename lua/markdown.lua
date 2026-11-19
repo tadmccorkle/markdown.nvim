@@ -307,7 +307,7 @@ local function on_attach(bufnr)
 end
 
 --- Setup with user options.
----@param cfg? MarkdownConfig
+---@param cfg? markdown.config.opts
 function M.setup(cfg)
 	if not check_deps() then
 		return
@@ -344,7 +344,7 @@ function M.define_nvim_ts_module()
 				local mod_cfgs = require("nvim-treesitter.configs")
 				local mod_cfg = mod_cfgs.get_module("markdown")
 				if mod_cfg ~= nil then
-					require("markdown.config"):setup(mod_cfg --[[@as MarkdownConfig]])
+					require("markdown.config"):setup(mod_cfg --[[@as markdown.config.opts]])
 				end
 
 				on_attach(bufnr)

@@ -1,29 +1,70 @@
----@alias MarkdownMapping string|boolean
+-- Input options are recursively partial; resolved types redeclare defaulted fields as required.
+-- Keep each opts/resolved pair in sync when adding configuration fields.
 
----@class MappingOpts
----@field inline_surround_toggle MarkdownMapping
----@field inline_surround_toggle_line MarkdownMapping
----@field inline_surround_delete MarkdownMapping
----@field inline_surround_change MarkdownMapping
----@field link_add MarkdownMapping
----@field link_follow MarkdownMapping
----@field go_curr_heading MarkdownMapping
----@field go_parent_heading MarkdownMapping
----@field go_next_heading MarkdownMapping
----@field go_prev_heading MarkdownMapping
+---@alias markdown.config.mapping string|false
 
----@alias KeyToTxt { key: string , txt: string }
+---@class markdown.config.mappings.opts
+---@field inline_surround_toggle? markdown.config.mapping
+---@field inline_surround_toggle_line? markdown.config.mapping
+---@field inline_surround_delete? markdown.config.mapping
+---@field inline_surround_change? markdown.config.mapping
+---@field link_add? markdown.config.mapping
+---@field link_follow? markdown.config.mapping
+---@field go_curr_heading? markdown.config.mapping
+---@field go_parent_heading? markdown.config.mapping
+---@field go_next_heading? markdown.config.mapping
+---@field go_prev_heading? markdown.config.mapping
 
----@class InlineSurroundOpts
----@field emphasis KeyToTxt
----@field strong KeyToTxt
----@field strikethrough KeyToTxt
----@field code KeyToTxt
+---@class markdown.config.mappings : markdown.config.mappings.opts
+---@field inline_surround_toggle markdown.config.mapping
+---@field inline_surround_toggle_line markdown.config.mapping
+---@field inline_surround_delete markdown.config.mapping
+---@field inline_surround_change markdown.config.mapping
+---@field link_add markdown.config.mapping
+---@field link_follow markdown.config.mapping
+---@field go_curr_heading markdown.config.mapping
+---@field go_parent_heading markdown.config.mapping
+---@field go_next_heading markdown.config.mapping
+---@field go_prev_heading markdown.config.mapping
 
----@class LinkOpts
----@field paste { enable: boolean }
+---@class markdown.config.surround.opts
+---@field key? string
+---@field txt? string
 
----@class TocOpts
+---@class markdown.config.surround : markdown.config.surround.opts
+---@field key string
+---@field txt string
+
+---@class markdown.config.inline_surround.opts
+---@field emphasis? markdown.config.surround.opts
+---@field strong? markdown.config.surround.opts
+---@field strikethrough? markdown.config.surround.opts
+---@field code? markdown.config.surround.opts
+
+---@class markdown.config.inline_surround : markdown.config.inline_surround.opts
+---@field emphasis markdown.config.surround
+---@field strong markdown.config.surround
+---@field strikethrough markdown.config.surround
+---@field code markdown.config.surround
+
+---@class markdown.config.link.paste.opts
+---@field enable? boolean
+
+---@class markdown.config.link.paste : markdown.config.link.paste.opts
+---@field enable boolean
+
+---@class markdown.config.link.opts
+---@field paste? markdown.config.link.paste.opts
+
+---@class markdown.config.link : markdown.config.link.opts
+---@field paste markdown.config.link.paste
+
+---@class markdown.config.toc.opts
+---@field omit_heading? string
+---@field omit_section? string
+---@field markers? string[]
+
+---@class markdown.config.toc : markdown.config.toc.opts
 ---@field omit_heading string
 ---@field omit_section string
 ---@field markers string[]
@@ -55,24 +96,33 @@
 ---@field path_type FollowPathType|nil Stat follows symlinks; nil for heading/external links
 ---@field is_markdown boolean|nil Whether the resolved path ends in '.md'
 
----@class HookOpts
----@field follow_link fun(opts: FollowHookOpts, fallback: fun())|nil
+---@class markdown.config.hooks.opts
+---@field follow_link? fun(opts: FollowHookOpts, fallback: fun())
 
----@class MarkdownConfig
----@field mappings MappingOpts|boolean
----@field inline_surround InlineSurroundOpts
----@field link LinkOpts
----@field toc TocOpts
----@field hooks HookOpts
----@field on_attach fun(bufnr: integer)|nil
+---@class markdown.config.hooks : markdown.config.hooks.opts
+
+---@class markdown.config.opts
+---@field mappings? markdown.config.mappings.opts|false
+---@field inline_surround? markdown.config.inline_surround.opts
+---@field link? markdown.config.link.opts
+---@field toc? markdown.config.toc.opts
+---@field hooks? markdown.config.hooks.opts
+---@field on_attach? fun(bufnr: integer)
+
+---@class markdown.config : markdown.config.opts
+---@field mappings markdown.config.mappings|false
+---@field inline_surround markdown.config.inline_surround
+---@field link markdown.config.link
+---@field toc markdown.config.toc
+---@field hooks markdown.config.hooks
 
 ---@private
----@class MarkdownConfigWrapper
----@field cfg MarkdownConfig
+---@class markdown.config.wrapper
+---@field cfg markdown.config
 local MarkdownConfigWrapper = {}
 MarkdownConfigWrapper.__index = MarkdownConfigWrapper
 
----@type MarkdownConfig
+---@type markdown.config
 local default_cfg = {
 	mappings = {
 		inline_surround_toggle = "gs",
@@ -121,8 +171,8 @@ local default_cfg = {
 }
 
 --- Setup config with user options.
----@param cfg? MarkdownConfig
----@return MarkdownConfig
+---@param cfg? markdown.config.opts
+---@return markdown.config
 function MarkdownConfigWrapper:setup(cfg)
 	if cfg then
 		self.cfg = vim.tbl_deep_extend("force", self.cfg, cfg)
@@ -131,7 +181,7 @@ function MarkdownConfigWrapper:setup(cfg)
 end
 
 --- Gets the current configuration.
----@return MarkdownConfig
+---@return markdown.config
 function MarkdownConfigWrapper:get()
 	return self.cfg
 end
