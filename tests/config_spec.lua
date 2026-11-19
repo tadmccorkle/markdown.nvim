@@ -1,5 +1,7 @@
 local api = vim.api
 
+require("luassert")
+
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
 	api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
@@ -27,27 +29,28 @@ describe("config", function()
 
 		local bufnr = new_md_buf()
 
-		set_buf(bufnr, { "*test*" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gsiwi")
-		assert_buf_eq(bufnr, { "*witest*" })
-
-		set_buf(bufnr, { "*test*" })
-		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gssi")
-		assert_buf_eq(bufnr, { "*iest*" })
+		-- Markdown's ftplugin may still install native buffer-local mappings.
+		for _, mode in ipairs({ "n", "x" }) do
+			for _, mapping in ipairs(api.nvim_buf_get_keymap(bufnr, mode)) do
+				assert.is_false(vim.startswith(mapping.rhs or "", "<Plug>(markdown_"))
+			end
+		end
 	end)
 
 	it("can disable mappings selectively", function()
 		require("markdown").setup({ mappings = { inline_surround_toggle = false } })
 
 		local bufnr = new_md_buf()
+		for _, mode in ipairs({ "n", "x" }) do
+			for _, mapping in ipairs(api.nvim_buf_get_keymap(bufnr, mode)) do
+				assert.are.not_equal("gs", mapping.lhs)
+			end
+		end
+
 		set_buf(bufnr, { "*test*" })
 		api.nvim_win_set_cursor(0, { 1, 1 })
-		vim.cmd("normal gsiwi")
-		assert_buf_eq(bufnr, { "*witest*" })
 		vim.cmd("normal gssi")
-		assert_buf_eq(bufnr, { "witest" })
+		assert_buf_eq(bufnr, { "test" })
 	end)
 
 	it("can change inline mappings", function()

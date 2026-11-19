@@ -1,5 +1,7 @@
 local api = vim.api
 
+require("luassert")
+
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
 	api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
@@ -32,8 +34,13 @@ describe("inline", function()
 			it("toggles around motions", function()
 				local bufnr = new_md_buf()
 				set_buf(bufnr, {
-					"block 1 line 1", "block 1 [line] 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 [line] 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 0 })
 				vim.cmd("normal gsei")
@@ -48,13 +55,23 @@ describe("inline", function()
 				api.nvim_win_set_cursor(0, { 6, 0 })
 				vim.cmd("normal gsipc")
 				assert_buf_eq(bufnr, {
-					"*~~block~~* 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3*", "",
-					"`*block 2 line 1*", "block 2 line 2", "block 2 line 3`",
+					"*~~block~~* 1 line 1",
+					"**block** 1 [~~line~~] 2",
+					"*block 1 line 3*",
+					"",
+					"`*block 2 line 1*",
+					"block 2 line 2",
+					"block 2 line 3`",
 				})
 				vim.cmd("normal gsipc")
 				assert_buf_eq(bufnr, {
-					"*~~block~~* 1 line 1", "**block** 1 [~~line~~] 2", "*block 1 line 3*", "",
-					"*block 2 line 1*", "block 2 line 2", "block 2 line 3",
+					"*~~block~~* 1 line 1",
+					"**block** 1 [~~line~~] 2",
+					"*block 1 line 3*",
+					"",
+					"*block 2 line 1*",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 3 })
 				vim.cmd("normal gsiws")
@@ -63,8 +80,13 @@ describe("inline", function()
 				vim.cmd("normal f[")
 				vim.cmd("normal gsi[s")
 				assert_buf_eq(bufnr, {
-					"*block* 1 line 1", "block 1 [line] 2", "*block 1 line 3*", "",
-					"*block 2 line 1*", "block 2 line 2", "block 2 line 3",
+					"*block* 1 line 1",
+					"block 1 [line] 2",
+					"*block 1 line 3*",
+					"",
+					"*block 2 line 1*",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 
 				set_buf(bufnr, { "asdf 👌🥲🤌 我 Ü fdsa" })
@@ -77,26 +99,46 @@ describe("inline", function()
 			it("toggles around line motions", function()
 				local bufnr = new_md_buf()
 				set_buf(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 2, 0 })
 				vim.cmd("normal gs4js")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "~~block 1 line 2", "block 1 line 3~~", "",
-					"~~block 2 line 1", "block 2 line 2~~", "block 2 line 3",
+					"block 1 line 1",
+					"~~block 1 line 2",
+					"block 1 line 3~~",
+					"",
+					"~~block 2 line 1",
+					"block 2 line 2~~",
+					"block 2 line 3",
 				})
 				vim.cmd("normal gs4jb")
 				vim.cmd("normal gs4ji")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "***~~block 1 line 2", "block 1 line 3~~***", "",
-					"***~~block 2 line 1", "block 2 line 2~~***", "block 2 line 3",
+					"block 1 line 1",
+					"***~~block 1 line 2",
+					"block 1 line 3~~***",
+					"",
+					"***~~block 2 line 1",
+					"block 2 line 2~~***",
+					"block 2 line 3",
 				})
 				vim.cmd("normal gs4js")
 				vim.cmd("normal gs4jb")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "*block 1 line 2", "block 1 line 3*", "",
-					"*block 2 line 1", "block 2 line 2*", "block 2 line 3",
+					"block 1 line 1",
+					"*block 1 line 2",
+					"block 1 line 3*",
+					"",
+					"*block 2 line 1",
+					"block 2 line 2*",
+					"block 2 line 3",
 				})
 				set_buf(bufnr, { "line of text" })
 				api.nvim_win_set_cursor(0, { 1, 0 })
@@ -145,8 +187,13 @@ describe("inline", function()
 			it("toggles around visual selection", function()
 				local bufnr = new_md_buf()
 				set_buf(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 8 })
 				vim.cmd("normal v6j2ge")
@@ -154,24 +201,42 @@ describe("inline", function()
 				vim.cmd("normal gve")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"block 1 ~~**line 1", "block 1 line 2", "block 1 line 3**~~", "",
-					"~~**block 2 line 1", "block 2 line 2", "block**~~ 2 line 3",
+					"block 1 ~~**line 1",
+					"block 1 line 2",
+					"block 1 line 3**~~",
+					"",
+					"~~**block 2 line 1",
+					"block 2 line 2",
+					"block**~~ 2 line 3",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"block 1 ~~line 1", "block 1 line 2", "block 1 line 3~~", "",
-					"~~block 2 line 1", "block 2 line 2", "block~~ 2 line 3",
+					"block 1 ~~line 1",
+					"block 1 line 2",
+					"block 1 line 3~~",
+					"",
+					"~~block 2 line 1",
+					"block 2 line 2",
+					"block~~ 2 line 3",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 
 				set_buf(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 				api.nvim_win_set_cursor(0, { 1, 0 })
 				vim.cmd("normal wv2je")
@@ -179,17 +244,26 @@ describe("inline", function()
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"block ***line***", "- ***list***", "- ***list 1*** item 3", "- list 1 item 4",
+					"block ***line***",
+					"- ***list***",
+					"- ***list 1*** item 3",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"block **line**", "- **list**", "- **list 1** item 3", "- list 1 item 4",
+					"block **line**",
+					"- **list**",
+					"- **list 1** item 3",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 
 				set_buf(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
@@ -208,8 +282,13 @@ describe("inline", function()
 			it("toggles around visual line selection", function()
 				local bufnr = new_md_buf()
 				set_buf(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 1 })
 				vim.cmd("normal V6j")
@@ -217,24 +296,42 @@ describe("inline", function()
 				vim.cmd("normal gv")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"~~**block 1 line 1", "block 1 line 2", "block 1 line 3**~~", "",
-					"~~**block 2 line 1", "block 2 line 2", "block 2 line 3**~~",
+					"~~**block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3**~~",
+					"",
+					"~~**block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3**~~",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"~~block 1 line 1", "block 1 line 2", "block 1 line 3~~", "",
-					"~~block 2 line 1", "block 2 line 2", "block 2 line 3~~",
+					"~~block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3~~",
+					"",
+					"~~block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3~~",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 
 				set_buf(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 				api.nvim_win_set_cursor(0, { 1, 0 })
 				vim.cmd("normal V2j")
@@ -242,17 +339,26 @@ describe("inline", function()
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"***block line***", "- ***list***", "- ***list 1 item 3***", "- list 1 item 4",
+					"***block line***",
+					"- ***list***",
+					"- ***list 1 item 3***",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"**block line**", "- **list**", "- **list 1 item 3**", "- list 1 item 4",
+					"**block line**",
+					"- **list**",
+					"- **list 1 item 3**",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 
 				set_buf(bufnr, { "asdf 👌🥲🤌 我", "Ü fdsa" })
@@ -272,8 +378,13 @@ describe("inline", function()
 
 				local bufnr = new_md_buf()
 				set_buf(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 				api.nvim_win_set_cursor(0, { 1, 8 })
 				vim.cmd("normal " .. ctrl_v .. "6je")
@@ -281,24 +392,42 @@ describe("inline", function()
 				vim.cmd("normal gve")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"block 1 ~~**line**~~ 1", "block 1 ~~**line**~~ 2", "block 1 ~~**line**~~ 3", "",
-					"block 2 ~~**line**~~ 1", "block 2 ~~**line**~~ 2", "block 2 ~~**line**~~ 3",
+					"block 1 ~~**line**~~ 1",
+					"block 1 ~~**line**~~ 2",
+					"block 1 ~~**line**~~ 3",
+					"",
+					"block 2 ~~**line**~~ 1",
+					"block 2 ~~**line**~~ 2",
+					"block 2 ~~**line**~~ 3",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"block 1 ~~line~~ 1", "block 1 ~~line~~ 2", "block 1 ~~line~~ 3", "",
-					"block 2 ~~line~~ 1", "block 2 ~~line~~ 2", "block 2 ~~line~~ 3",
+					"block 1 ~~line~~ 1",
+					"block 1 ~~line~~ 2",
+					"block 1 ~~line~~ 3",
+					"",
+					"block 2 ~~line~~ 1",
+					"block 2 ~~line~~ 2",
+					"block 2 ~~line~~ 3",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gss")
 				assert_buf_eq(bufnr, {
-					"block 1 line 1", "block 1 line 2", "block 1 line 3", "",
-					"block 2 line 1", "block 2 line 2", "block 2 line 3",
+					"block 1 line 1",
+					"block 1 line 2",
+					"block 1 line 3",
+					"",
+					"block 2 line 1",
+					"block 2 line 2",
+					"block 2 line 3",
 				})
 
 				set_buf(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 				api.nvim_win_set_cursor(0, { 1, 0 })
 				vim.cmd("normal " .. ctrl_v .. "2j3e")
@@ -306,17 +435,26 @@ describe("inline", function()
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"***block line***", "- ***list***", "- ***list 1 item*** 3", "- list 1 item 4",
+					"***block line***",
+					"- ***list***",
+					"- ***list 1 item*** 3",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsi")
 				assert_buf_eq(bufnr, {
-					"**block line**", "- **list**", "- **list 1 item** 3", "- list 1 item 4",
+					"**block line**",
+					"- **list**",
+					"- **list 1 item** 3",
+					"- list 1 item 4",
 				})
 				vim.cmd("normal gv")
 				vim.cmd("normal gsb")
 				assert_buf_eq(bufnr, {
-					"block line", "- list", "- list 1 item 3", "- list 1 item 4",
+					"block line",
+					"- list",
+					"- list 1 item 3",
+					"- list 1 item 4",
 				})
 
 				set_buf(bufnr, { "asdf 👌🥲🤌 fdsa", "asdf 👌🥲🤌 fdsa" })

@@ -1,3 +1,5 @@
+require("luassert")
+
 local Section = require("markdown.section")
 
 describe("section", function()

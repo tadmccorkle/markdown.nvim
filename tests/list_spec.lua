@@ -1,5 +1,7 @@
 local api = vim.api
 
+require("luassert")
+
 local function new_md_buf()
 	local bufnr = api.nvim_create_buf(true, true)
 	api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })

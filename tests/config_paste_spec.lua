@@ -1,5 +1,7 @@
 local api = vim.api
 
+require("luassert")
+
 describe("config (paste handler)", function()
 	it("can disable paste handler", function()
 		require("markdown").setup({
