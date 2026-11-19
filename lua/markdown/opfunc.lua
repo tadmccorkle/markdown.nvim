@@ -3,7 +3,7 @@ local api = vim.api
 local OpFunc = setmetatable({}, {
 	__call = function(self, ...)
 		return self.call(...)
-	end
+	end,
 })
 
 --- Sets the 'operatorfunc' to the provided module's function and returns the 'g@' operator.

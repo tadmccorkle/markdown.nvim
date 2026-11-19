@@ -80,7 +80,8 @@ function M.spans_parent_range(node, inner_col_offset)
 	local parent_range = { parent:range() }
 
 	inner_col_offset = inner_col_offset or 1
-	return range[1] == parent_range[1] and range[3] == parent_range[3]
+	return range[1] == parent_range[1]
+		and range[3] == parent_range[3]
 		and range[2] == parent_range[2] + inner_col_offset
 		and range[4] == parent_range[4] - inner_col_offset
 end

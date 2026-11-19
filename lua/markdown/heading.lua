@@ -35,7 +35,7 @@ function M.get_link(text)
 	return content, util.slugify(dest)
 end
 
----@class MarkdownHeading
+---@class markdown.Heading
 ---@field node TSNode
 ---@field content TSNode
 ---@field name string
@@ -46,7 +46,7 @@ end
 
 --- Assign destinations before any TOC filtering, using all non-container headings.
 ---@param root TSNode
----@return MarkdownHeading[]
+---@return markdown.Heading[]
 function M.get_document_headings(root)
 	local headings = {}
 	local used = {}

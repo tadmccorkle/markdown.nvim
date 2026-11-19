@@ -222,7 +222,7 @@ end,
 | `path`            | Absolute normalized local path; only present for path links.                      |
 | `fragment`        | Interpreted path fragment including `#`, if any.                                  |
 | `path_type`       | `"file"`, `"directory"`, `"other"`, `"missing"`, or `"unknown"`; path links only. |
-| `is_markdown`     | Whether the resolved path ends in `.md` (case-sensitive); path links only.        |
+| `is_markdown`     | Whether the path is Markdown; path links only.                                    |
 | `line_range`      | Parsed line hint `{ start_line = n, end_line = n }`, if applicable.               |
 
 `kind` describes the link type:

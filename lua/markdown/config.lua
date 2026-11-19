@@ -69,35 +69,35 @@
 ---@field omit_section string
 ---@field markers string[]
 
----@class FollowLineRange
+---@class markdown.config.hooks.FollowOpts.LineRange
 ---@field start_line integer Parsed 1-based inclusive start (may be zero); capped at max int32
 ---@field end_line integer Parsed inclusive end; same as start for a single line
 
----@alias FollowLinkKind
+---@alias markdown.config.hooks.FollowOpts.LinkKind
 ---| "heading" # Destination starts with '#'; heading lookup in the source document
 ---| "external" # URI or URL, including 'www.' shorthand
 ---| "path" # Local filesystem destination, using the plugin's path-resolution rules
 
----@alias FollowPathType
+---@alias markdown.config.hooks.FollowOpts.PathType
 ---| "file" # Stat reports a regular file; does not imply readability
 ---| "directory" # Stat reports a directory
 ---| "other" # Stat reports another object type, e.g. a FIFO, socket, or device
 ---| "missing" # Stat failed with ENOENT or ENOTDIR; the target cannot be found at this path
 ---| "unknown" # Other stat failure, e.g. permission denied; absence was not established
 
----@class FollowHookOpts
+---@class markdown.config.hooks.FollowOpts
 ---@field dest string Original destination
 ---@field use_default_app boolean|nil
 ---@field bufnr integer Source buffer
----@field kind FollowLinkKind
+---@field kind markdown.config.hooks.FollowOpts.LinkKind
 ---@field path string|nil Absolute normalized path (path links only)
 ---@field fragment string|nil Interpreted path fragment, including '#'
----@field line_range FollowLineRange|nil Parsed line hint, not a guaranteed navigation target
----@field path_type FollowPathType|nil Stat follows symlinks; nil for heading/external links
----@field is_markdown boolean|nil Whether the resolved path ends in '.md'
+---@field line_range markdown.config.hooks.FollowOpts.LineRange|nil Parsed line hint, not a guaranteed navigation target
+---@field path_type markdown.config.hooks.FollowOpts.PathType|nil Stat follows symlinks; nil for heading/external links
+---@field is_markdown boolean|nil Whether the path is Markdown
 
 ---@class markdown.config.hooks.opts
----@field follow_link? fun(opts: FollowHookOpts, fallback: fun())
+---@field follow_link? fun(opts: markdown.config.hooks.FollowOpts, fallback: fun())
 
 ---@class markdown.config.hooks : markdown.config.hooks.opts
 

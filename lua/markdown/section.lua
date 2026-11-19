@@ -1,18 +1,18 @@
 ---@diagnostic disable: duplicate-doc-field
 
----@class Section
+---@class markdown.Section
 ---@field name string
 ---@field text string
 ---@field destination string
----@field parent Section
+---@field parent markdown.Section
 ---@field level integer
 ---@field line integer
----@field omit omit_level
----@field children Section[]
+---@field omit markdown.Section.OmitLevel
+---@field children markdown.Section[]
 local Section = {}
 Section.__index = Section
 
----@enum omit_level
+---@enum markdown.Section.OmitLevel
 Section.OMIT_LEVEL = {
 	none = 0,
 	heading = 1,
@@ -49,7 +49,7 @@ function Section:add_subsection(name, level, line, text, destination)
 end
 
 --- Gets this section's top-most parent.
----@return Section
+---@return markdown.Section
 function Section:get_root()
 	local s = self
 	while s.level > 0 do
@@ -61,7 +61,7 @@ end
 --- Gets the parent of either the specified level relative to the current section
 --- or, if no level is specified, the current section.
 ---@param level? integer
----@return Section|nil
+---@return markdown.Section|nil
 ---
 --- Section `level`, if provided, must be greater than `0`.
 function Section:get_parent(level)
@@ -81,7 +81,7 @@ function Section:get_parent(level)
 end
 
 --- Creates a new, top-level section.
----@return Section
+---@return markdown.Section
 function Section.new()
 	return _new()
 end

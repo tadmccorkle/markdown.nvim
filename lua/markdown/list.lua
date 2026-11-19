@@ -15,13 +15,16 @@ local TASK_MARKER_UNCHECKED_TYPE = "task_list_marker_unchecked"
 local PARAGRAPH_TYPE = "paragraph"
 local INLINE_TYPE = "inline"
 
-local ordered_list_query = ts.query.parse("markdown", [[
+local ordered_list_query = ts.query.parse(
+	"markdown",
+	[[
 	(list
 		(list_item [
 			(list_marker_dot)
 			(list_marker_parenthesis)
 		])) @l
-]])
+]]
+)
 --
 ---@param node TSNode
 ---@return boolean
@@ -94,7 +97,9 @@ function M.reset_list_numbering(start_row, end_row)
 	end
 
 	local t = ts.get_parser(0, "markdown"):parse()[1]
-	for _, match, _ in ordered_list_query:iter_matches(t:root(), 0, start_row, end_row, { all = true }) do
+	for _, match, _ in
+		ordered_list_query:iter_matches(t:root(), 0, start_row, end_row, { all = true })
+	do
 		local list = md_ts.single_node_from_match(match, 1)
 		reset_list_numbering(list)
 	end
@@ -213,8 +218,7 @@ local function is_task_list_item(node)
 	end
 
 	local tm_type = task_marker:type()
-	return tm_type == TASK_MARKER_CHECKED_TYPE
-		or tm_type == TASK_MARKER_UNCHECKED_TYPE
+	return tm_type == TASK_MARKER_CHECKED_TYPE or tm_type == TASK_MARKER_UNCHECKED_TYPE
 end
 
 --- Toggles list item task markers.

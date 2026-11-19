@@ -1,3 +1,4 @@
+-- stylua: ignore start
 vim.keymap.set(
 	"n",
 	"<Plug>(markdown_toggle_emphasis)",
@@ -124,6 +125,7 @@ vim.keymap.set(
 		desc = "Set cursor to previous section heading",
 	}
 )
+-- stylua: ignore end
 
 local ok, nvim_ts = pcall(require, "nvim-treesitter")
 if ok and vim.is_callable(nvim_ts.define_modules) then

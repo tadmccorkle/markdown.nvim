@@ -581,7 +581,7 @@ markdown.setup({opts})                                      *markdown.setup()*
             * path: absolute normalized local path
             * fragment: interpreted path fragment including '#', if any
             * path_type: "file", "directory", "other", "missing", or "unknown"
-            * is_markdown: path ends in '.md' (case-sensitive)
+            * is_markdown: path is classified as Markdown
             * line_range: parsed range fragment `{start_line=L1,end_line=L2}`
         Default: nil
 

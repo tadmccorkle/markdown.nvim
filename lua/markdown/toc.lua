@@ -34,7 +34,7 @@ local function is_comment(html)
 end
 
 ---@param html TSNode
----@return omit_level
+---@return markdown.Section.OmitLevel
 local function to_omit_flag(html, omit_section_flag, omit_heading_flag)
 	local text = ts.get_node_text(html, 0, nil)
 	if is_comment(text) then
@@ -48,7 +48,7 @@ local function to_omit_flag(html, omit_section_flag, omit_heading_flag)
 end
 
 ---@param inline TSNode
----@return omit_level
+---@return markdown.Section.OmitLevel
 local function get_omit_flag(inline, omit_section_flag, omit_heading_flag)
 	local parser = ts.get_parser(0, "markdown")
 	---@cast parser -?
@@ -70,7 +70,7 @@ local function get_omit_flag(inline, omit_section_flag, omit_heading_flag)
 	return Section.OMIT_LEVEL.none
 end
 
----@return Section
+---@return markdown.Section
 local function get_document_sections()
 	local t = ts.get_parser(0, "markdown"):parse()[1]
 
@@ -115,7 +115,7 @@ local function get_document_sections()
 	return toc:get_root()
 end
 
----@param toc Section
+---@param toc markdown.Section
 ---@param markers string[]
 ---@param max_level integer
 ---@param lines? string[]
@@ -148,14 +148,14 @@ local function build_toc_lines(toc, markers, max_level, lines, depth, indent)
 	return lines
 end
 
----@class InsertOpts
+---@class markdown.toc.InsertOpts
 ---@field markers string[] List markers
 ---@field start_row integer Zero-based start row
 ---@field end_row? integer Zero-based end row
 ---@field max_level? integer Max heading level to include (default: '6')
 
 --- Inserts table of contents.
----@param opts InsertOpts
+---@param opts markdown.toc.InsertOpts
 ---
 --- If an `end_row` is not specified, table of contents is inserted at the start row. If an
 --- `end_row` is specified, table of contents replaces the range [`start_row`-`end_row`].
@@ -199,7 +199,7 @@ function M.insert_toc(opts)
 	list.reset_list_numbering(opts.start_row, opts.start_row + #lines - 1)
 end
 
----@param toc Section
+---@param toc markdown.Section
 ---@param opts { bufnr: integer, max_level: integer, omit_flagged: boolean, indent_subsections: boolean }
 ---@param loclist? table[]
 ---@param indent? string
@@ -235,13 +235,13 @@ local function build_toc_loclist(toc, opts, loclist, indent)
 	return loclist
 end
 
----@class LoclistOpts
+---@class markdown.toc.LoclistOpts
 ---@field max_level? integer Max heading level to include (default: '6')
 ---@field omit_flagged? boolean Whether to omit flagged sections and headings (default: 'false')
 ---@field indent_subsections? boolean Whether to indent subsection headings (default: 'false')
 
 --- Sets the current window's location list to the table of contents.
----@param opts? LoclistOpts
+---@param opts? markdown.toc.LoclistOpts
 ---
 --- This function only sets the location list. It must subsequently be searched or opened directly
 --- (e.g., `:lopen`). The location list set by this function has a quickfix context property

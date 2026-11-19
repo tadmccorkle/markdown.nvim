@@ -210,6 +210,29 @@ local function parse_line(line_num)
 	return math.min(tonumber(line_num) or 0, 2147483647)
 end
 
+local markdown_extensions = {
+	md = true,
+	markdown = true,
+	mdown = true,
+	mkd = true,
+	mkdn = true,
+	mdwn = true,
+}
+
+---@param path string
+---@return boolean
+local function is_markdown_path(path)
+	local filetype = vim.filetype.match({ filename = path })
+	if filetype ~= nil then
+		return filetype == "markdown"
+	end
+
+	-- Filename detection is case-sensitive; accept standard Markdown suffixes
+	-- in any case, but do not override an explicit non-Markdown filetype.
+	local extension = path:match("%.([^./\\]+)$")
+	return extension ~= nil and markdown_extensions[extension:lower()] == true
+end
+
 ---@param path string
 local function resolve_path(path)
 	if vim.startswith(path, "/") then
@@ -237,7 +260,7 @@ local function resolve_path(path)
 					end_line = parse_line(last or first),
 				}
 			end
-			if line_range ~= nil or base:sub(-3) == ".md" then
+			if line_range ~= nil or is_markdown_path(base) then
 				inner_dest = "#" .. fragment
 				path = base
 				normalized = vim.fs.normalize(path)
@@ -263,7 +286,7 @@ local function resolve_path(path)
 		fragment = inner_dest,
 		line_range = line_range,
 		path_type = path_type,
-		is_markdown = path:sub(-3) == ".md",
+		is_markdown = is_markdown_path(normalized),
 		-- Preserve the default follower's readability and directory policy.
 		is_file = is_file,
 		is_dir = is_dir,
@@ -271,7 +294,7 @@ local function resolve_path(path)
 end
 
 ---@param target table
----@param opts FollowOpts
+---@param opts markdown.link.FollowOpts
 local function open_path(target, opts)
 	if not (target.is_file or target.is_dir) then
 		notify.info("path not found")
@@ -311,11 +334,11 @@ local function open_path(target, opts)
 	end
 end
 
----@class FollowOpts
+---@class markdown.link.FollowOpts
 ---@field use_default_app? boolean Open non-markdown path with default application (default: 'false')
 
 --- Follows or opens the destination of the link under the cursor.
----@param opts FollowOpts?
+---@param opts markdown.link.FollowOpts?
 function M.follow(opts)
 	local ok, link, dest, t = pcall(function()
 		local row, col = util.get_cursor()

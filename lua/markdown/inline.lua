@@ -36,19 +36,19 @@ local function get_emphasis_by_key()
 	return {
 		[opts.emphasis.key] = {
 			type = EMPHASIS_TYPE,
-			text = opts.emphasis.txt
+			text = opts.emphasis.txt,
 		},
 		[opts.strong.key] = {
 			type = STRONG_TYPE,
-			text = opts.strong.txt
+			text = opts.strong.txt,
 		},
 		[opts.strikethrough.key] = {
 			type = STRIKETHROUGH_TYPE,
-			text = opts.strikethrough.txt
+			text = opts.strikethrough.txt,
 		},
 		[opts.code.key] = {
 			type = CODE_SPAN_TYPE,
-			text = opts.code.txt
+			text = opts.code.txt,
 		},
 	}
 end
@@ -87,8 +87,7 @@ local function get_emphasis_group_ranges(emphasis)
 	end
 
 	local inner_node, inner_delim_len
-	local child = emphasis
-	---@cast child +?
+	local child = emphasis --[[@as TSNode?]]
 	while child ~= nil and child ~= inner_node do
 		local delim_len = md_ts.child_count(child, is_emphasis_delim) / 2
 		if delim_len == 0 then
@@ -101,8 +100,10 @@ local function get_emphasis_group_ranges(emphasis)
 		local start_row, start_col, end_row, end_col = inner_node:range()
 		-- the calling node is returned if a valid descendant can't be found
 		child = inner_node:named_descendant_for_range(
-			start_row, start_col + delim_len,
-			end_row, end_col - delim_len
+			start_row,
+			start_col + delim_len,
+			end_row,
+			end_col - delim_len
 		)
 	end
 
@@ -112,8 +113,12 @@ local function get_emphasis_group_ranges(emphasis)
 
 	local outer_start_row, outer_start_col, outer_end_row, outer_end_col = outer_node:range()
 	local inner_start_row, inner_start_col, inner_end_row, inner_end_col = inner_node:range()
-	return { outer_start_row, outer_start_col, inner_start_row, inner_start_col + inner_delim_len },
-		{ inner_end_row, inner_end_col - inner_delim_len, outer_end_row, outer_end_col }
+	return { outer_start_row, outer_start_col, inner_start_row, inner_start_col + inner_delim_len }, {
+		inner_end_row,
+		inner_end_col - inner_delim_len,
+		outer_end_row,
+		outer_end_col,
+	}
 end
 
 --- Gets emphasis node adjusted for grammar rules the treesitter parser does not account for.
@@ -140,15 +145,9 @@ end
 local function get_emphasis_delim_len(emphasis)
 	if emphasis:type() == STRIKETHROUGH_TYPE then
 		local start_row, start_col, end_row, end_col = emphasis:range()
-		local child = emphasis:named_descendant_for_range(
-			start_row, start_col + 1,
-			end_row, end_col - 1
-		)
-		if
-			child ~= nil
-			and child ~= emphasis
-			and child:type() == STRIKETHROUGH_TYPE
-		then
+		local child =
+			emphasis:named_descendant_for_range(start_row, start_col + 1, end_row, end_col - 1)
+		if child ~= nil and child ~= emphasis and child:type() == STRIKETHROUGH_TYPE then
 			return 2
 		end
 	end
@@ -212,7 +211,8 @@ function M.toggle_emphasis(motion, key)
 		local found_existing = false
 		local root, os, oe = inline_tree:root(), overlap[1], overlap[3] + 1
 		for _, emphasis_node, _ in emphasis_query:iter_captures(root, 0, os, oe) do
-			local emphasis_start_range, emphasis_end_range = get_emphasis_group_ranges(emphasis_node)
+			local emphasis_start_range, emphasis_end_range =
+				get_emphasis_group_ranges(emphasis_node)
 			-- adjust to match motion range directly within emphasis range
 			emphasis_start_range[4] = emphasis_start_range[4] + 1
 			emphasis_end_range[2] = emphasis_end_range[2] - 1
@@ -239,7 +239,8 @@ function M.toggle_emphasis(motion, key)
 			local eol_col = vim.fn.col({ row + 1, "$" }) - 1
 			local row_start_col = math.min(start_col, eol_col)
 			local row_end_col = math.min(end_col, eol_col)
-			local inline_node = md_ts.find_node(is_inline, { pos = { row, math.max(row_end_col - 1, 0) } })
+			local inline_node =
+				md_ts.find_node(is_inline, { pos = { row, math.max(row_end_col - 1, 0) } })
 			if inline_node ~= nil and row_start_col ~= eol_col then
 				inline_count = inline_count + 1
 
@@ -335,7 +336,8 @@ function M.change_surrounding_emphasis()
 	local from_ok, from_key = util.try_get_char_input()
 	local to_ok, to_key = util.try_get_char_input()
 	if
-		not from_ok or not to_ok
+		not from_ok
+		or not to_ok
 		or emphasis_by_key[from_key] == nil
 		or emphasis_by_key[to_key] == nil
 	then

@@ -15,8 +15,7 @@ end
 ---@param node TSNode
 ---@return boolean
 local function is_section(node)
-	return node:type() == "section"
-		and md_ts.find_parent(node, is_container) == nil
+	return node:type() == "section" and md_ts.find_parent(node, is_container) == nil
 end
 
 ---@param node TSNode
@@ -25,8 +24,7 @@ local function is_section_heading(node)
 	if is_section(node) then
 		local child = node:named_child(0)
 		local type = child ~= nil and child:type()
-		return type == "atx_heading"
-			or type == "setext_heading"
+		return type == "atx_heading" or type == "setext_heading"
 	end
 	return false
 end
@@ -85,7 +83,7 @@ function M.next_heading()
 			api.nvim_win_set_cursor(0, { row + 1, 0 })
 			return
 		end
-		curr = md_ts.find_parent(curr, is_section_heading)
+		curr = md_ts.find_parent(curr --[[@as TSNode]], is_section_heading)
 	until curr == nil
 end
 

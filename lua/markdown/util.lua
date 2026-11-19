@@ -6,9 +6,8 @@ local M = {}
 ---@param s string
 ---@return string
 function M.sanitize(s)
-	local sanitized, _ = s:gsub("(%s-)\n(%s*)", " ")
-		:gsub("<!--(.-)-->", "")
-		:gsub("^%s*(.-)%s*$", "%1")
+	local sanitized, _ =
+		s:gsub("(%s-)\n(%s*)", " "):gsub("<!--(.-)-->", ""):gsub("^%s*(.-)%s*$", "%1")
 	return sanitized
 end
 

@@ -277,6 +277,119 @@ describe("file line links", function()
 		return received
 	end
 
+	local markdown_suffixes = {
+		"md", "markdown", "mdown", "mkd", "mkdn", "mdwn", "MD", "Md", "MaRkDoWn",
+	}
+
+	for _, extension in ipairs(markdown_suffixes) do
+		it("classifies missing ." .. extension .. " targets and heading fragments", function()
+			local o = context("./missing." .. extension .. "#section")
+			assert.is_true(o.is_markdown)
+			assert.are.same("missing", o.path_type)
+			assert.are.same("#section", o.fragment)
+			assert.are.same(vim.fs.normalize(dir .. "/missing." .. extension), o.path)
+		end)
+
+		for _, with_hook in ipairs({ false, true }) do
+			it("follows ." .. extension .. " in the editor (hook: " .. tostring(with_hook) .. ")", function()
+				local name = "target." .. extension
+				write_file(name, { "# First", "", "# Section", "text" })
+				stub(vim.ui, "open", function()
+					error("must not open Markdown externally")
+				end)
+				local received
+				if with_hook then
+					require("markdown").setup({
+						hooks = {
+							follow_link = function(o, fallback)
+								received = o
+								fallback()
+							end,
+						},
+					})
+				end
+				for _, fragment in ipairs({ "section", "L3" }) do
+					follow("./" .. name .. "#" .. fragment, { use_default_app = true })
+					assert_target(name, 3)
+					if with_hook then
+						assert.is_true(received.is_markdown)
+						assert.are.same("#" .. fragment, received.fragment)
+					end
+				end
+			end)
+		end
+	end
+
+	it("uses custom filename registrations for existing and missing Markdown targets", function()
+		local existing = vim.fs.normalize(dir .. "/target.notes")
+		local missing = vim.fs.normalize(dir .. "/missing.notes")
+		-- Absolute names keep these registrations local to this test's temporary directory.
+		vim.filetype.add({ filename = { [existing] = "markdown", [missing] = "markdown" } })
+		local o = context("./missing.notes#section")
+		assert.is_true(o.is_markdown)
+		assert.are.same(missing, o.path)
+		assert.are.same("#section", o.fragment)
+		assert.are.same("missing", o.path_type)
+		write_file("target.notes", { "# First", "", "# Section" })
+		stub(vim.ui, "open", function()
+			error("must not open Markdown externally")
+		end)
+		require("markdown").setup({
+			hooks = {
+				follow_link = function(opts, fallback)
+					assert.is_true(opts.is_markdown)
+					fallback()
+				end,
+			},
+		})
+		follow("./target.notes#section", { use_default_app = true })
+		assert_target("target.notes", 3)
+	end)
+
+	for _, extension in ipairs({ "md", "MD" }) do
+		it("respects explicit non-Markdown detection for ." .. extension, function()
+			local name = "target." .. extension
+			local path = vim.fs.normalize(dir .. "/" .. name)
+			vim.filetype.add({ filename = { [path] = "text" } })
+			local o = context("./" .. name .. "#section")
+			assert.is_false(o.is_markdown)
+			assert.is_nil(o.fragment)
+			assert.are.same(path .. "#section", o.path)
+			write_file(name)
+			local opened
+			stub(vim.ui, "open", function(p)
+				opened = p
+			end)
+			require("markdown").setup({
+				hooks = {
+					follow_link = function(opts, fallback)
+						assert.is_false(opts.is_markdown)
+						fallback()
+					end,
+				},
+			})
+			follow("./" .. name .. "#L3", { use_default_app = true })
+			assert.are.same(path, opened)
+			assert.are.same(source, api.nvim_get_current_buf())
+		end)
+	end
+
+	for _, name in ipairs({ "target.txt", "target.mdx", "target.notmd", "no-extension" }) do
+		it("does not classify " .. name .. " as Markdown", function()
+			local o = context("./" .. name .. "#section")
+			assert.is_false(o.is_markdown)
+			assert.is_nil(o.fragment)
+		end)
+	end
+
+	it("preserves literal alternate-extension paths containing heading fragments", function()
+		write_file("target.MD#section")
+		local o = context("./target.MD#section")
+		assert.are.same(vim.fs.normalize(dir .. "/target.MD#section"), o.path)
+		assert.are.same("file", o.path_type)
+		assert.is_nil(o.fragment)
+	end)
+
 	for _, case in ipairs({
 		{ "L3", 3, 3 },
 		{ "L3-L7", 3, 7 },
