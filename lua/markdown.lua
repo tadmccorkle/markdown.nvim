@@ -95,6 +95,21 @@ local function setup_usr_cmds(bufnr)
 		})
 
 	-- stylua: ignore end
+
+	create_cached_buf_usr_cmd(bufnr, "MDTableFormat", function(opts)
+		local first, last
+		if opts.range ~= 0 then first, last = opts.line1 - 1, opts.line2 - 1 end
+		require("markdown.table").format(first, last)
+	end, { force = true, range = true, desc = "Format current or selected Markdown tables" })
+	create_cached_buf_usr_cmd(bufnr, "MDTableFormatAll", function()
+		require("markdown.table").format(0, -1)
+	end, { force = true, desc = "Format all Markdown tables" })
+	create_cached_buf_usr_cmd(bufnr, "MDTableEdit", function()
+		require("markdown.table").edit()
+	end, { force = true, desc = "Edit current Markdown table in a float" })
+	create_cached_buf_usr_cmd(bufnr, "MDTableExport", function()
+		require("markdown.table_editor").export()
+	end, { force = true, desc = "Export the staged table to a scratch buffer" })
 end
 
 local function setup_usr_keymaps(cfg, bufnr)

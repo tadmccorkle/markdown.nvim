@@ -20,6 +20,7 @@ CONTENTS                                              *markdown.nvim.contents*
             Insert Items ....................... |markdown.lists.insert_item|
             Reset Numbering ................ |markdown.lists.reset_numbering|
             Toggle Tasks ....................... |markdown.lists.toggle_task|
+        Table Editing ..................................... |markdown.tables|
         Links .............................................. |markdown.links|
             Add ........................................ |markdown.links.add|
             Follow .................................. |markdown.links.follow|
@@ -43,6 +44,7 @@ USAGE                                                         *markdown.usage*
 * Inline Surround (|markdown.inline|)
 * Table of Contents (|markdown.toc|)
 * List Editing (|markdown.lists|)
+* Table Editing (|markdown.tables|)
 * Links (|markdown.links|)
 * Navigation (|markdown.navigation|)
 
@@ -274,6 +276,141 @@ TOGGLE TASKS                                      *markdown.lists.toggle_task*
                                                                *:MDTaskToggle*
 :MDTaskToggle           Toggles the task(s) on the current cursor line (normal
                         mode) or under selected lines (visual mode).
+
+--------------------------------------------------------------------------------
+TABLE EDITING                                                *markdown.tables*
+
+Format GFM pipe tables with these buffer-local commands:
+
+:MDTableFormat                                           *:MDTableFormat*
+    Format the table at the cursor, including when on its separator row.
+:[range]MDTableFormat
+    Format whole tables intersecting the range (including visual selections).
+:MDTableFormatAll                                        *:MDTableFormatAll*
+    Format every table in the document. Equivalent to :%MDTableFormat.
+:MDTableEdit                                             *:MDTableEdit*
+    Open the current table in a floating modal editor. Outside a table, stage a
+    new one-column, header-only table; insert it only when saved. Blank lines
+    are replaced; otherwise the table is inserted after the cursor line with
+    blank-line separation.
+:MDTableExport                                           *:MDTableExport*
+    Copy the staged table into a regular scratch split. Useful after a source
+    conflict; does not commit or discard the staged table.
+
+Formatting adds outer pipes and consistent padding, using the separator row's
+colons for left/right/center alignment. Unicode uses display widths; tabs expand
+using the source buffer's 'tabstop'. Missing cells are filled and surplus cells
+become extra columns. Inline Markdown and escaped pipes are preserved. Tables
+inside lists and blockquotes retain their prefixes. Fenced code is not changed.
+Cursor-based formatting does nothing away from a table.
+
+Table editor keys (Normal mode): ~
+    h/j/k/l, arrows     Move between cells, including the header; clamp at edges
+    Tab, w, e          Next cell, wrapping
+    Shift-Tab, b       Previous cell, wrapping
+    Enter or i         Open a separate cell-editing float in Insert mode
+    o / O              Insert a body row below / above
+    ci / ca            Insert a column before / after
+    dd / yy            Delete / yank row (header deletion is forbidden)
+    dc / yc            Delete / yank column (last-column deletion is forbidden)
+    dx / yx            Clear / yank cell
+    .                  Repeat the last successful row/column/cell deletion
+    P / p              Paste above/before or below/after; cells overwrite
+    al/ac/ar/an        Column alignment: left/center/right/unspecified
+    u / Ctrl-r         Undo / redo an operation
+    g- / g+            Earlier / later history state, including undo branches
+    Ctrl-g             Toggle cell navigation / content navigation
+    ?                  Show keymaps in a dedicated help float
+    s or Ctrl-y        Save the formatted table to the source buffer and close
+    q                  Discard all staged edits and close
+    Esc                Return to cell navigation; otherwise discard and close
+
+Cell navigation is the default. Content navigation removes the cell-motion
+bindings, allowing native Vim motions, scrolling, and Visual selections. Both
+modes keep the preview nonmodifiable, with supported table actions available.
+The active cell follows native cursor moves and mouse clicks, including near
+borders. The separator selects the header. Press Ctrl-g or Esc to return from
+content navigation. The preview contains only table text, not a keymap guide.
+
+Use V and native Visual-line motions to select multiple rows. Then d/x deletes
+and y yanks; P/p pastes the whole group in order as one operation. The separator
+is ignored. Deletion skips the protected header; yanking may include it. A multi-row
+deletion is repeated with . using the same row count at the current cell. Protected
+or no-op deletions do not replace the last successful deletion. Characterwise
+Visual yanking remains native in content-navigation mode.
+
+The separator is not selectable. Row insertion on the header inserts the first
+body row. New columns have no explicit alignment. Delete/yank uses an editor-local
+typed register: paste inserts rows/columns or replaces cells, depending on what
+was copied. Yanked headers paste as body rows. Copied columns retain alignment;
+paste expands dimensions if necessary to retain copied data. Cell yanks also
+copy decoded text to Vim's unnamed register. Operation history excludes movement
+and yanks, and retains abandoned redo branches accessible with g-/g+.
+
+Closing or dismissing the cell float always accepts its edits, including external
+window closure. Enter or Ctrl-y confirms from Normal or Insert mode; Ctrl-s and
+Esc also accept. Shift-Enter or Ctrl-j inserts a newline; use Ctrl-j when the
+terminal cannot distinguish Shift-Enter. Use table-level u to undo an accidental
+edit, or normal buffer
+undo after a direct source-cell edit. Acceptance-on-dismissal may become configurable
+later. Untouched cells preserve their original Markdown spelling and add no table
+undo step; dismissing an untouched direct source-cell edit does not format the
+buffer. The table editor itself remains transactional: q discards the whole table.
+Escaped pipes and <br> tags decode for editing; physical newlines encode as <br>
+on acceptance. Unescaped pipes are escaped, even inside code spans (GFM). Normal-mode ? shows cell editor keymaps.
+The Edit Cell float defaults to 64 columns wide and one line high for single-line
+contents. It grows/shrinks with physical lines up to 10 lines high, staying centered
+and bounded by the terminal.
+
+Changes stay in the editor until saved. Saving is one undoable buffer edit; it
+does not write the file. If the source buffer changes while the editor is open,
+saving is refused: discard and reopen, or use :MDTableExport to recover staged
+edits. Sorting, minification, live updates, and public configuration are deferred.
+
+Float filetypes: markdown_table_editor, markdown_table_cell, markdown_table_help.
+Their b:markdown_table_role values are editor, cell, and help, respectively.
+The table title is Edit Table, or Edit Table (content) in content-navigation mode.
+The wider keymaps float is titled Table Editor Keymaps (cell navigation), or
+Table Editor Keymaps (content navigation), without a repeated heading in its body.
+Keys align in a column using the MarkdownTableKey highlight group (default link:
+Special). Its footer is ?/q/Esc: close.
+Floats recenter on table size changes and terminal resizing; oversized cells
+scroll to show their beginning.
+
+No default source-buffer keys are added. Normal-mode <Plug> maps are available:
+    <Plug>(markdown_table_format)
+    <Plug>(markdown_table_format_all)
+    <Plug>(markdown_table_edit)
+
+Additional <Plug>(markdown_table_{action}) maps work in both source Markdown
+buffers and the table preview. Supported action suffixes:
+    left/right/up/down/next/previous         Navigate cells
+    edit_cell                               Open cell editor
+    yank_cell                               Copy decoded cell to unnamed register
+    row_above/row_below                      Insert row
+    column_before/column_after               Insert column
+    align_left/align_center/align_right/align_none
+                                            Change column alignment
+
+Source-buffer mutations commit directly as one undoable edit. Source cell edits
+only open the full preview if saving conflicts, so staged edits can be recovered.
+These actions do nothing outside tables. Navigation in ragged source tables skips
+omitted trailing cells; vertical movement clamps to the last physically present
+cell in the target row, without modifying the buffer.
+
+The float's typed paste register is local to its session. Direct source yank_cell
+copies decoded text; native p remains ordinary Vim paste, not table-aware cell
+replacement. In particular, pasting decoded multiline cells can break pipe rows.
+
+Lua API: >lua
+    require("markdown.table").format()          -- current table
+    require("markdown.table").format(0, -1)     -- all tables
+    require("markdown.table").format(first, last)
+    require("markdown.table").edit()
+    require("markdown.table").action("next")   -- same actions as Plug maps
+<
+The range arguments are inclusive, zero-based source rows. Intersecting tables
+are formatted in full. See doc/table-design.md for design notes and open questions.
 
 --------------------------------------------------------------------------------
 LINKS                                                         *markdown.links*

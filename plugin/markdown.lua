@@ -127,6 +127,25 @@ vim.keymap.set(
 )
 -- stylua: ignore end
 
+for _, action in ipairs({ "format", "format_all", "edit" }) do
+	vim.keymap.set("n", "<Plug>(markdown_table_" .. action .. ")", function()
+		local tbl = require("markdown.table")
+		if action == "format_all" then tbl.format(0, -1)
+		elseif action == "edit" then tbl.edit()
+		else tbl.format() end
+	end, { silent = true, desc = "Markdown table " .. action })
+end
+
+for _, action in ipairs({
+	"left", "right", "up", "down", "next", "previous", "edit_cell", "yank_cell",
+	"row_above", "row_below", "column_before", "column_after",
+	"align_left", "align_center", "align_right", "align_none",
+}) do
+	vim.keymap.set("n", "<Plug>(markdown_table_" .. action .. ")", function()
+		require("markdown.table").action(action)
+	end, { silent = true, desc = "Markdown table " .. action })
+end
+
 local ok, nvim_ts = pcall(require, "nvim-treesitter")
 if ok and vim.is_callable(nvim_ts.define_modules) then
 	require("markdown").define_nvim_ts_module()
